@@ -7,13 +7,14 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin
 
-month      = 2
-dom        = 28
+month      = 2;1
+dom        = 28;31
+monname    = "Feb";"Jan"
 
-pic = "AWAP_Tmax_Feb"
+pic = "AWAP_Tmax_"+monname
 
 wks = gsn_open_wks("pdf",pic)
-gsn_define_colormap(wks,"NCV_bright")
+gsn_define_colormap(wks,"BlAqGrYeOrReVi200");"NCV_bright")
 ;"BlueWhiteOrangeRed") ;"BlueYellowRed")
 res                    = True
 res@cnFillMode         = "RasterFill"            ; Raster Mode
@@ -58,14 +59,18 @@ res@trXMinF            = 112
 res@trXMaxF            = 154
 res@mpMinLonF          = 112
 res@mpMaxLonF          = 154
+res@mpDataSetName      = "/apps/ncl/6.6.2/lib/ncarg/database/Earth..4"
+res@mpDataBaseVersion  = "MediumRes" ; "HighRes"
 
-res@tmYLMode  = "Explicit"             ;��Y����������������,��ʾ�Լ���Ҫ��ֵ
+
+res@lbOrientation      = "Vertical"
+res@tmYLMode  = "Explicit"
 res@tmYLValues=(/-10,-20,-30,-40/)
 res@tmYLLabels=(/"10~S~o~N~S","20~S~o~N~S","30~S~o~N~S","40~S~o~N~S"/)
 res@tmXBMode  = "Explicit"
 res@tmXBValues=(/120,130,140,150/)
 res@tmXBLabels=(/"120~S~o~N~E","130~S~o~N~E","140~S~o~N~E","150~S~o~N~E"/)
-res@cnLevels  = ispan(0,50,5)
+res@cnLevels  = ispan(10,50,2)
 
 
 ncname = "/g/data/w35/mm3972/data/AWAP/AWAP_to_netcdf/Tair/AWAP.Tair.3hr.2019.nc"
@@ -85,7 +90,7 @@ tmp!1 ="lon"
 tmp&lat = f->lat
 tmp&lon = f->lon
 
-res@tiMainString  = "Feb-"+day
+res@tiMainString  = monname+"-"+day
 plots = gsn_csm_contour_map(wks,tmp,res)
 
 end do

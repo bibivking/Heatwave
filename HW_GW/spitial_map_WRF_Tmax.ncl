@@ -31,18 +31,21 @@ begin
 ;---Open WRF output file
   path = "/g/data/w35/mm3972/model/wrf/NUWRF/nuwrf_25km/LISWRF_configs/WRF_output/"
 
-  filename = path+"wrfout_d01_2009-01-01_00:00:00" ;- Jan
-  ;filename = path+"wrfout_d01_2009-02-01_03:00:00" ;- Feb
+  ;filename = path+"wrfout_d01_2009-01-01_00:00:00" ;- Jan
+  filename = path+"wrfout_d01_2009-02-01_03:00:00" ;- Feb
   ;filename = path+"wrfout_d01_2009-03-01_03:00:00"
+
+  tot_time_step = 224 ; 249 - Jan
+  tot_day       = 28  ; 31 - Jan
+  monname       = "Feb"
+
 
   a        = addfile(filename,"r")
   time     = wrf_user_getvar(a,"times",-1) ; Times in file
 
-  wks = gsn_open_wks("pdf","Jan-2009");"Feb-2009") ;"Jan-2009")
-  gsn_define_colormap(wks,"BlueYellowRed")
+  wks = gsn_open_wks("pdf",monname+"-2009");"Feb-2009") ;"Jan-2009")
+  gsn_define_colormap(wks,"BlAqGrYeOrReVi200") ; "BlueYellowRed")
 
-  tot_time_step = 249
-  tot_day       = 31
 
   slp = new((/tot_time_step,139,159/),float)
   tc2 = new((/tot_time_step,139,159/),float)
@@ -88,8 +91,9 @@ end do ;day
 ;---Temperature filled contour plot
   tc_res                      = res
   tc_res@cnFillOn             = True
+  tc_res@cnLinesOn            = False
   tc_res@cnLevelSelectionMode = "ExplicitLevels"
-  tc_res@cnLevels             = ispan(0,50,5)
+  tc_res@cnLevels             = ispan(10,50,2)
   tc_res@lbLabelFontHeightF   = 0.015
   tc_res@lbOrientation        = "Vertical"
   tc_res@pmLabelBarOrthogonalPosF = -0.005
@@ -103,7 +107,7 @@ end do ;day
   slp_res@cnLevelSelectionMode           = "ExplicitLevels"
   slp_res@cnLevels                       = levels
   slp_res@cnLineLabelBackgroundColor     = -1    ; transparent
-  slp_res@cnLineThicknessF               = 2.5
+  slp_res@cnLineThicknessF               = 1.5
   slp_res@cnHighLabelsOn                 = True
   slp_res@cnLowLabelsOn                  = True
   slp_res@cnHighLabelBackgroundColor     = -1
@@ -117,14 +121,16 @@ end do ;day
   map_res@gsnFrame      = False
   map_res@gsnDraw       = False
   map_res@mpOutlineOn   = True
-  map_res@mpCountyLineColor = "white"
+  map_res@mpCountyLineColor = "black"
   map_res@mpCountyLineThicknessF = 2.0
+  map_res@mpDataSetName      = "/apps/ncl/6.6.2/lib/ncarg/database/Earth..4"
+  map_res@mpDataBaseVersion  = "MediumRes" ; "HighRes"
   map_res@gsnLeftString = tc2@description + " (" + tc@units + ")~C~" + \
                           slp@description + " (" + slp@units + ")~C~"
   map_res@gsnLeftStringFontHeightF = 0.01
 
 do day = 0, tot_day-1
-  map_res@tiMainString  = "Jan-"+(day+1)
+  map_res@tiMainString  = monname+"-"+(day+1)
   tc2_max(day,:,:) = dim_max_n_Wrap(tc2(day*8:(day+1*8-1),:,:),0)
   slp_avg(day,:,:) = dim_avg_n_Wrap(slp(day*8:(day+1*8-1),:,:),0)
 
