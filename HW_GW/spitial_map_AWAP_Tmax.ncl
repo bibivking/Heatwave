@@ -11,7 +11,7 @@ month      = 2;1
 dom        = 28;31
 monname    = "Feb";"Jan"
 
-pic = "AWAP_Tmax_"+monname
+pic = "./plots/AWAP_Tmax_"+monname
 
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"BlAqGrYeOrReVi200");"NCV_bright")

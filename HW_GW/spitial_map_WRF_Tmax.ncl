@@ -43,7 +43,7 @@ begin
   a        = addfile(filename,"r")
   time     = wrf_user_getvar(a,"times",-1) ; Times in file
 
-  wks = gsn_open_wks("pdf",monname+"-2009");"Feb-2009") ;"Jan-2009")
+  wks = gsn_open_wks("pdf","./plots/"+monname+"-2009");"Feb-2009") ;"Jan-2009")
   gsn_define_colormap(wks,"BlAqGrYeOrReVi200") ; "BlueYellowRed")
 
 

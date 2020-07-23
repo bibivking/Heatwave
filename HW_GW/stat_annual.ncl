@@ -5,13 +5,13 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 ;*******************************************
 
-begin
-
 ;______ From Mark Decker's code ______
 setvalues NhlGetWorkspaceObjectId()
   "wsMaximumSize" : 5000000000 ;
 end setvalues
 ;_____________________________________
+
+begin
 
 path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/nuwrf_25km/LISWRF_configs/LIS_output"
 path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/outputs"
@@ -26,12 +26,13 @@ C = 117.552
 D = 153.598
 
 ;______________________________ Data _________________________________
-year_s = 2000
+year_s = 2003
 year_e = 2008
 year_sum = year_e-year_s+1
 day_sum  = 6940
 
 Var     = new((/2,20/),float)
+Var     = 0.0
 
 Var_name = (/\
              "Rain","Evap","TVeg","ESoil","ECanop","Qs","Qsb",\
@@ -51,50 +52,52 @@ do year = year_s,year_e
 
     ; read LIS-CABLE
     do month = 1, 12
-      print("month = "+month)
+      ;print("month = "+month)
       if month .lt. 10 then
         filename = path1+"/LIS.CABLE."+year+"0"+month+"0100.d01.nc"
       else
         filename = path1+"/LIS.CABLE."+year+month+"0100.d01.nc"
       end if
 
-      print(filename)
+      ; print(filename)
       f = addfile (filename,"r")
 
       ; 0: Rain
-      Var(0,0)     = Var(0,0) + avg(f->Rainf_f_inst(:,:,:))*3600*24
+      ;print(f->Rainf_f_inst)
+      Var(0,0)     = Var(0,0) + avg(dim_sum_n_Wrap(f->Rainf_f_inst,0))*3600*24
       ; 1: Evap
-      Var(0,1)     = Var(0,1) + avg(f->Evap_tavg(:,:,:))*3600*24
+      Var(0,1)     = Var(0,1) + avg(dim_sum_n_Wrap(f->Evap_tavg,0))*3600*24
       ; 2: TVeg
-      Var(0,2)     = Var(0,2) + avg(f->TVeg_tavg(:,:,:))*3600*24
+      Var(0,2)     = Var(0,2) + avg(dim_sum_n_Wrap(f->TVeg_tavg,0))*3600*24
       ; 3: ESoil
-      Var(0,3)     = Var(0,3) + avg(f->ESoil_tavg(:,:,:))*3600*24
+      Var(0,3)     = Var(0,3) + avg(dim_sum_n_Wrap(f->ESoil_tavg,0))*3600*24
       ; 4: ECanop
-      Var(0,4)     = Var(0,4) + avg(f->ECanop_tavg(:,:,:))*3600*24
+      Var(0,4)     = Var(0,4) + avg(dim_sum_n_Wrap(f->ECanop_tavg,0))*3600*24
       ; 5: Qs
-      Var(0,5)     = Var(0,5) + avg(f->Qs_tavg(:,:,:))*3600*24
+      Var(0,5)     = Var(0,5) + avg(dim_sum_n_Wrap(f->Qs_tavg,0))*3600*24
       ; 6: Qsb
-      Var(0,6)     = Var(0,6) + avg(f->Qsb_tavg(:,:,:))*3600*24
+      Var(0,6)     = Var(0,6) + avg(dim_sum_n_Wrap(f->Qsb_tavg,0))*3600*24
       ; 7: Rnet
-      Var(0,7)     = Var(0,7) + avg(f->Swnet_tavg(:,:,:)) + avg(f->Lwnet_tavg(:,:,:))
+      Var(0,7)     = Var(0,7) + avg(dim_avg_n_Wrap(f->Swnet_tavg,0))\
+                              + avg(dim_avg_n_Wrap(f->Lwnet_tavg,0))
       ; 8: Qle
-      Var(0,8)     = Var(0,8) + avg(f->Qle_tavg(:,:,:))
+      Var(0,8)     = Var(0,8) + avg(dim_avg_n_Wrap(f->Qle_tavg,0))
       ; 9: Qh
-      Var(0,9)     = Var(0,9) + avg(f->Qh_tavg(:,:,:))
+      Var(0,9)     = Var(0,9) + avg(dim_avg_n_Wrap(f->Qh_tavg,0))
       ; 10: Qg
-      Var(0,10)     = Var(0,10) + avg(f->Qg_tavg(:,:,:))
+      Var(0,10)     = Var(0,10) + avg(dim_avg_n_Wrap(f->Qg_tavg,0))
       ; 11: Tair
-      Var(0,11)     = Var(0,11) + avg(f->Tair_f_inst(:,:,:))-273.15
+      Var(0,11)     = Var(0,11) + avg(dim_avg_n_Wrap(f->Tair_f_inst,0))-273.15
 
       do soil = 0,5
         ; 12: SoilMoist
-        Var(0,12)     = Var(0,12) + (avg(f->SoilMoist_inst(:,soil,:,:)))\
+        Var(0,12)     = Var(0,12) + avg(dim_avg_n_Wrap(f->SoilMoist_inst(:,soil,:,:),0))\
                                    *Soil_thickness(soil)/sum(Soil_thickness)
         ; 13: SoilTemp
-        Var(0,13)     = Var(0,13) + (avg(f->SoilTemp_inst(:,soil,:,:))-273.15)\
+        Var(0,13)     = Var(0,13) + (avg(dim_avg_n_Wrap(f->SoilTemp_inst(:,soil,:,:),0))-273.15)\
                                    *Soil_thickness(soil)/sum(Soil_thickness)
         ; 14-19: SoilMoist1-6
-        Var(0,14+soil)= Var(0,14+soil) + avg(f->SoilMoist_inst(:,soil,:,:))
+        Var(0,14+soil)= Var(0,14+soil) + avg(dim_avg_n_Wrap(f->SoilMoist_inst(:,soil,:,:),0))
       end do ; soil
       delete(f)
     end do ; month
@@ -104,47 +107,50 @@ do year = year_s,year_e
     f1 = addfile (filename1,"r")
 
     ; 0: Rain
-    Var(1,0)     = Var(1,0) + avg(f1->Rainf(:,{A:B},{C:D}))*3600*24
+    Var(1,0)     = Var(1,0) + avg(dim_sum_n_Wrap(f1->Rainf(:,{A:B},{C:D}),0))*3600*24
     ; 1: Evap
-    Var(1,1)     = Var(1,1) + avg(f1->Evap(:,{A:B},{C:D}))*3600*24
+    Var(1,1)     = Var(1,1) + avg(dim_sum_n_Wrap(f1->Evap(:,{A:B},{C:D}),0))*3600*24
     ; 2: TVeg
-    Var(1,2)     = Var(1,2) + avg(f1->TVeg(:,{A:B},{C:D}))*3600*24
+    Var(1,2)     = Var(1,2) + avg(dim_sum_n_Wrap(f1->TVeg(:,{A:B},{C:D}),0))*3600*24
     ; 3: ESoil
-    Var(1,3)     = Var(1,3) + avg(f1->ESoil(:,{A:B},{C:D}))*3600*24
+    Var(1,3)     = Var(1,3) + avg(dim_sum_n_Wrap(f1->ESoil(:,{A:B},{C:D}),0))*3600*24
     ; 4: ECanop
-    Var(1,4)     = Var(1,4) + avg(f1->ECanop(:,{A:B},{C:D}))*3600*24
+    Var(1,4)     = Var(1,4) + avg(dim_sum_n_Wrap(f1->ECanop(:,{A:B},{C:D}),0))*3600*24
     ; 5: Qs
-    Var(1,5)     = Var(1,5) + avg(f1->Qs(:,{A:B},{C:D}))*3600*24
+    Var(1,5)     = Var(1,5) + avg(dim_sum_n_Wrap(f1->Qs(:,{A:B},{C:D}),0))*3600*24
     ; 6: Qsb
-    Var(1,6)     = Var(1,6) + avg(f1->Qsb(:,{A:B},{C:D}))*3600*24
+    Var(1,6)     = Var(1,6) + avg(dim_sum_n_Wrap(f1->Qsb(:,{A:B},{C:D}),0))*3600*24
     ; 7: Rnet
-    Var(1,7)     = Var(1,7) + avg(f1->Rnet(:,{A:B},{C:D}))
+    Var(1,7)     = Var(1,7) + avg(dim_avg_n_Wrap(f1->Rnet(:,{A:B},{C:D}),0))
     ; 8: Qle
-    Var(1,8)     = Var(1,8) + avg(f1->Qle(:,{A:B},{C:D}))
+    Var(1,8)     = Var(1,8) + avg(dim_avg_n_Wrap(f1->Qle(:,{A:B},{C:D}),0))
     ; 9: Qh
-    Var(1,9)     = Var(1,9) + avg(f1->Qh(:,{A:B},{C:D}))
+    Var(1,9)     = Var(1,9) + avg(dim_avg_n_Wrap(f1->Qh(:,{A:B},{C:D}),0))
     ; 10: Qg
-    Var(1,10)     = Var(1,10) + avg(f1->Qg(:,{A:B},{C:D}))
+    Var(1,10)     = Var(1,10) + avg(dim_avg_n_Wrap(f1->Qg(:,{A:B},{C:D}),0))
     ; 11: Tair
-    Var(1,11)     = Var(1,11) + avg(f1->Tair(:,{A:B},{C:D}))-273.15
+    Var(1,11)     = Var(1,11) + avg(dim_avg_n_Wrap(f1->Tair(:,{A:B},{C:D}),0))-273.15
 
     do soil = 0,5
       ; 12: SoilMoist
-      Var(1,12)     = Var(1,12) + (avg(f1->SoilMoist(:,soil,{A:B},{C:D})))\
+      Var(1,12)     = Var(1,12) + avg(dim_avg_n_Wrap(f1->SoilMoist(:,soil,{A:B},{C:D}),0))\
                                  *Soil_thickness(soil)/sum(Soil_thickness)
       ; 13: SoilTemp
-      Var(1,13)     = Var(1,13) + (avg(f1->SoilTemp(:,soil,{A:B},{C:D}))-273.15)\
+      Var(1,13)     = Var(1,13) + (avg(dim_avg_n_Wrap(f1->SoilTemp(:,soil,{A:B},{C:D}),0))-273.15)\
                                  *Soil_thickness(soil)/sum(Soil_thickness)
       ; 14-19: SoilMoist1-6
-      Var(1,14+soil)= Var(1,14+soil) + avg(f1->SoilMoist(:,soil,{A:B},{C:D}))
+      Var(1,14+soil)= Var(1,14+soil) + avg(dim_avg_n_Wrap(f1->SoilMoist(:,soil,{A:B},{C:D}),0))
     end do ; soil
     delete(f1)
 end do ; year
+print(Var)
+Var(0,0:6) = Var(0,0:6)/year_sum
+Var(0,7:) = Var(0,7:)/year_sum/12
+Var(1,0:6) = Var(1,0:6)/year_sum
+Var(1,7:) = Var(1,7:)/year_sum
 
-Var(:,0:6) = Var(:,0:6)/year_sum
-Var(:,7:) = Var(:,7:)/day_sum
 do var_num = 0, dimsizes(Var_name)-1
-  print(Var_name(var_num)+ Var(:,var_num))
+  print(Var_name(var_num)+ " "+ Var(0,var_num)+" "+ Var(1,var_num))
 end do
 
 end
