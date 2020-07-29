@@ -14,10 +14,10 @@ end setvalues
 begin
 
 path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/nuwrf_25km/LISWRF_configs/LIS_output"
-path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/outputs"
+path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/litter/outputs"
 
-Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
-
+Soil_thickness  = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
+Soil_thickness1 =(/0.005, 0.075, 0.154, 0.409, 1.085, 2.872/) ; LIS-CABLE
 ; region
 
 A = -43.4377
@@ -50,6 +50,10 @@ do year = year_s,year_e
        dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
     end if
 
+    ; read CABLE (HESS)
+    filename1 = path2+"/cable_out_"+year+".nc"
+    f1 = addfile (filename1,"r")
+
     ; read LIS-CABLE
     do month = 1, 12
       ;print("month = "+month)
@@ -64,7 +68,7 @@ do year = year_s,year_e
 
       ; 0: Rain
       ;print(f->Rainf_f_inst)
-      Var(0,0)     = Var(0,0) + avg(dim_sum_n_Wrap(f->Rainf_f_inst,0))*3600*24
+      Var(0,0)     = Var(0,0) + avg(dim_sum_n_Wrap(f->Rainf_tavg,0))*3600*24
       ; 1: Evap
       Var(0,1)     = Var(0,1) + avg(dim_sum_n_Wrap(f->Evap_tavg,0))*3600*24
       ; 2: TVeg
@@ -92,34 +96,36 @@ do year = year_s,year_e
       do soil = 0,5
         ; 12: SoilMoist
         Var(0,12)     = Var(0,12) + avg(dim_avg_n_Wrap(f->SoilMoist_inst(:,soil,:,:),0))\
-                                   *Soil_thickness(soil)/sum(Soil_thickness)
+                                   *Soil_thickness1(soil)/sum(Soil_thickness1)
         ; 13: SoilTemp
         Var(0,13)     = Var(0,13) + (avg(dim_avg_n_Wrap(f->SoilTemp_inst(:,soil,:,:),0))-273.15)\
-                                   *Soil_thickness(soil)/sum(Soil_thickness)
+                                   *Soil_thickness1(soil)/sum(Soil_thickness1)
         ; 14-19: SoilMoist1-6
         Var(0,14+soil)= Var(0,14+soil) + avg(dim_avg_n_Wrap(f->SoilMoist_inst(:,soil,:,:),0))
       end do ; soil
       delete(f)
+
+
+      ; read CABLE (HESS)
+
+      ; 0: Rain
+      Var(1,0)     = Var(1,0) + avg(f1->Rainf(month-1,{A:B},{C:D})*dom(month-1))*3600*24
+      ; 1: Evap
+      Var(1,1)     = Var(1,1) + avg(f1->Evap(month-1,{A:B},{C:D})*dom(month-1))*3600*24
+      ; 2: TVeg
+      Var(1,2)     = Var(1,2) + avg(f1->TVeg(month-1,{A:B},{C:D})*dom(month-1))*3600*24
+      ; 3: ESoil
+      Var(1,3)     = Var(1,3) + avg(f1->ESoil(month-1,{A:B},{C:D})*dom(month-1))*3600*24
+      ; 4: ECanop
+      Var(1,4)     = Var(1,4) + avg(f1->ECanop(month-1,{A:B},{C:D})*dom(month-1))*3600*24
+      ; 5: Qs
+      Var(1,5)     = Var(1,5) + avg(f1->Qs(month-1,{A:B},{C:D})*dom(month-1))*3600*24
+      ; 6: Qsb
+      Var(1,6)     = Var(1,6) + avg(f1->Qsb(month-1,{A:B},{C:D})*dom(month-1))*3600*24
+
+
     end do ; month
 
-    ; read CABLE (HESS)
-    filename1 = path2+"/cable_out_"+year+".nc"
-    f1 = addfile (filename1,"r")
-
-    ; 0: Rain
-    Var(1,0)     = Var(1,0) + avg(dim_sum_n_Wrap(f1->Rainf(:,{A:B},{C:D}),0))*3600*24
-    ; 1: Evap
-    Var(1,1)     = Var(1,1) + avg(dim_sum_n_Wrap(f1->Evap(:,{A:B},{C:D}),0))*3600*24
-    ; 2: TVeg
-    Var(1,2)     = Var(1,2) + avg(dim_sum_n_Wrap(f1->TVeg(:,{A:B},{C:D}),0))*3600*24
-    ; 3: ESoil
-    Var(1,3)     = Var(1,3) + avg(dim_sum_n_Wrap(f1->ESoil(:,{A:B},{C:D}),0))*3600*24
-    ; 4: ECanop
-    Var(1,4)     = Var(1,4) + avg(dim_sum_n_Wrap(f1->ECanop(:,{A:B},{C:D}),0))*3600*24
-    ; 5: Qs
-    Var(1,5)     = Var(1,5) + avg(dim_sum_n_Wrap(f1->Qs(:,{A:B},{C:D}),0))*3600*24
-    ; 6: Qsb
-    Var(1,6)     = Var(1,6) + avg(dim_sum_n_Wrap(f1->Qsb(:,{A:B},{C:D}),0))*3600*24
     ; 7: Rnet
     Var(1,7)     = Var(1,7) + avg(dim_avg_n_Wrap(f1->Rnet(:,{A:B},{C:D}),0))
     ; 8: Qle
