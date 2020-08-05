@@ -5,6 +5,41 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 ;*******************************************
 
+
+undef("regrid_data")
+function regrid_data(var,interp_method,lat2d,lon2d,lat,lon,src_mask,dst_mask)
+local var_regrid
+begin
+
+    Opt                   = True
+
+    Opt@SrcFileName       = "WRF_SCRIP.nc"      ; Name of source and ???
+    Opt@DstFileName       = "1degree.nc"    ; destination files  ???
+
+    Opt@InterpMethod      = interp_method
+
+    Opt@SrcRegional       = True
+    Opt@SrcGridMask       = src_mask
+
+    Opt@DstRegional       = True
+    ; Opt@DstLLCorner       = (/ minlat,minlon /)
+    ; Opt@DstURCorner       = (/ maxlat,maxlon /)
+    Opt@DstGridType       = "rectilinear"
+    Opt@DstGridLat        = lat
+    Opt@DstGridLon        = lon
+    Opt@DstGridMask       = dst_mask
+
+    Opt@ForceOverwrite    = True
+    Opt@PrintTimings      = True
+    Opt@Debug             = True
+
+    var@lat2d = lat2d              ; This information will be used by
+    var@lon2d = lon2d              ; ESMF_regrid for the source grid
+    var_regrid = ESMF_regrid(var,Opt)     ; Do the regridding for TMP
+    printVarSummary(var_regrid)
+    return(var_regrid)
+end
+
 begin
 
 ;______ From Mark Decker's code ______
@@ -14,7 +49,7 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/nuwrf_25km/LISWRF_configs/LIS_output"
+path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/25km/LIS_output"
 path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl/outputs"
 path3 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/litter/outputs"
 
@@ -36,31 +71,39 @@ betaroot       = (/ \
                   0.961, 0.961, 0.961, 0.961, 0.961, \
                   0.975, 0.975 /)
 
+; ================================ Set Regrid ==================================
+interp_method = "neareststod"  ;"neareststod"; "conserve" "patch";"bilinear"
+minlon  = 117 ;min(lon2d)-1 ; 116.5516
+minlat  = -44 ;min(lat2d)-1 ; -44.43771
+maxlon  = 154 ;max(lon2d)+1 ; 154.5981
+maxlat  = -13 ;max(lat2d)+1 ; -12.5853
+
+; study region
+A = minlat
+B = maxlat
+C = minlon
+D = maxlon
 
 ; ================================ READ CABLE ==================================
-filename = path1+"/LIS.CABLE."+year_s+"010100.d01.nc"
-f        = addfile (filename,"r")
-
+filename  = path1+"/LIS.CABLE."+year_s+"010100.d01.nc"
+f         = addfile (filename,"r")
 Landcover = f->Landcover_inst(0,:,:)
 RelSMC    = dim_avg_n_Wrap(f->RelSMC_inst,0)
+Fwsoil_LIS= dim_avg_n_Wrap(f->fwsoil_inst,0)
 RelSMC    = 0.
-printVarSummary(RelSMC)
+Fwsoil_LIS= 0.
 delete(f)
 
 filename1 = path2+"/cable_out_"+year_s+".nc"
 f1        = addfile (filename1,"r")
-
 Fwsoil_HESS = dim_sum_n_Wrap(f1->Fwsoil(:,{A:B},{C:D}),0)
 Fwsoil_HESS = 0.
-printVarSummary(Fwsoil_HESS)
 delete(f1)
 
 filename2 = path3+"/cable_out_"+year_s+".nc"
 f2        = addfile (filename2,"r")
-
 Fwsoil_HESS_def = dim_sum_n_Wrap(f2->Fwsoil(:,{A:B},{C:D}),0)
 Fwsoil_HESS_def = 0.
-printVarSummary(Fwsoil_HESS_def)
 delete(f2)
 
 do year = year_s,year_e
@@ -68,12 +111,13 @@ do year = year_s,year_e
     ; _________________________ read LIS-CABLE ____________________________
     do month = 1, 12
       if month .lt. 10 then
-        filename = path1+"/LIS.CABLE."+year+"0"+month+"0100.d01.nc"
+        filename  = path1+"/LIS.CABLE."+year+"0"+month+"0100.d01.nc"
       else
-        filename = path1+"/LIS.CABLE."+year+month+"0100.d01.nc"
+        filename  = path1+"/LIS.CABLE."+year+month+"0100.d01.nc"
       end if
       f = addfile (filename,"r")
       RelSMC     = RelSMC   + dim_avg_n_Wrap(f->RelSMC_inst,0)
+      Fwsoil_LIS = Fwsoil_LIS + dim_avg_n_Wrap(f->fwsoil_inst,0)
       delete(f)
     end do ; month
 
@@ -91,6 +135,7 @@ do year = year_s,year_e
 end do ; year
 
 RelSMC       = RelSMC/year_sum/12
+Fwsoil_LIS   = Fwsoil_LIS/year_sum/12
 Fwsoil_HESS  = Fwsoil_HESS/year_sum
 Fwsoil_HESS_def  = Fwsoil_HESS_def/year_sum
 
@@ -123,9 +168,30 @@ do soil = 0, 5
   end do
 end do
 
-Fwsoil_LIS = dim_sum_n_Wrap(Froot_LIS * RelSMC, 0)
-printVarSummary(Fwsoil_LIS)
+Fwsoil_LIS_cal = dim_sum_n_Wrap(Froot_LIS * RelSMC, 0)
+printVarSummary(Fwsoil_LIS_cal)
 
+; ================================== Regrid ====================================
+filename  = path1+"/LIS.CABLE."+year_s+"090100.d01.nc"
+f = addfile (filename,"r")
+filename1 = path2+"/cable_out_"+year_s+".nc"
+f1 = addfile (filename1,"r")
+
+src_mask = where(.not.ismissing(f->SandFrac_inst(0,:,:)),1,0)
+dst_mask = where(.not.ismissing(f1->Qs(0,{minlat:maxlat},{minlon:maxlon})),1,0)
+
+lat2d    = f->lat(0,:,:)
+lon2d    = f->lon(0,:,:)
+lon2d    = where(lon2d.lt.0,360+lon2d,lon2d)
+lat      = fspan(minlat,maxlat,dimsizes(dst_mask(:,0)))
+lon      = fspan(minlon,maxlon,dimsizes(dst_mask(0,:)))
+
+Fwsoil_LIS_cal_regrid = regrid_data(Fwsoil_LIS_cal,interp_method, lat2d, lon2d, \
+                        lat, lon, src_mask, dst_mask )
+Fwsoil_LIS_regrid     = regrid_data(Fwsoil_LIS,interp_method, lat2d, lon2d, \
+                        lat, lon, src_mask, dst_mask )
+delete(f)
+delete(f1)
 
 ; ================================= Plotting ===================================
 res                    = True
@@ -186,17 +252,26 @@ wks1 = gsn_open_wks("pdf",pic1)
 gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")             ;����ɫ��
 
 ; Fwsoil
-plots = new(3,graphic)
+plots = new(5,graphic)
 pres@txString = "Fwsoil (-)"
 levels = fspan(0,1,21)
 res@cnLevels = levels
 
 res@tiMainString = "LIS-CABLE"
-plots(0) = gsn_csm_contour(wks1,Fwsoil_LIS,res)
+plots(0) = gsn_csm_contour(wks1,Fwsoil_LIS_regrid,res)
+res@tiMainString = "LIS-CABLE_cal"
+plots(1) = gsn_csm_contour(wks1,Fwsoil_LIS_cal_regrid,res)
 res@tiMainString = "CABLE(HESS)"
-plots(1) = gsn_csm_contour(wks1,Fwsoil_HESS,res)
+plots(2) = gsn_csm_contour(wks1,Fwsoil_HESS,res)
 res@tiMainString = "CABLE(HESS)-litter"
-plots(2) = gsn_csm_contour(wks1,Fwsoil_HESS_def,res)
-gsn_panel(wks1,(/plots/),(/1,3/),pres)
+plots(3) = gsn_csm_contour(wks1,Fwsoil_HESS_def,res)
+res@tiMainString = "LIS-CABLE - CABLE(HESS)"
+
+levels = fspan(-0.5,0.5,21)
+res@cnLevels = levels
+res@cnFillPalette = "BlueWhiteOrangeRed"
+plots(4) = gsn_csm_contour(wks1,Fwsoil_LIS_regrid-Fwsoil_HESS,res)
+
+gsn_panel(wks1,(/plots/),(/3,2/),pres)
 
 end

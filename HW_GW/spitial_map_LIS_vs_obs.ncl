@@ -14,8 +14,9 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/nuwrf_25km/LISWRF_configs/LIS_output"
-path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/litter/outputs"
+;path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/nuwrf_25km/LISWRF_configs/LIS_output"
+path1 = "/scratch/w35/mm3972/model/NUWRF/ERAI_1819/LIS_offline/OUTPUT/SURFACEMODEL"
+path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl/outputs"
 
 path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/yearly";
 path_CLASS= "/g/data/w35/mm3972/data/CLASS_v1"
@@ -24,8 +25,8 @@ path_LORA = "/g/data/w35/mm3972/data/LORA"  ; LORA_v1.0_2000.nc
 path_CERES= "/g/data/w35/mm3972/data/CERES" ; CERES_EBAF-Surface_Ed2.8_Subset_200003-201502.nc
 
 ; ================================= Predefine ==================================
-year_s = 2003
-year_e = 2008
+year_s = 1989;2003
+year_e = 1997;2008
 year_sum = year_e-year_s+1
 
 ; study region
@@ -36,6 +37,10 @@ D = 153.598
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 Soil_thickness1 =(/0.005, 0.075, 0.154, 0.409, 1.085, 2.872/) ; LIS-CABLE
+
+; ================================== OPTIONS ===================================
+plot_type = "all"
+force_name= "ERAI"
 
 ; ================================ READ CABLE ==================================
 filename = path1+"/LIS.CABLE."+year_s+"010100.d01.nc"
@@ -369,6 +374,7 @@ Rnet_CERES = dim_avg_n_Wrap(CERES->sfc_net_tot_all_mon(34:105,{A:B},{C:D}),0) ; 
 ; sfc_net_tot_clr_mon "Surface Net Total Flux, Monthly Means, Clear-Sky conditions"
 delete(CERES)
 
+
 ; ================================= Plotting ===================================
 res                    = True
 res@cnFillMode         = "RasterFill"            ; Raster Mode
@@ -421,299 +427,302 @@ pres@lbLabelFontHeightF = 0.01
 res@gsnLeftString = ""
 res@gsnRightString = ""
 
-
-
 ; ============================= plot met input =============================
-pic0 = "./plots/LIS_vs_obs_met_Princeton"
-wks0 = gsn_open_wks("pdf",pic0)
-gsn_define_colormap(wks0,"WhiteBlueGreenYellowRed") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")             ;����ɫ��
+  if (plot_type .eq. "met_force") .or. (plot_type .eq. "all") then
 
-; Rain
-plots = new(2,graphic)
-pres@txString = "Rain (mm/y)"
-levels = fspan(0,1000,21)
-res@cnLevels = levels
+    pic0 = "./plots/LIS_vs_obs_met_"+force_name
+    wks0 = gsn_open_wks("pdf",pic0)
+    gsn_define_colormap(wks0,"WhiteBlueGreenYellowRed") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")
 
-res@tiMainString = "LIS-CABLE"
-plots(0) = gsn_csm_contour(wks0,Rain_LIS,res)
-res@tiMainString = "CABLE(HESS)"
-plots(1) = gsn_csm_contour(wks0,Rain_HESS,res)
-gsn_panel(wks0,(/plots/),(/1,2/),pres)
-delete(levels)
-delete(res@cnLevels)
+    ; Rain
+    plots = new(2,graphic)
+    pres@txString = "Rain (mm/y)"
+    levels = fspan(0,1000,21)
+    res@cnLevels = levels
 
-; Tair
-pres@txString = "Tair (C)"
-levels = fspan(0,30,16)
-res@cnLevels = levels
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks0,Rain_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks0,Rain_HESS,res)
+    gsn_panel(wks0,(/plots/),(/1,2/),pres)
+    delete(levels)
+    delete(res@cnLevels)
 
-res@tiMainString = "LIS-CABLE"
-plots(0) = gsn_csm_contour(wks0,Tair_LIS,res)
-res@tiMainString = "CABLE(HESS)"
-plots(1) = gsn_csm_contour(wks0,Tair_HESS,res)
-gsn_panel(wks0,(/plots/),(/1,2/),pres)
-delete(levels)
-delete(res@cnLevels)
+    ; Tair
+    pres@txString = "Tair (C)"
+    levels = fspan(0,30,16)
+    res@cnLevels = levels
 
-; Qair
-pres@txString = "Qair (kg/kg)"
-levels = fspan(0,0.01,21)
-res@cnLevels = levels
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks0,Tair_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks0,Tair_HESS,res)
+    gsn_panel(wks0,(/plots/),(/1,2/),pres)
+    delete(levels)
+    delete(res@cnLevels)
 
-res@tiMainString = "LIS-CABLE"
-plots(0) = gsn_csm_contour(wks0,Qair_LIS,res)
-res@tiMainString = "CABLE(HESS)"
-plots(1) = gsn_csm_contour(wks0,Qair_HESS,res)
-gsn_panel(wks0,(/plots/),(/1,2/),pres)
-delete(levels)
-delete(res@cnLevels)
+    ; Qair
+    pres@txString = "Qair (kg/kg)"
+    levels = fspan(0,0.01,21)
+    res@cnLevels = levels
 
-; Psurf
-pres@txString = "Psurf (hPa)"
-levels = fspan(900,1200,31)
-res@cnLevels = levels
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks0,Qair_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks0,Qair_HESS,res)
+    gsn_panel(wks0,(/plots/),(/1,2/),pres)
+    delete(levels)
+    delete(res@cnLevels)
 
-res@tiMainString = "LIS-CABLE"
-plots(0) = gsn_csm_contour(wks0,Psurf_LIS,res)
-res@tiMainString = "CABLE(HESS)"
-plots(1) = gsn_csm_contour(wks0,Psurf_HESS,res)
-gsn_panel(wks0,(/plots/),(/1,2/),pres)
-delete(levels)
-delete(res@cnLevels)
+    ; Psurf
+    pres@txString = "Psurf (hPa)"
+    levels = fspan(900,1200,31)
+    res@cnLevels = levels
 
-; SWdown
-pres@txString = "SWdown (W/m^2)"
-levels = fspan(0,500,51)
-res@cnLevels = levels
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks0,Psurf_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks0,Psurf_HESS,res)
+    gsn_panel(wks0,(/plots/),(/1,2/),pres)
+    delete(levels)
+    delete(res@cnLevels)
 
-res@tiMainString = "LIS-CABLE"
-plots(0) = gsn_csm_contour(wks0,SWdown_LIS,res)
-res@tiMainString = "CABLE(HESS)"
-plots(1) = gsn_csm_contour(wks0,SWdown_HESS,res)
-gsn_panel(wks0,(/plots/),(/1,2/),pres)
-delete(levels)
-delete(res@cnLevels)
+    ; SWdown
+    pres@txString = "SWdown (W/m^2)"
+    levels = fspan(0,500,51)
+    res@cnLevels = levels
 
-; LWdown
-pres@txString = "LWdown (W/m^2)"
-levels = fspan(0,500,51)
-res@cnLevels = levels
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks0,SWdown_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks0,SWdown_HESS,res)
+    gsn_panel(wks0,(/plots/),(/1,2/),pres)
+    delete(levels)
+    delete(res@cnLevels)
 
-res@tiMainString = "LIS-CABLE"
-plots(0) = gsn_csm_contour(wks0,LWdown_LIS,res)
-res@tiMainString = "CABLE(HESS)"
-plots(1) = gsn_csm_contour(wks0,LWdown_HESS,res)
-gsn_panel(wks0,(/plots/),(/1,2/),pres)
-delete(levels)
-delete(res@cnLevels)
+    ; LWdown
+    pres@txString = "LWdown (W/m^2)"
+    levels = fspan(0,500,51)
+    res@cnLevels = levels
 
-; Wind
-pres@txString = "Wind (m/s)"
-levels = fspan(0,10,21)
-res@cnLevels = levels
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks0,LWdown_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks0,LWdown_HESS,res)
+    gsn_panel(wks0,(/plots/),(/1,2/),pres)
+    delete(levels)
+    delete(res@cnLevels)
 
-res@tiMainString = "LIS-CABLE"
-plots(0) = gsn_csm_contour(wks0,Wind_LIS,res)
-res@tiMainString = "CABLE(HESS)"
-plots(1) = gsn_csm_contour(wks0,Wind_HESS,res)
-gsn_panel(wks0,(/plots/),(/1,2/),pres)
-delete(levels)
-delete(res@cnLevels)
+    ; Wind
+    pres@txString = "Wind (m/s)"
+    levels = fspan(0,10,21)
+    res@cnLevels = levels
 
-;
-; ; ============================= plot water balance =============================
-; pic1 = "./plots/LIS_vs_obs_water_balance_litter_Princeton"
-; wks1 = gsn_open_wks("pdf",pic1)
-; gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")             ;����ɫ��
-;
-;
-; ; LAI
-; pres@txString = "LAI (mm/y)"
-; levels = fspan(0,6,21)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks1,LAI_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks1,LAI_HESS,res)
-; gsn_panel(wks1,(/plots/),(/1,2/),pres)
-; delete(plots)
-;
-; ; Evap
-; plots = new(3,graphic)
-; pres@txString = "Evap (mm/y)"
-; levels = fspan(0,1000,21)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks1,Evap_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks1,Evap_HESS,res)
-; res@tiMainString = "GLEAM"
-; plots(2) = gsn_csm_contour(wks1,Evap_GLEAM,res)
-; gsn_panel(wks1,(/plots/),(/1,3/),pres)
-;
-; ; TVeg
-; pres@txString = "TVeg (mm/y)"
-; levels = fspan(0,1000,21)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks1,TVeg_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks1,TVeg_HESS,res)
-; res@tiMainString = "GLEAM"
-; plots(2) = gsn_csm_contour(wks1,TVeg_GLEAM,res)
-; gsn_panel(wks1,(/plots/),(/1,3/),pres)
-;
-; ; ESoil
-; pres@txString = "ESoil (mm/y)"
-; levels = fspan(0,1000,21)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks1,ESoil_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks1,ESoil_HESS,res)
-; res@tiMainString = "GLEAM"
-; plots(2) = gsn_csm_contour(wks1,ESoil_GLEAM,res)
-; gsn_panel(wks1,(/plots/),(/1,3/),pres)
-;
-; ; ECanop
-; pres@txString = "ECanop (mm/y)"
-; levels = fspan(0,1000,21)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks1,ECanop_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks1,ECanop_HESS,res)
-; res@tiMainString = "GLEAM"
-; plots(2) = gsn_csm_contour(wks1,ECanop_GLEAM,res)
-; gsn_panel(wks1,(/plots/),(/1,3/),pres)
-;
-; ; Runoff
-; pres@txString = "Runoff (mm/y)"
-; levels = fspan(0,1000,21)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks1,Runoff_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks1,Runoff_HESS,res)
-; res@tiMainString = "LORA"
-; plots(2) = gsn_csm_contour(wks1,Runoff_LORA,res)
-; gsn_panel(wks1,(/plots/),(/1,3/),pres)
-;
-; ; SMsurf
-; pres@txString = "SMsurf (m3/m3)"
-; levels = fspan(0,0.5,21)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks1,SMsurf_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks1,SMsurf_HESS,res)
-; res@tiMainString = "GLEAM"
-; plots(2) = gsn_csm_contour(wks1,SMsurf_GLEAM,res)
-; gsn_panel(wks1,(/plots/),(/1,3/),pres)
-; delete(plots)
-;
-; ; ET/P
-; plots = new(2,graphic)
-; pres@txString = "Evap/Rain (-)"
-; levels = fspan(0,1.,21)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks1,Evap_LIS/Rain_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks1,Evap_HESS/Rain_HESS,res)
-; ; res@tiMainString = "GLEAM"
-; ; plots(2) = gsn_csm_contour(wks1,Evap_GLEAM/Rain_HESS,res)
-; ; gsn_panel(wks1,(/plots/),(/1,3/),pres)
-; gsn_panel(wks1,(/plots/),(/1,2/),pres)
-;
-; ; R/ET
-; pres@txString = "Runoff/Evap (-)"
-; levels = fspan(0,1.,21)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks1,Runoff_LIS/Evap_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks1,Runoff_HESS/Evap_HESS,res)
-; ; res@tiMainString = "LORA/GLEAM"
-; ; plots(2) = gsn_csm_contour(wks1,Runoff_LORA/Evap_GLEAM,res)
-; ; gsn_panel(wks1,(/plots/),(/1,3/),pres)
-; gsn_panel(wks1,(/plots/),(/1,2/),pres)
-; delete(plots)
-; delete(levels)
-; delete(res@cnLevels)
-;
-; ; ============================ plot energy balance =============================
-; pic2 = "./plots/LIS_vs_obs_energy_balance_litter_Princeton"
-; wks2 = gsn_open_wks("pdf",pic2)
-; gsn_define_colormap(wks2,"WhiteBlueGreenYellowRed") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")
-;
-; ; Rnet
-; plots = new(4,graphic)
-; pres@txString = "Rnet (W/m2)"
-; levels = fspan(-50,200,51)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks2,Rnet_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks2,Rnet_HESS,res)
-; res@tiMainString = "CLASS"
-; plots(2) = gsn_csm_contour(wks2,Rnet_CLASS,res)
-; res@tiMainString = "CERES"
-; plots(3) = gsn_csm_contour(wks2,Rnet_CERES,res)
-; gsn_panel(wks2,(/plots/),(/2,2/),pres)
-;
-; ; Qle
-; pres@txString = "Qle (W/m2)"
-; levels = fspan(-50,200,51)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks2,Qle_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks2,Qle_HESS,res)
-; res@tiMainString = "CLASS"
-; plots(2) = gsn_csm_contour(wks2,Qle_CLASS,res)
-; res@tiMainString = "DOLCE"
-; plots(3) = gsn_csm_contour(wks2,Qle_DOLCE,res)
-; gsn_panel(wks2,(/plots/),(/2,2/),pres)
-; delete(plots)
-;
-; ; Qh
-; plots = new(3,graphic)
-; pres@txString = "Qh (W/m2)"
-; levels = fspan(-50,200,51)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks2,Qh_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks2,Qh_HESS,res)
-; res@tiMainString = "CLASS"
-; plots(2) = gsn_csm_contour(wks2,Qh_CLASS,res)
-; gsn_panel(wks2,(/plots/),(/1,3/),pres)
-;
-; ; Qg
-; pres@txString = "Qg (W/m2)"
-; levels = fspan(-50,200,51)
-; res@cnLevels = levels
-;
-; res@tiMainString = "LIS-CABLE"
-; plots(0) = gsn_csm_contour(wks2,Qg_LIS,res)
-; res@tiMainString = "CABLE(HESS)"
-; plots(1) = gsn_csm_contour(wks2,Qg_HESS,res)
-; res@tiMainString = "CLASS"
-; plots(2) = gsn_csm_contour(wks2,Qg_CLASS,res)
-; gsn_panel(wks2,(/plots/),(/1,3/),pres)
-;
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks0,Wind_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks0,Wind_HESS,res)
+    gsn_panel(wks0,(/plots/),(/1,2/),pres)
+    delete(levels)
+    delete(res@cnLevels)
+  end if
+
+
+  ; ============================= plot water balance ===========================
+  if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
+    pic1 = "./plots/LIS_vs_obs_water_balance_litter_"+force_name
+    wks1 = gsn_open_wks("pdf",pic1)
+    gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")
+
+    ; LAI
+    pres@txString = "LAI (mm/y)"
+    levels = fspan(0,6,21)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks1,LAI_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks1,LAI_HESS,res)
+    gsn_panel(wks1,(/plots/),(/1,2/),pres)
+    delete(plots)
+
+    ; Evap
+    plots = new(3,graphic)
+    pres@txString = "Evap (mm/y)"
+    levels = fspan(0,1000,21)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks1,Evap_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks1,Evap_HESS,res)
+    res@tiMainString = "GLEAM"
+    plots(2) = gsn_csm_contour(wks1,Evap_GLEAM,res)
+    gsn_panel(wks1,(/plots/),(/1,3/),pres)
+
+    ; TVeg
+    pres@txString = "TVeg (mm/y)"
+    levels = fspan(0,1000,21)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks1,TVeg_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks1,TVeg_HESS,res)
+    res@tiMainString = "GLEAM"
+    plots(2) = gsn_csm_contour(wks1,TVeg_GLEAM,res)
+    gsn_panel(wks1,(/plots/),(/1,3/),pres)
+
+    ; ESoil
+    pres@txString = "ESoil (mm/y)"
+    levels = fspan(0,1000,21)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks1,ESoil_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks1,ESoil_HESS,res)
+    res@tiMainString = "GLEAM"
+    plots(2) = gsn_csm_contour(wks1,ESoil_GLEAM,res)
+    gsn_panel(wks1,(/plots/),(/1,3/),pres)
+
+    ; ECanop
+    pres@txString = "ECanop (mm/y)"
+    levels = fspan(0,1000,21)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks1,ECanop_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks1,ECanop_HESS,res)
+    res@tiMainString = "GLEAM"
+    plots(2) = gsn_csm_contour(wks1,ECanop_GLEAM,res)
+    gsn_panel(wks1,(/plots/),(/1,3/),pres)
+
+    ; Runoff
+    pres@txString = "Runoff (mm/y)"
+    levels = fspan(0,1000,21)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks1,Runoff_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks1,Runoff_HESS,res)
+    res@tiMainString = "LORA"
+    plots(2) = gsn_csm_contour(wks1,Runoff_LORA,res)
+    gsn_panel(wks1,(/plots/),(/1,3/),pres)
+
+    ; SMsurf
+    pres@txString = "SMsurf (m3/m3)"
+    levels = fspan(0,0.5,21)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks1,SMsurf_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks1,SMsurf_HESS,res)
+    res@tiMainString = "GLEAM"
+    plots(2) = gsn_csm_contour(wks1,SMsurf_GLEAM,res)
+    gsn_panel(wks1,(/plots/),(/1,3/),pres)
+    delete(plots)
+
+    ; ET/P
+    plots = new(2,graphic)
+    pres@txString = "Evap/Rain (-)"
+    levels = fspan(0,1.,21)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks1,Evap_LIS/Rain_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks1,Evap_HESS/Rain_HESS,res)
+    ; res@tiMainString = "GLEAM"
+    ; plots(2) = gsn_csm_contour(wks1,Evap_GLEAM/Rain_HESS,res)
+    ; gsn_panel(wks1,(/plots/),(/1,3/),pres)
+    gsn_panel(wks1,(/plots/),(/1,2/),pres)
+
+    ; R/ET
+    pres@txString = "Runoff/Evap (-)"
+    levels = fspan(0,1.,21)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks1,Runoff_LIS/Evap_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks1,Runoff_HESS/Evap_HESS,res)
+    ; res@tiMainString = "LORA/GLEAM"
+    ; plots(2) = gsn_csm_contour(wks1,Runoff_LORA/Evap_GLEAM,res)
+    ; gsn_panel(wks1,(/plots/),(/1,3/),pres)
+    gsn_panel(wks1,(/plots/),(/1,2/),pres)
+    delete(plots)
+    delete(levels)
+    delete(res@cnLevels)
+end if
+
+; ============================ plot energy balance =============================
+  if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
+    pic2 = "./plots/LIS_vs_obs_energy_balance_litter_"+force_name
+    wks2 = gsn_open_wks("pdf",pic2)
+    gsn_define_colormap(wks2,"WhiteBlueGreenYellowRed") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")
+
+    ; Rnet
+    plots = new(4,graphic)
+    pres@txString = "Rnet (W/m2)"
+    levels = fspan(-50,200,51)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks2,Rnet_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks2,Rnet_HESS,res)
+    res@tiMainString = "CLASS"
+    plots(2) = gsn_csm_contour(wks2,Rnet_CLASS,res)
+    res@tiMainString = "CERES"
+    plots(3) = gsn_csm_contour(wks2,Rnet_CERES,res)
+    gsn_panel(wks2,(/plots/),(/2,2/),pres)
+
+    ; Qle
+    pres@txString = "Qle (W/m2)"
+    levels = fspan(-50,200,51)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks2,Qle_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks2,Qle_HESS,res)
+    res@tiMainString = "CLASS"
+    plots(2) = gsn_csm_contour(wks2,Qle_CLASS,res)
+    res@tiMainString = "DOLCE"
+    plots(3) = gsn_csm_contour(wks2,Qle_DOLCE,res)
+    gsn_panel(wks2,(/plots/),(/2,2/),pres)
+    delete(plots)
+
+    ; Qh
+    plots = new(3,graphic)
+    pres@txString = "Qh (W/m2)"
+    levels = fspan(-50,200,51)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks2,Qh_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks2,Qh_HESS,res)
+    res@tiMainString = "CLASS"
+    plots(2) = gsn_csm_contour(wks2,Qh_CLASS,res)
+    gsn_panel(wks2,(/plots/),(/1,3/),pres)
+
+    ; Qg
+    pres@txString = "Qg (W/m2)"
+    levels = fspan(-50,200,51)
+    res@cnLevels = levels
+
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks2,Qg_LIS,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks2,Qg_HESS,res)
+    res@tiMainString = "CLASS"
+    plots(2) = gsn_csm_contour(wks2,Qg_CLASS,res)
+    gsn_panel(wks2,(/plots/),(/1,3/),pres)
+  end if
 
 end
