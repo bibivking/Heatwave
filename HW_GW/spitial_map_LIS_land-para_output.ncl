@@ -1,4 +1,4 @@
-;*****************************************
+;*******************************************
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
@@ -50,24 +50,45 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/25km/LIS_output"
-path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl/outputs"
-path3 = "/g/data/w35/mm3972/model/cable/runs/my_version/outputs/GSWP"
+path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/Princeton_ctl_para/LIS_output"
+path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl_para/outputs"
+path3 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl/outputs"
 path4 = "/g/data/w35/mm3972/model/cable/src/CABLE-AUX/offline"
+
+
 ; ================================= Predefine ==================================
 year_s = 2003
 year_e = 2008
 year_sum = year_e-year_s+1
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
-Soil_thickness1 =(/0.005, 0.075, 0.154, 0.409, 1.085, 2.872/) ; LIS-CABLE
+Soil_thickness1 = Soil_thickness
+;(/0.005, 0.075, 0.154, 0.409, 1.085, 2.872/) ; LIS-CABLE
 
 ; ================================ Set Regrid ==================================
 interp_method = "neareststod"  ;"neareststod"; "conserve" "patch";"bilinear"
-minlon  = 117 ;min(lon2d)-1 ; 116.5516
-minlat  = -44 ;min(lat2d)-1 ; -44.43771
-maxlon  = 154 ;max(lon2d)+1 ; 154.5981
-maxlat  = -13 ;max(lat2d)+1 ; -12.5853
+
+filename  = path1+"/LIS.CABLE."+year_e+"090100.d01.nc"
+f = addfile (filename,"r")
+filename1 = path2+"/cable_out_"+year_e+".nc"
+f1 = addfile (filename1,"r")
+
+lat2d    = f->lat(0,:,:)
+lon2d    = f->lon(0,:,:)
+lon2d    = where(lon2d.lt.0,360+lon2d,lon2d)
+
+minlon  = ceil(min(lon2d))+0.5 ; 116.5516
+minlat  = ceil(min(lat2d))+0.5 ; -44.43771
+maxlon  = floor(max(lon2d))-0.5 ; 154.5981
+maxlat  = floor(max(lat2d))-0.5 ; -12.5853
+
+src_mask = where(.not.ismissing(f->Landcover_inst(0,:,:)),1,0)
+dst_mask = where(.not.ismissing(f1->Qs(0,{minlat:maxlat},{minlon:maxlon})),1,0)
+
+lat      = fspan(minlat,maxlat,dimsizes(dst_mask(:,0)))
+lon      = fspan(minlon,maxlon,dimsizes(dst_mask(0,:)))
+delete(f)
+delete(f1)
 
 ; study region
 A = minlat
@@ -78,17 +99,17 @@ D = maxlon
 ; ================================ READ CABLE ==================================
 
 ; READ LIS-CABLE
-filename = path1+"/LIS.CABLE."+year_s+"010100.d01.nc"
+filename = path1+"/LIS.CABLE."+year_e+"010100.d01.nc"
 f        = addfile (filename,"r")
 
-Albedo_LIS    = dim_avg_n_Wrap(f->Albedo_inst,0)
+; Albedo_LIS    = dim_avg_n_Wrap(f->Albedo_tavg,0)
 Landcover_LIS = dim_avg_n_Wrap(f->Landcover_inst,0)
 Soiltype_LIS  = dim_avg_n_Wrap(f->Soiltype_inst,0)
 
 sand_LIS      = dim_avg_n_Wrap(f->SandFrac_inst,0)
 clay_LIS      = dim_avg_n_Wrap(f->ClayFrac_inst,0)
 silt_LIS      = dim_avg_n_Wrap(f->SiltFrac_inst,0)
-ssat_LIS      = dim_avg_n_Wrap(f->Porosity_acc,0)
+ssat_LIS      = dim_avg_n_Wrap(f->Porosity_inst,0)
 bch_LIS       = dim_avg_n_Wrap(f->bch_inst,0)
 sfc_LIS       = dim_avg_n_Wrap(f->sfc_inst,0)
 swilt_LIS     = dim_avg_n_Wrap(f->swilt_inst,0)
@@ -111,7 +132,7 @@ elev_LIS      = dim_avg_n_Wrap(f->Elevation_inst,0)
 filename1 = path2+"/cable_out_"+year_s+".nc"
 f1        = addfile (filename1,"r")
 
-Albedo_HESS = f1->Albedo(0,{A:B},{C:D}) ; Jan
+; Albedo_HESS = f1->Albedo(0,{A:B},{C:D}) ; Jan
 iveg_HESS   = f1->iveg({A:B},{C:D})
 isoil_HESS  = f1->isoil({A:B},{C:D})
 elev_HESS   = f1->elev({A:B},{C:D})
@@ -153,20 +174,11 @@ end do
 filename2 = path3+"/cable_out_"+year_s+".nc"
 f2        = addfile(filename2,"r")
 
-Albedo_HESS_def = f2->Albedo(0,{A:B},{C:D}) ; Jan
+; Albedo_HESS_def = f2->Albedo(0,{A:B},{C:D}) ; Jan
 
 ; ================================== Regrid ====================================
-src_mask = where(.not.ismissing(f->SandFrac_inst(0,:,:)),1,0)
-dst_mask = where(.not.ismissing(f1->Qs(0,{minlat:maxlat},{minlon:maxlon})),1,0)
-
-lat2d    = f->lat(0,:,:)
-lon2d    = f->lon(0,:,:)
-lon2d    = where(lon2d.lt.0,360+lon2d,lon2d)
-lat      = fspan(minlat,maxlat,dimsizes(dst_mask(:,0)))
-lon      = fspan(minlon,maxlon,dimsizes(dst_mask(0,:)))
-
-Albedo_LIS_regrid    = regrid_data(Albedo_LIS,interp_method, lat2d, lon2d, \
-              lat, lon, src_mask, dst_mask )
+; Albedo_LIS_regrid    = regrid_data(Albedo_LIS,interp_method, lat2d, lon2d, \
+;               lat, lon, src_mask, dst_mask )
 Landcover_LIS_regrid = regrid_data(Landcover_LIS,interp_method, lat2d, lon2d, \
               lat, lon, src_mask, dst_mask )
 Soiltype_LIS_regrid  = regrid_data(Soiltype_LIS,interp_method, lat2d, lon2d, \
@@ -255,24 +267,24 @@ res@gsnRightString = ""
 ; ============================= plot water balance =============================
 pic1 = "./plots/LIS_land_para_output"
 wks1 = gsn_open_wks("pdf",pic1)
-gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")             ;����ɫ��
+gsn_define_colormap(wks1,"amwg") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")   "amwg") ;
 
-; Albedo
-plots = new(3,graphic)
-pres@txString = "Albedo"
-levels = fspan(0,0.3,21)
-res@cnLevels = levels
-
-res@tiMainString = "LIS-CABLE"
-plots(0) = gsn_csm_contour(wks1,Albedo_LIS_regrid*1.,res)
-res@tiMainString = "CABLE(HESS)"
-plots(1) = gsn_csm_contour(wks1,Albedo_HESS*1.,res)
-res@tiMainString = "CABLE(HESS)-def"
-plots(2) = gsn_csm_contour(wks1,Albedo_HESS_def*1.,res)
-gsn_panel(wks1,(/plots/),(/1,3/),pres)
-delete(plots)
-delete(levels)
-delete(res@cnLevels)
+; ; Albedo
+; plots = new(3,graphic)
+; pres@txString = "Albedo"
+; levels = fspan(0,0.3,21)
+; res@cnLevels = levels
+;
+; res@tiMainString = "LIS-CABLE"
+; plots(0) = gsn_csm_contour(wks1,Albedo_LIS_regrid*1.,res)
+; res@tiMainString = "CABLE(HESS)"
+; plots(1) = gsn_csm_contour(wks1,Albedo_HESS*1.,res)
+; res@tiMainString = "CABLE(HESS)-def"
+; plots(2) = gsn_csm_contour(wks1,Albedo_HESS_def*1.,res)
+; gsn_panel(wks1,(/plots/),(/1,3/),pres)
+; delete(plots)
+; delete(levels)
+; delete(res@cnLevels)
 
 ; Landcover
 plots = new(2,graphic)
@@ -282,10 +294,55 @@ res@cnLevels = levels
 print(min(Landcover_LIS))
 print(max(Landcover_LIS))
 res@tiMainString = "LIS-CABLE"
+delete(levels)
+delete(res@cnLevels)
+
+; ; forest
+; tmp_lis = where((Landcover_LIS_regrid .le. 5) .and. (Landcover_LIS_regrid .gt. 0), 1, Landcover_LIS_regrid)
+; ; shrub
+; tmp_lis = where((tmp_lis .le. 7) .and. (tmp_lis .gt. 5), 2, tmp_lis)
+; ; savanna
+; tmp_lis = where((tmp_lis .eq. 9) .or. (tmp_lis .eq. 8), 3, tmp_lis)
+; ; grassland
+; tmp_lis = where(tmp_lis .eq. 10, 4, tmp_lis)
+; ; wetland
+; tmp_lis = where(tmp_lis .eq. 11, 5, tmp_lis)
+; ; cropland
+; tmp_lis = where((tmp_lis .eq. 12) .or. (tmp_lis .eq. 14), 6, tmp_lis)
+; ; urban
+; tmp_lis = where(tmp_lis .eq. 13 , 7, tmp_lis)
+; ; ice
+; tmp_lis = where(tmp_lis .eq. 15 .or. tmp_lis .eq. 17, 8, tmp_lis)
+; ;barren
+; tmp_lis = where(tmp_lis .eq. 16 , 9, tmp_lis)
+;
+; ; forest
+; tmp_hess = where((iveg_HESS .le. 4) .and. (iveg_HESS .gt. 0), 1, iveg_HESS)
+; ; shrub
+; tmp_hess = where(tmp_hess .eq. 5, 2, tmp_hess)
+; ; grassland
+; tmp_hess = where((tmp_hess .ge. 6) .and. (tmp_hess .le. 8), 4, tmp_hess)
+; ; wetland
+; tmp_hess = where(tmp_hess .eq. 11, 5, tmp_hess)
+; ; cropland
+; tmp_hess = where((tmp_hess .eq. 9) .or. (tmp_hess .eq. 10), 6, tmp_hess)
+; ; urban
+; tmp_hess = where(tmp_hess .eq. 15 , 7, tmp_hess)
+; ; ice
+; tmp_hess = where(tmp_hess .eq. 17 , 8, tmp_hess)
+; ;barren
+; tmp_hess = where(tmp_hess .eq. 14 , 9, tmp_hess)
+; ;empty
+; tmp_hess = where((tmp_hess .eq. 12) .or. (tmp_hess .eq. 13), 10, tmp_hess)
+
+levels = fspan(1,17,17)
+res@cnLevels = levels
+; plots(0) = gsn_csm_contour(wks1,tmp_lis*1.,res)
 plots(0) = gsn_csm_contour(wks1,Landcover_LIS_regrid*1.,res)
 res@tiMainString = "CABLE(HESS)"
 print(min(iveg_HESS))
 print(max(iveg_HESS))
+; plots(1) = gsn_csm_contour(wks1,tmp_hess*1.,res)
 plots(1) = gsn_csm_contour(wks1,iveg_HESS*1.,res)
 gsn_panel(wks1,(/plots/),(/1,2/),pres)
 delete(levels)
@@ -357,7 +414,7 @@ pres@txString = "ssat"
 levels = fspan(0,0.5,21)
 res@cnLevels = levels
 res@tiMainString = "LIS-CABLE"
-plots(0) = gsn_csm_contour(wks1,ssat_LIS_regrid/10958/24,res)
+plots(0) = gsn_csm_contour(wks1,ssat_LIS_regrid,res)
 res@tiMainString = "CABLE(HESS)"
 plots(1) = gsn_csm_contour(wks1,ssat_HESS,res)
 gsn_panel(wks1,(/plots/),(/1,2/),pres)

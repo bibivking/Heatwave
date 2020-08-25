@@ -49,20 +49,15 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/25km/LIS_output"
-path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl/outputs"
-path3 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/litter/outputs"
+path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/Princeton_ctl/LIS_output"
+path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl_para/outputs"
+path3 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl/outputs"
+
 
 ; ================================= Predefine ==================================
 year_s = 2003
 year_e = 2008
 year_sum = year_e-year_s+1
-
-; study region
-A = -43.4377
-B = -13.5853
-C = 117.552
-D = 153.598
 
 Soil_thickness1 =(/0.005, 0.075, 0.154, 0.409, 1.085, 2.872/) ; LIS-CABLE
 betaroot       = (/ \
@@ -73,10 +68,29 @@ betaroot       = (/ \
 
 ; ================================ Set Regrid ==================================
 interp_method = "neareststod"  ;"neareststod"; "conserve" "patch";"bilinear"
-minlon  = 117 ;min(lon2d)-1 ; 116.5516
-minlat  = -44 ;min(lat2d)-1 ; -44.43771
-maxlon  = 154 ;max(lon2d)+1 ; 154.5981
-maxlat  = -13 ;max(lat2d)+1 ; -12.5853
+
+filename  = path1+"/LIS.CABLE."+year_s+"090100.d01.nc"
+f = addfile (filename,"r")
+filename1 = path2+"/cable_out_"+year_s+".nc"
+f1 = addfile (filename1,"r")
+
+
+lat2d    = f->lat(0,:,:)
+lon2d    = f->lon(0,:,:)
+lon2d    = where(lon2d.lt.0,360+lon2d,lon2d)
+
+minlon  = ceil(min(lon2d))+0.5 ; 116.5516
+minlat  = ceil(min(lat2d))+0.5 ; -44.43771
+maxlon  = floor(max(lon2d))-0.5 ; 154.5981
+maxlat  = floor(max(lat2d))-0.5 ; -12.5853
+
+src_mask = where(.not.ismissing(f->Landcover_inst(0,:,:)),1,0)
+dst_mask = where(.not.ismissing(f1->Qs(0,{minlat:maxlat},{minlon:maxlon})),1,0)
+
+lat      = fspan(minlat,maxlat,dimsizes(dst_mask(:,0)))
+lon      = fspan(minlon,maxlon,dimsizes(dst_mask(0,:)))
+delete(f)
+delete(f1)
 
 ; study region
 A = minlat
@@ -84,12 +98,13 @@ B = maxlat
 C = minlon
 D = maxlon
 
+
 ; ================================ READ CABLE ==================================
 filename  = path1+"/LIS.CABLE."+year_s+"010100.d01.nc"
 f         = addfile (filename,"r")
 Landcover = f->Landcover_inst(0,:,:)
-RelSMC    = dim_avg_n_Wrap(f->RelSMC_inst,0)
-Fwsoil_LIS= dim_avg_n_Wrap(f->fwsoil_inst,0)
+RelSMC    = dim_avg_n_Wrap(f->RelSMC_tavg,0)
+Fwsoil_LIS= dim_avg_n_Wrap(f->fwsoil_tavg,0)
 RelSMC    = 0.
 Fwsoil_LIS= 0.
 delete(f)
@@ -116,8 +131,8 @@ do year = year_s,year_e
         filename  = path1+"/LIS.CABLE."+year+month+"0100.d01.nc"
       end if
       f = addfile (filename,"r")
-      RelSMC     = RelSMC   + dim_avg_n_Wrap(f->RelSMC_inst,0)
-      Fwsoil_LIS = Fwsoil_LIS + dim_avg_n_Wrap(f->fwsoil_inst,0)
+      RelSMC     = RelSMC   + dim_avg_n_Wrap(f->RelSMC_tavg,0)
+      Fwsoil_LIS = Fwsoil_LIS + dim_avg_n_Wrap(f->fwsoil_tavg,0)
       delete(f)
     end do ; month
 
@@ -139,59 +154,45 @@ Fwsoil_LIS   = Fwsoil_LIS/year_sum/12
 Fwsoil_HESS  = Fwsoil_HESS/year_sum
 Fwsoil_HESS_def  = Fwsoil_HESS_def/year_sum
 
-; _________________________ Calculate Froot ________________________________
-froot = new((/17,6/),float)
-froot = 0.
-
-do vegtype = 0, 16
-  depth = 0.
-  do soil = 0,5
-     print(betaroot(vegtype))
-     depth = depth + (Soil_thickness1(soil)*100.0)
-     print(depth)
-     print(froot(vegtype,soil))
-     froot(vegtype,soil) = 1. - betaroot(vegtype)^depth
-  end do
-  do soil = 5,1,1
-     froot(vegtype,soil) = froot(vegtype,soil) - froot(vegtype,soil-1)
-  end do
-  print(froot(vegtype,:))
-end do
-
-Froot_LIS = RelSMC
-Froot_LIS = 0.
-printVarSummary(Froot_LIS)
-
-do soil = 0, 5
-  do vegtype = 1, 17
-    Froot_LIS(soil, :, :) = where(Landcover .eq. vegtype, froot(vegtype-1 ,soil), Froot_LIS(soil, :, :))
-  end do
-end do
-
-Fwsoil_LIS_cal = dim_sum_n_Wrap(Froot_LIS * RelSMC, 0)
-printVarSummary(Fwsoil_LIS_cal)
+; ; _________________________ Calculate Froot ________________________________
+; froot = new((/17,6/),float)
+; froot = 0.
+;
+; do vegtype = 0, 16
+;   depth = 0.
+;   do soil = 0,5
+;      print(betaroot(vegtype))
+;      depth = depth + (Soil_thickness1(soil)*100.0)
+;      print(depth)
+;      print(froot(vegtype,soil))
+;      froot(vegtype,soil) = 1. - betaroot(vegtype)^depth
+;   end do
+;   do soil = 5,1,1
+;      froot(vegtype,soil) = froot(vegtype,soil) - froot(vegtype,soil-1)
+;   end do
+;   print(froot(vegtype,:))
+; end do
+;
+; Froot_LIS = RelSMC
+; Froot_LIS = 0.
+; printVarSummary(Froot_LIS)
+;
+; do soil = 0, 5
+;   do vegtype = 1, 17
+;     Froot_LIS(soil, :, :) = where(Landcover .eq. vegtype, froot(vegtype-1 ,soil), Froot_LIS(soil, :, :))
+;   end do
+; end do
+;
+; Fwsoil_LIS_cal = dim_sum_n_Wrap(Froot_LIS * RelSMC, 0)
+; printVarSummary(Fwsoil_LIS_cal)
 
 ; ================================== Regrid ====================================
-filename  = path1+"/LIS.CABLE."+year_s+"090100.d01.nc"
-f = addfile (filename,"r")
-filename1 = path2+"/cable_out_"+year_s+".nc"
-f1 = addfile (filename1,"r")
 
-src_mask = where(.not.ismissing(f->SandFrac_inst(0,:,:)),1,0)
-dst_mask = where(.not.ismissing(f1->Qs(0,{minlat:maxlat},{minlon:maxlon})),1,0)
-
-lat2d    = f->lat(0,:,:)
-lon2d    = f->lon(0,:,:)
-lon2d    = where(lon2d.lt.0,360+lon2d,lon2d)
-lat      = fspan(minlat,maxlat,dimsizes(dst_mask(:,0)))
-lon      = fspan(minlon,maxlon,dimsizes(dst_mask(0,:)))
-
-Fwsoil_LIS_cal_regrid = regrid_data(Fwsoil_LIS_cal,interp_method, lat2d, lon2d, \
-                        lat, lon, src_mask, dst_mask )
+; Fwsoil_LIS_cal_regrid = regrid_data(Fwsoil_LIS_cal,interp_method, lat2d, lon2d, \
+;                         lat, lon, src_mask, dst_mask )
 Fwsoil_LIS_regrid     = regrid_data(Fwsoil_LIS,interp_method, lat2d, lon2d, \
                         lat, lon, src_mask, dst_mask )
-delete(f)
-delete(f1)
+
 
 ; ================================= Plotting ===================================
 res                    = True
@@ -249,7 +250,7 @@ res@gsnRightString = ""
 ; ============================= plot water balance =============================
 pic1 = "./plots/LIS_fwsoil"
 wks1 = gsn_open_wks("pdf",pic1)
-gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")             ;����ɫ��
+gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")             ;����ɫ��
 
 ; Fwsoil
 plots = new(5,graphic)
@@ -259,19 +260,20 @@ res@cnLevels = levels
 
 res@tiMainString = "LIS-CABLE"
 plots(0) = gsn_csm_contour(wks1,Fwsoil_LIS_regrid,res)
-res@tiMainString = "LIS-CABLE_cal"
-plots(1) = gsn_csm_contour(wks1,Fwsoil_LIS_cal_regrid,res)
 res@tiMainString = "CABLE(HESS)"
-plots(2) = gsn_csm_contour(wks1,Fwsoil_HESS,res)
-res@tiMainString = "CABLE(HESS)-litter"
-plots(3) = gsn_csm_contour(wks1,Fwsoil_HESS_def,res)
-res@tiMainString = "LIS-CABLE - CABLE(HESS)"
+plots(1) = gsn_csm_contour(wks1,Fwsoil_HESS,res)
+res@tiMainString = "CABLE(HESS) def param"
+plots(2) = gsn_csm_contour(wks1,Fwsoil_HESS_def,res)
 
 levels = fspan(-0.5,0.5,21)
 res@cnLevels = levels
-res@cnFillPalette = "BlueWhiteOrangeRed"
-plots(4) = gsn_csm_contour(wks1,Fwsoil_LIS_regrid-Fwsoil_HESS,res)
-
-gsn_panel(wks1,(/plots/),(/3,2/),pres)
+res@cnFillPalette = "ViBlGrWhYeOrRe"
+res@tiMainString = "LIS-CABLE - CABLE(HESS)"
+plots(3) = gsn_csm_contour(wks1,Fwsoil_LIS_regrid-Fwsoil_HESS,res)
+res@tiMainString = "CABLE(HESS) def param - CABLE(HESS)"
+plots(4) = gsn_csm_contour(wks1,Fwsoil_HESS_def-Fwsoil_HESS,res)
+; res@tiMainString = "LIS-CABLE_cal"
+; plots(1) = gsn_csm_contour(wks1,Fwsoil_LIS_cal_regrid,res)
+gsn_panel(wks1,(/plots/),(/2,3/),pres)
 
 end

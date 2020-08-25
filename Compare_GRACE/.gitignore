@@ -1,0 +1,13 @@
+*.pdf
+*.eps
+*.csv
+*.ps
+*.txt
+*.nc
+*/*.pdf
+*/*.eps
+*/*.csv
+*/*.ps
+*/*.txt
+./backup
+

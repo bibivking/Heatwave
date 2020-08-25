@@ -15,7 +15,7 @@ end setvalues
 begin
 
 ;path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/nuwrf_25km/LISWRF_configs/LIS_output"
-path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/25km/LIS_output"
+path1 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl_para/outputs"
 path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/outputs/GSWP"
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
@@ -310,7 +310,7 @@ else
   plot = gsn_csm_xy(wks,x,SnowDepth,res)
 end if
 
-; 
+;
 ; do soil = 0,5
 ;   print("plot soil temp")
 ;   res@trYMaxF = 50.
