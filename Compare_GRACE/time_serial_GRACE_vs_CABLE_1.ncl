@@ -138,7 +138,7 @@ if grace_version .eq. "Original" then
     printVarSummary(GRACE)
     printVarSummary(uncertainty)
 
-    plot = gsn_csm_contour(wks,GRACE(compensate_month,:,:),res)
+    plot = gsn_csm_contour(wks,GRACE(0,:,:),res)
 
     do year = GRACE_start_year+1,GRACE_end_year
         print("add year :" + year)
@@ -150,7 +150,7 @@ if grace_version .eq. "Original" then
     May_ave = May_ave/(GRACE_end_year-GRACE_start_year)
     Jun_ave = Jun_ave/(GRACE_end_year-GRACE_start_year)
     Jul_ave = Jul_ave/(GRACE_end_year-GRACE_start_year)
-    print(May_ave)
+
     plot = gsn_csm_contour(wks,May_ave,res)
     plot = gsn_csm_contour(wks,Jun_ave,res)
     plot = gsn_csm_contour(wks,Jul_ave,res)
@@ -339,8 +339,8 @@ uncertainty = where( .not. ismissing(TWS(0,:,:,:)), uncertainty, uncertainty@_Fi
 printVarSummary(GRACE)
 printVarSummary(uncertainty)
 
-plot = gsn_csm_contour(wks,GRACE(compensate_month,:,:),res)
-plot = gsn_csm_contour(wks,uncertainty(compensate_month,:,:),res)
+plot = gsn_csm_contour(wks,GRACE(5,:,:),res)
+plot = gsn_csm_contour(wks,uncertainty(5,:,:),res)
 plot = gsn_csm_contour(wks,TWS(0,5,:,:),res)
 
 TWS!0 = "case"
@@ -539,8 +539,8 @@ res@vpWidthF 	   = 0.7
 res@tiYAxisString	 = "Total Water Storage Anormaly (mm)"              ; add an axis title
 res@txFontHeightF	 = 0.015            ; change title font heights
 
-res@trYMaxF = 150.
-res@trYMinF = -150.
+res@trYMaxF = 70.
+res@trYMinF = -60.
 
 LineColors       = (/"darkgreen","limegreen","red","pink","orange"/) ; colors chosen
 LineThicknesses	 = (/2.,2.,2.,2.,2./)      ; line thicknesses
@@ -550,8 +550,8 @@ Labels           = (/"TWS", "GWMoist","SoilMoist", "CanopInt", "SWE" /)
 if time_scale .eq. "monthly" then
   x = ispan(1,total,1)
   res@tmXBMode  = "Explicit"
-  res@tmXBValues=ispan(1,total+1,12*5)
-  res@tmXBLabels= tostring(ispan(year_s,year_e+1,5))
+  res@tmXBValues=ispan(1,total+1,12)
+  res@tmXBLabels= tostring(ispan(year_s,year_e+1,1))
 
   res@xyMonoLineColor    = False             ; want colored lines
   res@xyLineColor        = "Blue"

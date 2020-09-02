@@ -48,8 +48,8 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-CTL_name = "ERAI_ctl"
-SEN_name = "ERAI_watmove"
+CTL_name = "Princeton_ctl"
+SEN_name = "Princeton_ctl_watmove_new_veg"
 
 
 path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+CTL_name+"/LIS_output"
@@ -61,8 +61,8 @@ path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/
 ; path_CERES= "/g/data/w35/mm3972/data/CERES" ; CERES_EBAF-Surface_Ed2.8_Subset_200003-201502.nc
 
 ; ================================= Predefine ==================================
-year_s = 1980
-year_e = 2017
+year_s = 2000
+year_e = 2008
 year_sum = year_e-year_s+1
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
@@ -72,7 +72,7 @@ Soil_thickness1 = Soil_thickness
 
 ; ================================== OPTIONS ===================================
 plot_type = "all"
-force_name= "ERAI";"ERAI"
+force_name= "Princeton";"ERAI"
 
 
 ; ================================ Set Regrid ==================================
@@ -166,7 +166,6 @@ SMsurf_SEN   = SMsurf_CTL
 SoilTemp_SEN = SoilTemp_CTL
 SoilMoist_SEN= SoilMoist_CTL
 LAI_SEN      = LAI_CTL
-
 
 
 do year = year_s,year_e
@@ -405,11 +404,11 @@ res@gsnRightString = ""
 
     ; Rain
     res@tiMainString = "Rain (mm/y)"
-    ; levels = fspan(0,1000,21)
-    ; res@cnLevels = levels
+    levels = fspan(0,1000,21)
+    res@cnLevels = levels
     plots(0) = gsn_csm_contour(wks0,Rain_CTL,res)
-    ; delete(levels)
-    ; delete(res@cnLevels)
+    delete(levels)
+    delete(res@cnLevels)
 
     ; Tair
     res@tiMainString = "Tair (C)"

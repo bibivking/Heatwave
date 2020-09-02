@@ -205,3 +205,820 @@ warning:cnFillOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_G
 fatal:["Execute.c":8637]:Execute: Error occurred at or near line 568 in file time_serial_GRACE_vs_CABLE.ncl
 
 input in flex scanner failed
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+
+
+Variable: lat_num
+Type: integer
+Total Size: 4 bytes
+            1 values
+Number of Dimensions: 1
+Dimensions and sizes:	[1]
+Coordinates: 
+(0)	68
+
+Variable: GRACE
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+
+Variable: uncertainty
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+
+Variable: GRACE
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: uncertainty
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+
+Variable: case_name (subsection)
+Type: string
+Total Size: 8 bytes
+            1 values
+Number of Dimensions: 1
+Dimensions and sizes:	[1]
+Coordinates: 
+(0)	/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+warning:Dimension (1) has not been defined
+warning:Dimension (1) has not been defined
+(0)	point 1 
+
+Variable: GRACE
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: uncertainty
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	zonal average
+
+Variable: GRACE (subsection)
+Type: float
+Total Size: 272 bytes
+            68 values
+Number of Dimensions: 1
+Dimensions and sizes:	[lat | 68]
+Coordinates: 
+            lat: [-43.75..-10.25]
+Number Of Attributes: 2
+  lon :	0.25
+  _FillValue :	-1e+33
+
+Variable: y (file variable)
+Type: float
+Total Size: 272 bytes
+            68 values
+Number of Dimensions: 1
+Dimensions and sizes:	[y | 68]
+Coordinates: 
+            y: [-43.75..-10.25]
+Number Of Attributes: 2
+  units :	degrees_north
+  comment :	y coordinate variable for GrADS compatibility
+(0)	finish zonal average
+(0)	global average
+(0)	GRACE_global_ave: -2.22509
+(0)	GRACE_global_ave: 20.619
+(0)	GRACE_global_ave: 46.7644
+(0)	GRACE_global_ave: 32.8643
+(0)	GRACE_global_ave: 19.7628
+(0)	GRACE_global_ave: -9.07064
+(0)	GRACE_global_ave: 11.2848
+(0)	GRACE_global_ave: 8.6247
+(0)	GRACE_global_ave: 7.31263
+(0)	GRACE_global_ave: 7.2365
+(0)	GRACE_global_ave: -9.41602
+(0)	GRACE_global_ave: -7.77581
+(0)	GRACE_global_ave: 17.2186
+(0)	GRACE_global_ave: 56.6905
+(0)	GRACE_global_ave: 62.1201
+(0)	GRACE_global_ave: 36.9602
+(0)	GRACE_global_ave: 28.7706
+(0)	GRACE_global_ave: 35.1757
+(0)	GRACE_global_ave: 14.8598
+(0)	GRACE_global_ave: 22.4957
+(0)	GRACE_global_ave: 18.401
+(0)	GRACE_global_ave: 9.40388
+(0)	GRACE_global_ave: -3.83957
+(0)	GRACE_global_ave: -10.0187
+(0)	GRACE_global_ave: 14.9847
+(0)	GRACE_global_ave: 3.57523
+(0)	GRACE_global_ave: -10.0072
+(0)	GRACE_global_ave: -9.05907
+(0)	GRACE_global_ave: -21.4299
+(0)	GRACE_global_ave: -7.7394
+(0)	GRACE_global_ave: 10.7053
+(0)	GRACE_global_ave: -5.98753
+(0)	GRACE_global_ave: -11.2493
+(0)	GRACE_global_ave: -20.0896
+(0)	GRACE_global_ave: -14.8126
+(0)	GRACE_global_ave: -18.0981
+(0)	GRACE_global_ave: -2.45541
+(0)	GRACE_global_ave: 29.588
+(0)	GRACE_global_ave: 25.4378
+(0)	GRACE_global_ave: 37.2295
+(0)	GRACE_global_ave: 38.6553
+(0)	GRACE_global_ave: 11.0742
+(0)	GRACE_global_ave: 11.6981
+(0)	GRACE_global_ave: -0.627709
+(0)	GRACE_global_ave: 0.193811
+(0)	GRACE_global_ave: -9.19113
+(0)	GRACE_global_ave: -20.2441
+(0)	GRACE_global_ave: -34.3888
+(0)	GRACE_global_ave: -9.06105
+(0)	GRACE_global_ave: 9.60998
+(0)	GRACE_global_ave: 23.2115
+(0)	GRACE_global_ave: 14.1887
+(0)	GRACE_global_ave: 1.20477
+(0)	GRACE_global_ave: 0.38733
+(0)	GRACE_global_ave: 13.5141
+(0)	GRACE_global_ave: -2.51093
+(0)	GRACE_global_ave: -0.130478
+(0)	GRACE_global_ave: -14.8152
+(0)	GRACE_global_ave: -22.7415
+(0)	GRACE_global_ave: -16.921
+(0)	GRACE_global_ave: 6.58415
+(0)	GRACE_global_ave: 22.1449
+(0)	GRACE_global_ave: 8.0748
+(0)	GRACE_global_ave: -4.59244
+(0)	GRACE_global_ave: -28.5191
+(0)	GRACE_global_ave: -19.5254
+(0)	GRACE_global_ave: -16.0704
+(0)	GRACE_global_ave: -24.9744
+(0)	GRACE_global_ave: -21.9664
+(0)	GRACE_global_ave: -35.0078
+(0)	GRACE_global_ave: -19.8198
+(0)	GRACE_global_ave: -19.1712
+(0)	Correlation between Rain and GRACE : 0.239289
+(0)	Correlation between GRACE and TWS in GSWP: 0.905585
+(0)	Correlation between Rain and TWS in GSWP: 0.157316
+warning:cnFillOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnFillMode is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnLinesOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnFillOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnFillMode is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnLinesOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+
+
+Variable: SoilMoist_global_ave
+Type: float
+Total Size: 288 bytes
+            72 values
+Number of Dimensions: 2
+Dimensions and sizes:	[1] x [72]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+(0,0)	0.1574189
+(0,1)	16.5079
+(0,2)	40.41031
+(0,3)	27.59696
+(0,4)	18.18935
+(0,5)	12.24857
+(0,6)	9.941472
+(0,7)	6.351153
+(0,8)	0.002526061
+(0,9)	-6.573234
+(0,10)	-13.24364
+(0,11)	-9.776137
+(0,12)	15.22697
+(0,13)	35.6184
+(0,14)	43.54877
+(0,15)	35.2772
+(0,16)	25.12557
+(0,17)	23.055
+(0,18)	16.90709
+(0,19)	10.64886
+(0,20)	3.301175
+(0,21)	-4.067667
+(0,22)	-8.407577
+(0,23)	-5.215888
+(0,24)	0.8270478
+(0,25)	4.650105
+(0,26)	0.8030928
+(0,27)	-6.186307
+(0,28)	-12.43972
+(0,29)	-12.00994
+(0,30)	-1.646302
+(0,31)	-7.661592
+(0,32)	-12.88496
+(0,33)	-17.37693
+(0,34)	-20.4191
+(0,35)	-20.81194
+(0,36)	-3.343139
+(0,37)	22.00899
+(0,38)	24.78818
+(0,39)	37.24216
+(0,40)	25.26406
+(0,41)	12.42583
+(0,42)	7.79626
+(0,43)	0.443136
+(0,44)	-8.136908
+(0,45)	-18.24923
+(0,46)	-23.58526
+(0,47)	-28.33543
+(0,48)	-14.14153
+(0,49)	8.817991
+(0,50)	17.25245
+(0,51)	13.95533
+(0,52)	4.137595
+(0,53)	5.253359
+(0,54)	5.054523
+(0,55)	-2.996021
+(0,56)	-11.11815
+(0,57)	-20.38392
+(0,58)	-21.6576
+(0,59)	-17.15203
+(0,60)	0.5577982
+(0,61)	17.93125
+(0,62)	24.44489
+(0,63)	9.394485
+(0,64)	-4.523237
+(0,65)	-8.665241
+(0,66)	-12.42434
+(0,67)	-17.43224
+(0,68)	-23.01688
+(0,69)	-30.94201
+(0,70)	-33.45765
+(0,71)	-23.06886
+fatal:Subscript out of range, error in subscript #0
+fatal:An error occurred reading SoilMoist_global_ave
+fatal:["Execute.c":8637]:Execute: Error occurred at or near line 568 in file time_serial_GRACE_vs_CABLE.ncl
+
+input in flex scanner failed
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+
+
+Variable: lat_num
+Type: integer
+Total Size: 4 bytes
+            1 values
+Number of Dimensions: 1
+Dimensions and sizes:	[1]
+Coordinates: 
+(0)	68
+
+Variable: GRACE
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+
+Variable: uncertainty
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+
+Variable: GRACE
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: uncertainty
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+
+Variable: case_name (subsection)
+Type: string
+Total Size: 8 bytes
+            1 values
+Number of Dimensions: 1
+Dimensions and sizes:	[1]
+Coordinates: 
+(0)	/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+warning:Dimension (1) has not been defined
+warning:Dimension (1) has not been defined
+(0)	point 1 
+
+Variable: GRACE
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: uncertainty
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	zonal average
+
+Variable: GRACE (subsection)
+Type: float
+Total Size: 272 bytes
+            68 values
+Number of Dimensions: 1
+Dimensions and sizes:	[lat | 68]
+Coordinates: 
+            lat: [-43.75..-10.25]
+Number Of Attributes: 2
+  lon :	0.25
+  _FillValue :	-1e+33
+
+Variable: y (file variable)
+Type: float
+Total Size: 272 bytes
+            68 values
+Number of Dimensions: 1
+Dimensions and sizes:	[y | 68]
+Coordinates: 
+            y: [-43.75..-10.25]
+Number Of Attributes: 2
+  units :	degrees_north
+  comment :	y coordinate variable for GrADS compatibility
+(0)	finish zonal average
+(0)	global average
+(0)	GRACE_global_ave: -2.22509
+(0)	GRACE_global_ave: 20.619
+(0)	GRACE_global_ave: 46.7644
+(0)	GRACE_global_ave: 32.8643
+(0)	GRACE_global_ave: 19.7628
+(0)	GRACE_global_ave: -9.07064
+(0)	GRACE_global_ave: 11.2848
+(0)	GRACE_global_ave: 8.6247
+(0)	GRACE_global_ave: 7.31263
+(0)	GRACE_global_ave: 7.2365
+(0)	GRACE_global_ave: -9.41602
+(0)	GRACE_global_ave: -7.77581
+(0)	GRACE_global_ave: 17.2186
+(0)	GRACE_global_ave: 56.6905
+(0)	GRACE_global_ave: 62.1201
+(0)	GRACE_global_ave: 36.9602
+(0)	GRACE_global_ave: 28.7706
+(0)	GRACE_global_ave: 35.1757
+(0)	GRACE_global_ave: 14.8598
+(0)	GRACE_global_ave: 22.4957
+(0)	GRACE_global_ave: 18.401
+(0)	GRACE_global_ave: 9.40388
+(0)	GRACE_global_ave: -3.83957
+(0)	GRACE_global_ave: -10.0187
+(0)	GRACE_global_ave: 14.9847
+(0)	GRACE_global_ave: 3.57523
+(0)	GRACE_global_ave: -10.0072
+(0)	GRACE_global_ave: -9.05907
+(0)	GRACE_global_ave: -21.4299
+(0)	GRACE_global_ave: -7.7394
+(0)	GRACE_global_ave: 10.7053
+(0)	GRACE_global_ave: -5.98753
+(0)	GRACE_global_ave: -11.2493
+(0)	GRACE_global_ave: -20.0896
+(0)	GRACE_global_ave: -14.8126
+(0)	GRACE_global_ave: -18.0981
+(0)	GRACE_global_ave: -2.45541
+(0)	GRACE_global_ave: 29.588
+(0)	GRACE_global_ave: 25.4378
+(0)	GRACE_global_ave: 37.2295
+(0)	GRACE_global_ave: 38.6553
+(0)	GRACE_global_ave: 11.0742
+(0)	GRACE_global_ave: 11.6981
+(0)	GRACE_global_ave: -0.627709
+(0)	GRACE_global_ave: 0.193811
+(0)	GRACE_global_ave: -9.19113
+(0)	GRACE_global_ave: -20.2441
+(0)	GRACE_global_ave: -34.3888
+(0)	GRACE_global_ave: -9.06105
+(0)	GRACE_global_ave: 9.60998
+(0)	GRACE_global_ave: 23.2115
+(0)	GRACE_global_ave: 14.1887
+(0)	GRACE_global_ave: 1.20477
+(0)	GRACE_global_ave: 0.38733
+(0)	GRACE_global_ave: 13.5141
+(0)	GRACE_global_ave: -2.51093
+(0)	GRACE_global_ave: -0.130478
+(0)	GRACE_global_ave: -14.8152
+(0)	GRACE_global_ave: -22.7415
+(0)	GRACE_global_ave: -16.921
+(0)	GRACE_global_ave: 6.58415
+(0)	GRACE_global_ave: 22.1449
+(0)	GRACE_global_ave: 8.0748
+(0)	GRACE_global_ave: -4.59244
+(0)	GRACE_global_ave: -28.5191
+(0)	GRACE_global_ave: -19.5254
+(0)	GRACE_global_ave: -16.0704
+(0)	GRACE_global_ave: -24.9744
+(0)	GRACE_global_ave: -21.9664
+(0)	GRACE_global_ave: -35.0078
+(0)	GRACE_global_ave: -19.8198
+(0)	GRACE_global_ave: -19.1712
+(0)	Correlation between Rain and GRACE : 0.239289
+(0)	Correlation between GRACE and TWS in GSWP: 0.905585
+(0)	Correlation between Rain and TWS in GSWP: 0.157316
+warning:cnFillOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnFillMode is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnLinesOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnFillOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnFillMode is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnLinesOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+
+
+Variable: SoilMoist_global_ave
+Type: float
+Total Size: 288 bytes
+            72 values
+Number of Dimensions: 2
+Dimensions and sizes:	[1] x [72]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+(0,0)	0.1574189
+(0,1)	16.5079
+(0,2)	40.41031
+(0,3)	27.59696
+(0,4)	18.18935
+(0,5)	12.24857
+(0,6)	9.941472
+(0,7)	6.351153
+(0,8)	0.002526061
+(0,9)	-6.573234
+(0,10)	-13.24364
+(0,11)	-9.776137
+(0,12)	15.22697
+(0,13)	35.6184
+(0,14)	43.54877
+(0,15)	35.2772
+(0,16)	25.12557
+(0,17)	23.055
+(0,18)	16.90709
+(0,19)	10.64886
+(0,20)	3.301175
+(0,21)	-4.067667
+(0,22)	-8.407577
+(0,23)	-5.215888
+(0,24)	0.8270478
+(0,25)	4.650105
+(0,26)	0.8030928
+(0,27)	-6.186307
+(0,28)	-12.43972
+(0,29)	-12.00994
+(0,30)	-1.646302
+(0,31)	-7.661592
+(0,32)	-12.88496
+(0,33)	-17.37693
+(0,34)	-20.4191
+(0,35)	-20.81194
+(0,36)	-3.343139
+(0,37)	22.00899
+(0,38)	24.78818
+(0,39)	37.24216
+(0,40)	25.26406
+(0,41)	12.42583
+(0,42)	7.79626
+(0,43)	0.443136
+(0,44)	-8.136908
+(0,45)	-18.24923
+(0,46)	-23.58526
+(0,47)	-28.33543
+(0,48)	-14.14153
+(0,49)	8.817991
+(0,50)	17.25245
+(0,51)	13.95533
+(0,52)	4.137595
+(0,53)	5.253359
+(0,54)	5.054523
+(0,55)	-2.996021
+(0,56)	-11.11815
+(0,57)	-20.38392
+(0,58)	-21.6576
+(0,59)	-17.15203
+(0,60)	0.5577982
+(0,61)	17.93125
+(0,62)	24.44489
+(0,63)	9.394485
+(0,64)	-4.523237
+(0,65)	-8.665241
+(0,66)	-12.42434
+(0,67)	-17.43224
+(0,68)	-23.01688
+(0,69)	-30.94201
+(0,70)	-33.45765
+(0,71)	-23.06886
+fatal:Subscript out of range, error in subscript #0
+fatal:An error occurred reading SoilMoist_global_ave
+fatal:["Execute.c":8637]:Execute: Error occurred at or near line 569 in file time_serial_GRACE_vs_CABLE.ncl
+
+input in flex scanner failed
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+
+
+Variable: lat_num
+Type: integer
+Total Size: 4 bytes
+            1 values
+Number of Dimensions: 1
+Dimensions and sizes:	[1]
+Coordinates: 
+(0)	68
+
+Variable: GRACE
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+
+Variable: uncertainty
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+
+Variable: GRACE
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: uncertainty
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+
+Variable: case_name (subsection)
+Type: string
+Total Size: 8 bytes
+            1 values
+Number of Dimensions: 1
+Dimensions and sizes:	[1]
+Coordinates: 
+(0)	/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+warning:Dimension (1) has not been defined
+warning:Dimension (1) has not been defined
+(0)	point 1 
+
+Variable: GRACE
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: uncertainty
+Type: float
+Total Size: 74649600 bytes
+            18662400 values
+Number of Dimensions: 3
+Dimensions and sizes:	[72] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	zonal average
+
+Variable: GRACE (subsection)
+Type: float
+Total Size: 272 bytes
+            68 values
+Number of Dimensions: 1
+Dimensions and sizes:	[lat | 68]
+Coordinates: 
+            lat: [-43.75..-10.25]
+Number Of Attributes: 2
+  lon :	0.25
+  _FillValue :	-1e+33
+
+Variable: y (file variable)
+Type: float
+Total Size: 272 bytes
+            68 values
+Number of Dimensions: 1
+Dimensions and sizes:	[y | 68]
+Coordinates: 
+            y: [-43.75..-10.25]
+Number Of Attributes: 2
+  units :	degrees_north
+  comment :	y coordinate variable for GrADS compatibility
+(0)	finish zonal average
+(0)	global average
+(0)	GRACE_global_ave: -2.22509
+(0)	GRACE_global_ave: 20.619
+(0)	GRACE_global_ave: 46.7644
+(0)	GRACE_global_ave: 32.8643
+(0)	GRACE_global_ave: 19.7628
+(0)	GRACE_global_ave: -9.07064
+(0)	GRACE_global_ave: 11.2848
+(0)	GRACE_global_ave: 8.6247
+(0)	GRACE_global_ave: 7.31263
+(0)	GRACE_global_ave: 7.2365
+(0)	GRACE_global_ave: -9.41602
+(0)	GRACE_global_ave: -7.77581
+(0)	GRACE_global_ave: 17.2186
+(0)	GRACE_global_ave: 56.6905
+(0)	GRACE_global_ave: 62.1201
+(0)	GRACE_global_ave: 36.9602
+(0)	GRACE_global_ave: 28.7706
+(0)	GRACE_global_ave: 35.1757
+(0)	GRACE_global_ave: 14.8598
+(0)	GRACE_global_ave: 22.4957
+(0)	GRACE_global_ave: 18.401
+(0)	GRACE_global_ave: 9.40388
+(0)	GRACE_global_ave: -3.83957
+(0)	GRACE_global_ave: -10.0187
+(0)	GRACE_global_ave: 14.9847
+(0)	GRACE_global_ave: 3.57523
+(0)	GRACE_global_ave: -10.0072
+(0)	GRACE_global_ave: -9.05907
+(0)	GRACE_global_ave: -21.4299
+(0)	GRACE_global_ave: -7.7394
+(0)	GRACE_global_ave: 10.7053
+(0)	GRACE_global_ave: -5.98753
+(0)	GRACE_global_ave: -11.2493
+(0)	GRACE_global_ave: -20.0896
+(0)	GRACE_global_ave: -14.8126
+(0)	GRACE_global_ave: -18.0981
+(0)	GRACE_global_ave: -2.45541
+(0)	GRACE_global_ave: 29.588
+(0)	GRACE_global_ave: 25.4378
+(0)	GRACE_global_ave: 37.2295
+(0)	GRACE_global_ave: 38.6553
+(0)	GRACE_global_ave: 11.0742
+(0)	GRACE_global_ave: 11.6981
+(0)	GRACE_global_ave: -0.627709
+(0)	GRACE_global_ave: 0.193811
+(0)	GRACE_global_ave: -9.19113
+(0)	GRACE_global_ave: -20.2441
+(0)	GRACE_global_ave: -34.3888
+(0)	GRACE_global_ave: -9.06105
+(0)	GRACE_global_ave: 9.60998
+(0)	GRACE_global_ave: 23.2115
+(0)	GRACE_global_ave: 14.1887
+(0)	GRACE_global_ave: 1.20477
+(0)	GRACE_global_ave: 0.38733
+(0)	GRACE_global_ave: 13.5141
+(0)	GRACE_global_ave: -2.51093
+(0)	GRACE_global_ave: -0.130478
+(0)	GRACE_global_ave: -14.8152
+(0)	GRACE_global_ave: -22.7415
+(0)	GRACE_global_ave: -16.921
+(0)	GRACE_global_ave: 6.58415
+(0)	GRACE_global_ave: 22.1449
+(0)	GRACE_global_ave: 8.0748
+(0)	GRACE_global_ave: -4.59244
+(0)	GRACE_global_ave: -28.5191
+(0)	GRACE_global_ave: -19.5254
+(0)	GRACE_global_ave: -16.0704
+(0)	GRACE_global_ave: -24.9744
+(0)	GRACE_global_ave: -21.9664
+(0)	GRACE_global_ave: -35.0078
+(0)	GRACE_global_ave: -19.8198
+(0)	GRACE_global_ave: -19.1712
+(0)	Correlation between Rain and GRACE : 0.239289
+(0)	Correlation between GRACE and TWS in GSWP: 0.905585
+(0)	Correlation between Rain and TWS in GSWP: 0.157316
+warning:cnFillOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnFillMode is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnLinesOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnFillOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnFillMode is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+warning:cnLinesOn is not a valid resource in time_serial_GRACE_vs_CABLE_monthly_GRACE06-Gap-fill_AU_xy at this time
+
+Variable: TWS_global_ave
+Type: float
+Total Size: 288 bytes
+            72 values
+Number of Dimensions: 2
+Dimensions and sizes:	[1] x [72]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+
+Variable: SWE_global_ave
+Type: float
+Total Size: 288 bytes
+            72 values
+Number of Dimensions: 2
+Dimensions and sizes:	[1] x [72]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+
+Variable: SoilMoist_global_ave
+Type: float
+Total Size: 288 bytes
+            72 values
+Number of Dimensions: 2
+Dimensions and sizes:	[1] x [72]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+fatal:Subscript out of range, error in subscript #0
+fatal:An error occurred reading SoilMoist_global_ave
+fatal:["Execute.c":8637]:Execute: Error occurred at or near line 570 in file time_serial_GRACE_vs_CABLE.ncl
+
+input in flex scanner failed

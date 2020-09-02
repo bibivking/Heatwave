@@ -14,7 +14,7 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-case_name = "ERAI_watmove"
+case_name = "Princeton_ctl_watmove_new_veg"
 
 
 path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output"
@@ -22,8 +22,8 @@ path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_out
 ; case_name = ["ERAI_ctl","ERAI_beta_exp","ERAI_gw_off","ERAI_or","ERAI_hyre","ERAI_watmove"]
 
 ; ================================= Predefine ==================================
-year_s = 1980
-year_e = 1980
+year_s = 2002
+year_e = 2002
 year_sum = year_e-year_s+1
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
@@ -33,7 +33,7 @@ Soil_thickness1 = Soil_thickness
 
 ; ================================== OPTIONS ===================================
 plot_type = "all"
-force_name= "ERAI";"ERAI"
+force_name= "Princeton";"ERAI"
 
 
 ; ================================ Set Regrid ==================================
@@ -156,13 +156,13 @@ res@gsnLeftString = ""
 res@gsnRightString = ""
 
 ; ============================= PLOTTING =============================
-pic1 = "./plots/LIS_water_movement_"+case_name+"_"+year_s
+pic1 = "./plots/LIS_water_movement_"+case_name+"_"+year_s+"-"+year_e
 wks1 = gsn_open_wks("pdf",pic1)
 gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
 
 plots = new(2,graphic)
-levels = fspan(0,500,41)
+levels = fspan(0,800,41)
 res@cnLevels = levels
 res@tiMainString = "TVeg"
 plots(0)  = gsn_csm_contour(wks1,TVeg,res)
@@ -178,7 +178,7 @@ delete(plots)
 plots = new(6,graphic)
 pres@txString = "Transpiration from ith layer"
 res@cnFillPalette = "WhiteBlueGreenYellowRed"
-levels = fspan(0,200,21)
+levels = fspan(0,400,21)
 res@cnLevels = levels
 do i = 0,5
   res@tiMainString = i+1 + " layer"
@@ -192,7 +192,7 @@ delete(res@cnLevels)
 plots = new(6,graphic)
 pres@txString = "Percentage of Transpiration from ith layer"
 res@cnFillPalette = "WhiteBlueGreenYellowRed"
-levels = fspan(0,40,21)
+levels = fspan(0,50,21)
 res@cnLevels = levels
 
 tmp = TVeg
@@ -211,7 +211,7 @@ delete(res@cnLevels)
 ; WATMOVE
 pres@txString = "Water move from upper layer to ith layer"
 res@cnFillPalette = "ViBlGrWhYeOrRe"
-levels = fspan(-1000,1000,41)
+levels = fspan(-400,400,41)
 res@cnLevels = levels
 do i = 0,5
   res@tiMainString = i+1 + " layer"

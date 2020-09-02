@@ -14,20 +14,29 @@ end setvalues
 
 begin
 
-;path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/nuwrf_25km/LISWRF_configs/LIS_output"
-path1 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl_para/outputs"
-path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/outputs/GSWP"
+path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/Princeton_ctl/LIS_output"
+;path1 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl_para/outputs"
+path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 
 ; ____________________________ OPTIONS _______________________________
 hydr_param = True
+scale      = "SE-AU"
 
 ; region
-A = -43.4377
-B = -13.5853
-C = 117.552
-D = 153.598
+if scale .eq. "SE-AU" then
+    A = -40.
+    B = -27.
+    C = 140.
+    D = 155.
+else if scale .eq. "AU" then
+    A = -44.
+    B = -10.
+    C = 112.
+    D = 154.
+end if
+end if
 
 ;______________________________ Data _________________________________
 year_s = 1979
@@ -55,7 +64,7 @@ else
 end if
 
 ; SoilTemp = new((/2,time_tot,6/),float)
-; SoilMoist= new((/2,time_tot,6/),float)
+SoilMoist= new((/2,time_tot,6/),float)
 
 ; Rain     = 0.
 ; Qle      = 0.
@@ -77,7 +86,7 @@ else
 end if
 
 ; SoilTemp = 0.
-; SoilMoist= 0.
+SoilMoist= 0.
 
 i = 0
 do year = year_s,year_e
@@ -97,12 +106,12 @@ do year = year_s,year_e
     ; read LIS-CABLE
     do month = 1, 12
       print("month = "+month)
-      if month .lt. 10 then
-        filename = path1+"/LIS.CABLE."+year+"0"+month+"0100.d01.nc"
-      else
-        filename = path1+"/LIS.CABLE."+year+month+"0100.d01.nc"
-      end if
-      f = addfile (filename,"r")
+      ; if month .lt. 10 then
+      ;   filename = path1+"/LIS.CABLE."+year+"0"+month+"0100.d01.nc"
+      ; else
+      ;   filename = path1+"/LIS.CABLE."+year+month+"0100.d01.nc"
+      ; end if
+      ; f = addfile (filename,"r")
 
       ; ========================= READING =============================
 
@@ -119,15 +128,15 @@ do year = year_s,year_e
         ; Qsb(0,i)      = avg(f->Qsb_tavg(day-1,:,:))*3600*24
         ; AvgSurfT(0,i) = avg(f->AvgSurfT_tavg(day-1,:,:))-273.15
 
-        if hydr_param then
-          GWwb(0,i)    = avg(f->GWwb_inst(day-1,:,:))
-          ; Fwsoil(0,i)  = avg(f->fwsoil_inst(day-1,:,:))
-          WatTab(0,i)  = avg(f->WaterTableD_inst(day-1,:,:))/1000.
-          ; Rain(0,i)    = avg(f->TotalPrecip_tavg(day-1,:,:))*3600*24
-        else
-          Rain(0,i)     = avg(f->Rainf_f_inst(day-1,:,:))*3600*24
-          SnowDepth(0,i)= avg(f->SnowDepth_inst(day-1,:,:))
-        end if
+        ; if hydr_param then
+        ;   GWwb(0,i)    = avg(f->GWwb_tavg(day-1,:,:))
+        ;   ; Fwsoil(0,i)  = avg(f->fwsoil_inst(day-1,:,:))
+        ;   WatTab(0,i)  = avg(f->WaterTableD_tavg(day-1,:,:))/1000.
+        ;   ; Rain(0,i)    = avg(f->TotalPrecip_tavg(day-1,:,:))*3600*24
+        ; else
+        ;   Rain(0,i)     = avg(f->Rainf_f_inst(day-1,:,:))*3600*24
+        ;   SnowDepth(0,i)= avg(f->SnowDepth_inst(day-1,:,:))
+        ; end if
 
         ; do soil = 0,5
         ;   SoilTemp(0,i,soil) = avg(f->SoilTemp_inst(day-1,soil,:,:))-273.15
@@ -154,15 +163,15 @@ do year = year_s,year_e
           SnowDepth(1,i)= avg(f1->SnowDepth(day_acu-1,{A:B},{C:D}))
         end if
 
-        ; do soil = 0,5
+        do soil = 0,5
         ;   SoilTemp(1,i,soil) = avg(f1->SoilTemp(day_acu-1,soil,{A:B},{C:D}))-273.15
-        ;   SoilMoist(1,i,soil)= avg(f1->SoilMoist(day_acu-1,soil,{A:B},{C:D}))
-        ; end do
+          SoilMoist(1,i,soil)= avg(f1->SoilMoist(day_acu-1,soil,{A:B},{C:D}))
+        end do
         day_acu = day_acu + 1
         i = i + 1
       end do ; day
-      delete(filename)
-      delete(f)
+      ; delete(filename)
+      ; delete(f)
     end do ; month
     delete(f1)
 end do ; year
@@ -172,9 +181,9 @@ print("prepare to plot")
 ;_____________________________ PLOT ___________________________________
 x = ispan(1,i,1)
 if hydr_param then
-  pic = "./plots/Spinup_LIS-CABLE_vs_CABLE-HESS_hydr-param"
+  pic = "./plots/Spinup_CABLE-HESS_GSWP3_"+scale+"_hydr-param"
 else
-  pic = "./plots/Spinup_LIS-CABLE_vs_CABLE-HESS"
+  pic = "./plots/Spinup_CABLE-HESS_GSWP3"
 end if
 
 wks = gsn_open_wks("pdf",pic)
@@ -283,8 +292,12 @@ if hydr_param then
   ; GWwb_arry  = new ( (/2,time_tot/), typeof(GWwb))
   ; GWwb_arry(0,:) = GWwb
   ; GWwb_arry(1,:) = GWwb_rc*x + GWwb_rc@yintercept
-  res@tiYAxisString  = f->GWwb_inst@long_name+" ("+f->GWwb_inst@units+")"
+  res@trYMaxF = 0.4
+  res@trYMinF = 0.
+  res@tiYAxisString  = f->GWwb_tavg@long_name+" ("+f->GWwb_tavg@units+")"
   plot = gsn_csm_xy(wks,x,GWwb,res)
+  delete(res@trYMaxF)
+  delete(res@trYMinF)
   ; print("plot fwsoil")
   ; ; fwsoil_rc    = regline(x, Fwsoil)          ; slope
   ; ; fwsoil_arry  = new ( (/2,time_tot/), typeof(Fwsoil))
@@ -297,9 +310,12 @@ if hydr_param then
   ; WatTab_arry  = new ( (/2,time_tot/), typeof(WatTab))
   ; WatTab_arry(0,:) = WatTab
   ; WatTab_arry(1,:) = WatTab_rc*x + WatTab_rc@yintercept
-  res@tiYAxisString  = f->WaterTableD_inst@long_name+" ("+f->WaterTableD_inst@units+")"
+  res@trYMaxF = 10.
+  res@trYMinF = 0.
+  res@tiYAxisString  = f->WaterTableD_tavg@long_name+" ("+f->WaterTableD_tavg@units+")"
   plot = gsn_csm_xy(wks,x,WatTab,res)
-
+  delete(res@trYMaxF)
+  delete(res@trYMinF)
 else
   print("plot snow depth")
   ; SnowDepth_rc    = regline(x, SnowDepth)          ; slope
@@ -326,21 +342,21 @@ end if
 ;   delete(res@trYMaxF)
 ;   delete(res@trYMinF)
 ; end do
-; do soil = 0,5
-;   print("plot soil moisture")
-;   res@trYMaxF = 0.4
-;   res@trYMinF = 0.
-;   ; SoilMoist_rc    = regline(x, SoilMoist(:,soil))          ; slope
-;   ; SoilMoist_arry  = new ( (/2,time_tot/), typeof(SoilMoist))
-;   ; SoilMoist_arry(0,:) = SoilMoist(:,soil)
-;   ; SoilMoist_arry(1,:) = SoilMoist_rc*x + SoilMoist_rc@yintercept
-;   res@tiYAxisString  = "Layer "+(soil+1)+" Soil Moisture (m3/m3)"
-;   plot = gsn_csm_xy(wks,x,SoilMoist(:,:,soil),res)
-;   ; delete(SoilMoist_rc)
-;   ; delete(SoilMoist_arry)
-;   delete(res@trYMaxF)
-;   delete(res@trYMinF)
-; end do
+do soil = 0,5
+  print("plot soil moisture")
+  res@trYMaxF = 0.4
+  res@trYMinF = 0.
+  ; SoilMoist_rc    = regline(x, SoilMoist(:,soil))          ; slope
+  ; SoilMoist_arry  = new ( (/2,time_tot/), typeof(SoilMoist))
+  ; SoilMoist_arry(0,:) = SoilMoist(:,soil)
+  ; SoilMoist_arry(1,:) = SoilMoist_rc*x + SoilMoist_rc@yintercept
+  res@tiYAxisString  = "Layer "+(soil+1)+" Soil Moisture (m3/m3)"
+  plot = gsn_csm_xy(wks,x,SoilMoist(:,:,soil),res)
+  ; delete(SoilMoist_rc)
+  ; delete(SoilMoist_arry)
+  delete(res@trYMaxF)
+  delete(res@trYMinF)
+end do
 ;
 ; print("plot surface temp")
 ; res@trYMaxF = 50.
