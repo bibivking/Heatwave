@@ -1,4 +1,4 @@
-;*****************************************
+;*******************************************
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
@@ -14,29 +14,23 @@ end setvalues
 
 begin
 
-path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/Princeton_ctl/LIS_output"
+path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/Princeton_ctl_watmove_new_veg/LIS_output/"
 ;path1 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl_para/outputs"
-path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
+path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/spinup2"
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 
 ; ____________________________ OPTIONS _______________________________
 hydr_param = True
-scale      = "SE-AU"
+scale      = "AU"
+case_name  = "spinup2"
 
-; region
-if scale .eq. "SE-AU" then
-    A = -40.
-    B = -27.
-    C = 140.
-    D = 155.
-else if scale .eq. "AU" then
-    A = -44.
-    B = -10.
-    C = 112.
-    D = 154.
-end if
-end if
+; region: AU
+A = -44.
+B = -10.
+C = 112.
+D = 154.
+
 
 ;______________________________ Data _________________________________
 year_s = 1979
@@ -45,14 +39,14 @@ year_sum = year_e-year_s+1
 time_tot = 10958
 
 ; Rain     = new((/2,time_tot/),float)
-; Qle      = new((/2,time_tot/),float)
-; Qh       = new((/2,time_tot/),float)
-; Qg       = new((/2,time_tot/),float)
-; Evap     = new((/2,time_tot/),float)
-; TVeg     = new((/2,time_tot/),float)
-; ESoil    = new((/2,time_tot/),float)
-; Qs       = new((/2,time_tot/),float)
-; Qsb      = new((/2,time_tot/),float)
+Qle      = new((/2,time_tot/),float)
+Qh       = new((/2,time_tot/),float)
+Qg       = new((/2,time_tot/),float)
+Evap     = new((/2,time_tot/),float)
+TVeg     = new((/2,time_tot/),float)
+ESoil    = new((/2,time_tot/),float)
+Qs       = new((/2,time_tot/),float)
+Qsb      = new((/2,time_tot/),float)
 ; AvgSurfT = new((/2,time_tot/),float)
 
 if hydr_param then
@@ -67,14 +61,14 @@ end if
 SoilMoist= new((/2,time_tot,6/),float)
 
 ; Rain     = 0.
-; Qle      = 0.
-; Qh       = 0.
-; Qg       = 0.
-; Evap     = 0.
-; TVeg     = 0.
-; ESoil    = 0.
-; Qs       = 0.
-; Qsb      = 0.
+Qle      = 0.
+Qh       = 0.
+Qg       = 0.
+Evap     = 0.
+TVeg     = 0.
+ESoil    = 0.
+Qs       = 0.
+Qsb      = 0.
 ; AvgSurfT = 0.
 
 if hydr_param then
@@ -106,53 +100,54 @@ do year = year_s,year_e
     ; read LIS-CABLE
     do month = 1, 12
       print("month = "+month)
-      ; if month .lt. 10 then
-      ;   filename = path1+"/LIS.CABLE."+year+"0"+month+"0100.d01.nc"
-      ; else
-      ;   filename = path1+"/LIS.CABLE."+year+month+"0100.d01.nc"
-      ; end if
-      ; f = addfile (filename,"r")
+      if month .lt. 10 then
+        filename = path1+"/LIS.CABLE."+year+"0"+month+"0100.d01.nc"
+      else
+        filename = path1+"/LIS.CABLE."+year+month+"0100.d01.nc"
+      end if
+      f = addfile (filename,"r")
 
       ; ========================= READING =============================
 
       do day = 1, dom(month-1)
 
         ; --------------- read LIS-CABLE ------------------
-        ; Qle(0,i)      = avg(f->Qle_tavg(day-1,:,:))
-        ; Qh(0,i)       = avg(f->Qh_tavg(day-1,:,:))
-        ; Qg(0,i)       = avg(f->Qg_tavg(day-1,:,:))
-        ; Evap(0,i)     = avg(f->Evap_tavg(day-1,:,:))*3600*24
-        ; TVeg(0,i)     = avg(f->TVeg_tavg(day-1,:,:))*3600*24
-        ; ESoil(0,i)    = avg(f->ESoil_tavg(day-1,:,:))*3600*24
-        ; Qs(0,i)       = avg(f->Qs_tavg(day-1,:,:))*3600*24
-        ; Qsb(0,i)      = avg(f->Qsb_tavg(day-1,:,:))*3600*24
+        Qle(0,i)      = avg(f->Qle_tavg(day-1,:,:))
+        Qh(0,i)       = avg(f->Qh_tavg(day-1,:,:))
+        Qg(0,i)       = avg(f->Qg_tavg(day-1,:,:))
+        Evap(0,i)     = avg(f->Evap_tavg(day-1,:,:))*3600*24
+        TVeg(0,i)     = avg(f->TVeg_tavg(day-1,:,:))*3600*24
+        ESoil(0,i)    = avg(f->ESoil_tavg(day-1,:,:))*3600*24
+        Qs(0,i)       = avg(f->Qs_tavg(day-1,:,:))*3600*24
+        Qsb(0,i)      = avg(f->Qsb_tavg(day-1,:,:))*3600*24
+
         ; AvgSurfT(0,i) = avg(f->AvgSurfT_tavg(day-1,:,:))-273.15
 
-        ; if hydr_param then
-        ;   GWwb(0,i)    = avg(f->GWwb_tavg(day-1,:,:))
-        ;   ; Fwsoil(0,i)  = avg(f->fwsoil_inst(day-1,:,:))
-        ;   WatTab(0,i)  = avg(f->WaterTableD_tavg(day-1,:,:))/1000.
-        ;   ; Rain(0,i)    = avg(f->TotalPrecip_tavg(day-1,:,:))*3600*24
-        ; else
-        ;   Rain(0,i)     = avg(f->Rainf_f_inst(day-1,:,:))*3600*24
-        ;   SnowDepth(0,i)= avg(f->SnowDepth_inst(day-1,:,:))
-        ; end if
+        if hydr_param then
+          GWwb(0,i)    = avg(f->GWwb_tavg(day-1,:,:))
+          ; Fwsoil(0,i)  = avg(f->fwsoil_inst(day-1,:,:))
+          WatTab(0,i)  = avg(f->WaterTableD_tavg(day-1,:,:))/1000.
+          ; Rain(0,i)    = avg(f->TotalPrecip_tavg(day-1,:,:))*3600*24
+        else
+          ; Rain(0,i)     = avg(f->Rainf_f_inst(day-1,:,:))*3600*24
+          SnowDepth(0,i)= avg(f->SnowDepth_inst(day-1,:,:))
+        end if
 
-        ; do soil = 0,5
-        ;   SoilTemp(0,i,soil) = avg(f->SoilTemp_inst(day-1,soil,:,:))-273.15
-        ;   SoilMoist(0,i,soil)= avg(f->SoilMoist_inst(day-1,soil,:,:))
-        ; end do
+        do soil = 0,5
+          ; SoilTemp(0,i,soil) = avg(f->SoilTemp_inst(day-1,soil,:,:))-273.15
+          SoilMoist(0,i,soil)= avg(f->SoilMoist_tavg(day-1,soil,:,:))
+        end do
 
         ; --------------- read CABLE(HESS) ------------------
         ; Rain(1,i)     = avg(f1->Rainf(day_acu-1,{A:B},{C:D}))*3600*24
-        ; Qle(1,i)      = avg(f1->Qle(day_acu-1,{A:B},{C:D}))
-        ; Qh(1,i)       = avg(f1->Qh(day_acu-1,{A:B},{C:D}))
-        ; Qg(1,i)       = avg(f1->Qg(day_acu-1,{A:B},{C:D}))
-        ; Evap(1,i)     = avg(f1->Evap(day_acu-1,{A:B},{C:D}))*3600*24
-        ; TVeg(1,i)     = avg(f1->TVeg(day_acu-1,{A:B},{C:D}))*3600*24
-        ; ESoil(1,i)    = avg(f1->ESoil(day_acu-1,{A:B},{C:D}))*3600*24
-        ; Qs(1,i)       = avg(f1->Qs(day_acu-1,{A:B},{C:D}))*3600*24
-        ; Qsb(1,i)      = avg(f1->Qsb(day_acu-1,{A:B},{C:D}))*3600*24
+        Qle(1,i)      = avg(f1->Qle(day_acu-1,{A:B},{C:D}))
+        Qh(1,i)       = avg(f1->Qh(day_acu-1,{A:B},{C:D}))
+        Qg(1,i)       = avg(f1->Qg(day_acu-1,{A:B},{C:D}))
+        Evap(1,i)     = avg(f1->Evap(day_acu-1,{A:B},{C:D}))*3600*24
+        TVeg(1,i)     = avg(f1->TVeg(day_acu-1,{A:B},{C:D}))*3600*24
+        ESoil(1,i)    = avg(f1->ESoil(day_acu-1,{A:B},{C:D}))*3600*24
+        Qs(1,i)       = avg(f1->Qs(day_acu-1,{A:B},{C:D}))*3600*24
+        Qsb(1,i)      = avg(f1->Qsb(day_acu-1,{A:B},{C:D}))*3600*24
         ; AvgSurfT(1,i) = avg(f1->Tair(day_acu-1,{A:B},{C:D}))-273.15
 
         if hydr_param then
@@ -179,9 +174,8 @@ print("prepare to plot")
 
 
 ;_____________________________ PLOT ___________________________________
-x = ispan(1,i,1)
 if hydr_param then
-  pic = "./plots/Spinup_CABLE-HESS_GSWP3_"+scale+"_hydr-param"
+  pic = "./plots/Spinup_LIS_vs_CABLE-HESS-"+case_name+"_"+scale
 else
   pic = "./plots/Spinup_CABLE-HESS_GSWP3"
 end if
@@ -199,10 +193,18 @@ res@pmLegendWidthF     = 0.14                     ; Resize legend width
 res@pmLegendHeightF    = 0.11                     ; and height
 
 res@xyLineThicknesses  = (/  1.0, 1.0, 1.0, 1.0, 1.0, 1.0,1.0/)          ; make second line thicker
-;res@pmLegendDisplayMode = "Always"
+res@pmLegendDisplayMode = "Always"
 res@xyLineColors       = (/"blue","red","green","orange","red","red","red"/)          ; change line color
 res@xyExplicitLegendLabels = (/"LIS-CABLE","CABLE-HESS","GW_1-60","NoAQ"/)
 ;res@trYMinF = 0
+
+
+x             = ispan(1,time_tot,1)
+res@tmXBMode  = "Explicit"
+res@tmXBValues= ispan(1,time_tot+1,365*5)
+res@tmXBLabels= tostring(ispan(year_s,year_e+1,5))
+
+
 
 filename = path1+"/LIS.CABLE.1999090100.d01.nc"
 f = addfile(filename,"r")
@@ -220,70 +222,70 @@ f = addfile(filename,"r")
 ; res@tiXAxisString  = "days"
 ; plot = gsn_csm_xy(wks,x,Rain,res)
 ;
-; print("plot latent heat")
-; ; Qle_rc    = regline(x, Qle)          ; slope
-; ; Qle_arry  = new ( (/2,time_tot/), typeof(Qle))
-; ; Qle_arry(0,:) = Qle
-; ; Qle_arry(1,:) = Qle_rc*x + Qle_rc@yintercept
-; res@tiYAxisString  = f->Qle_tavg@long_name+" ("+f->Qle_tavg@units+")"
-; res@tiXAxisString  = "days"
-; plot = gsn_csm_xy(wks,x,Qle,res)
-;
-; print("plot sensible heat")
-; ; Qh_rc    = regline(x, Qh)          ; slope
-; ; Qh_arry  = new ( (/2,time_tot/), typeof(Qh))
-; ; Qh_arry(0,:) = Qh
-; ; Qh_arry(1,:) = Qh_rc*x + Qh_rc@yintercept
-; res@tiYAxisString  = f->Qh_tavg@long_name+" ("+f->Qh_tavg@units+")"
-; plot = gsn_csm_xy(wks,x,Qh,res)
-;
-; print("plot ground heat")
-; ; Qg_rc    = regline(x, Qg)          ; slope
-; ; Qg_arry  = new ( (/2,time_tot/), typeof(Qg))
-; ; Qg_arry(0,:) = Qg
-; ; Qg_arry(1,:) = Qg_rc*x + Qg_rc@yintercept
-; res@tiYAxisString  = f->Qg_tavg@long_name+" ("+f->Qg_tavg@units+")"
-; plot = gsn_csm_xy(wks,x,Qg,res)
-;
-; print("plot ET")
-; ; Evap_rc    = regline(x, Evap)          ; slope
-; ; Evap_arry  = new ( (/2,time_tot/), typeof(Evap))
-; ; Evap_arry(0,:) = Evap
-; ; Evap_arry(1,:) = Evap_rc*x + Evap_rc@yintercept
-; res@tiYAxisString  = f->Evap_tavg@long_name+" (mm/d)"
-; plot = gsn_csm_xy(wks,x,Evap,res)
-;
-; print("plot trans")
-; ; TVeg_rc    = regline(x, TVeg)          ; slope
-; ; TVeg_arry  = new ( (/2,time_tot/), typeof(TVeg))
-; ; TVeg_arry(0,:) = TVeg
-; ; TVeg_arry(1,:) = TVeg_rc*x + TVeg_rc@yintercept
-; res@tiYAxisString  = f->TVeg_tavg@long_name+" (mm/d)"
-; plot = gsn_csm_xy(wks,x,TVeg,res)
-;
-; print("plot esoil")
-; ; ESoil_rc    = regline(x, ESoil)          ; slope
-; ; ESoil_arry  = new ( (/2,time_tot/), typeof(ESoil))
-; ; ESoil_arry(0,:) = ESoil
-; ; ESoil_arry(1,:) = ESoil_rc*x + ESoil_rc@yintercept
-; res@tiYAxisString  = f->ESoil_tavg@long_name+" (mm/d)"
-; plot = gsn_csm_xy(wks,x,ESoil,res)
-;
-; print("plot surface runoff")
-; ; Qs_rc    = regline(x, Qs)          ; slope
-; ; Qs_arry  = new ( (/2,time_tot/), typeof(Qs))
-; ; Qs_arry(0,:) = Qs
-; ; Qs_arry(1,:) = Qs_rc*x + Qs_rc@yintercept
-; res@tiYAxisString  = f->Qs_tavg@long_name+" (mm/d)"
-; plot = gsn_csm_xy(wks,x,Qs,res)
-;
-; print("plot subsurface runoff")
-; ; Qsb_rc    = regline(x, Qsb)          ; slope
-; ; Qsb_arry  = new ( (/2,time_tot/), typeof(Qsb))
-; ; Qsb_arry(0,:) = Qsb
-; ; Qsb_arry(1,:) = Qsb_rc*x + Qsb_rc@yintercept
-; res@tiYAxisString  = f->Qsb_tavg@long_name+" (mm/d)"
-; plot = gsn_csm_xy(wks,x,Qsb,res)
+print("plot latent heat")
+; Qle_rc    = regline(x, Qle)          ; slope
+; Qle_arry  = new ( (/2,time_tot/), typeof(Qle))
+; Qle_arry(0,:) = Qle
+; Qle_arry(1,:) = Qle_rc*x + Qle_rc@yintercept
+res@tiYAxisString  = f->Qle_tavg@long_name+" ("+f->Qle_tavg@units+")"
+res@tiXAxisString  = "days"
+plot = gsn_csm_xy(wks,x,Qle,res)
+
+print("plot sensible heat")
+; Qh_rc    = regline(x, Qh)          ; slope
+; Qh_arry  = new ( (/2,time_tot/), typeof(Qh))
+; Qh_arry(0,:) = Qh
+; Qh_arry(1,:) = Qh_rc*x + Qh_rc@yintercept
+res@tiYAxisString  = f->Qh_tavg@long_name+" ("+f->Qh_tavg@units+")"
+plot = gsn_csm_xy(wks,x,Qh,res)
+
+print("plot ground heat")
+; Qg_rc    = regline(x, Qg)          ; slope
+; Qg_arry  = new ( (/2,time_tot/), typeof(Qg))
+; Qg_arry(0,:) = Qg
+; Qg_arry(1,:) = Qg_rc*x + Qg_rc@yintercept
+res@tiYAxisString  = f->Qg_tavg@long_name+" ("+f->Qg_tavg@units+")"
+plot = gsn_csm_xy(wks,x,Qg,res)
+
+print("plot ET")
+; Evap_rc    = regline(x, Evap)          ; slope
+; Evap_arry  = new ( (/2,time_tot/), typeof(Evap))
+; Evap_arry(0,:) = Evap
+; Evap_arry(1,:) = Evap_rc*x + Evap_rc@yintercept
+res@tiYAxisString  = f->Evap_tavg@long_name+" (mm/d)"
+plot = gsn_csm_xy(wks,x,Evap,res)
+
+print("plot trans")
+; TVeg_rc    = regline(x, TVeg)          ; slope
+; TVeg_arry  = new ( (/2,time_tot/), typeof(TVeg))
+; TVeg_arry(0,:) = TVeg
+; TVeg_arry(1,:) = TVeg_rc*x + TVeg_rc@yintercept
+res@tiYAxisString  = f->TVeg_tavg@long_name+" (mm/d)"
+plot = gsn_csm_xy(wks,x,TVeg,res)
+
+print("plot esoil")
+; ESoil_rc    = regline(x, ESoil)          ; slope
+; ESoil_arry  = new ( (/2,time_tot/), typeof(ESoil))
+; ESoil_arry(0,:) = ESoil
+; ESoil_arry(1,:) = ESoil_rc*x + ESoil_rc@yintercept
+res@tiYAxisString  = f->ESoil_tavg@long_name+" (mm/d)"
+plot = gsn_csm_xy(wks,x,ESoil,res)
+
+print("plot surface runoff")
+; Qs_rc    = regline(x, Qs)          ; slope
+; Qs_arry  = new ( (/2,time_tot/), typeof(Qs))
+; Qs_arry(0,:) = Qs
+; Qs_arry(1,:) = Qs_rc*x + Qs_rc@yintercept
+res@tiYAxisString  = f->Qs_tavg@long_name+" (mm/d)"
+plot = gsn_csm_xy(wks,x,Qs,res)
+
+print("plot subsurface runoff")
+; Qsb_rc    = regline(x, Qsb)          ; slope
+; Qsb_arry  = new ( (/2,time_tot/), typeof(Qsb))
+; Qsb_arry(0,:) = Qsb
+; Qsb_arry(1,:) = Qsb_rc*x + Qsb_rc@yintercept
+res@tiYAxisString  = f->Qsb_tavg@long_name+" (mm/d)"
+plot = gsn_csm_xy(wks,x,Qsb,res)
 
 
 if hydr_param then
@@ -292,7 +294,7 @@ if hydr_param then
   ; GWwb_arry  = new ( (/2,time_tot/), typeof(GWwb))
   ; GWwb_arry(0,:) = GWwb
   ; GWwb_arry(1,:) = GWwb_rc*x + GWwb_rc@yintercept
-  res@trYMaxF = 0.4
+  res@trYMaxF = 0.5
   res@trYMinF = 0.
   res@tiYAxisString  = f->GWwb_tavg@long_name+" ("+f->GWwb_tavg@units+")"
   plot = gsn_csm_xy(wks,x,GWwb,res)
@@ -310,7 +312,7 @@ if hydr_param then
   ; WatTab_arry  = new ( (/2,time_tot/), typeof(WatTab))
   ; WatTab_arry(0,:) = WatTab
   ; WatTab_arry(1,:) = WatTab_rc*x + WatTab_rc@yintercept
-  res@trYMaxF = 10.
+  res@trYMaxF = 12.
   res@trYMinF = 0.
   res@tiYAxisString  = f->WaterTableD_tavg@long_name+" ("+f->WaterTableD_tavg@units+")"
   plot = gsn_csm_xy(wks,x,WatTab,res)
