@@ -14,7 +14,7 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-case_name = "Princeton_ctl_watmove_new_veg"
+case_name = "ERAI_watmove"
 path1     = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output"
 
 ; case_name = ["ERAI_ctl","ERAI_beta_exp","ERAI_gw_off","ERAI_or","ERAI_hyre","ERAI_watmove"]
@@ -31,9 +31,8 @@ Soil_thickness1 = Soil_thickness
 
 
 ; ================================== OPTIONS ===================================
-plot_type = "all"
-force_name= "Princeton";"ERAI"
 time_scale= "daily" ; "annual"
+plot_type = "trans" ; "soilmoist"; "trans" ; "watmove"
 
 ; ================================ Set Regrid ==================================
 interp_method = "neareststod"  ;"neareststod"; "conserve" "patch";"bilinear"
@@ -181,7 +180,7 @@ res@gsnLeftString = ""
 res@gsnRightString = ""
 
 ; ============================= PLOTTING =============================
-pic1 = "./plots/LIS_water_movement_"+case_name+"_"+time_scale+"_"+year_s+"-"+year_e
+pic1 = "./plots/LIS_water_movement_"+case_name+"_"+time_scale+"_"+plot_type+"_"+year_s+"-"+year_e
 wks1 = gsn_open_wks("pdf",pic1)
 gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
@@ -245,103 +244,129 @@ if time_scale .eq. "annual" then
     gsn_panel(wks1,(/plots/),(/2,3/),pres)
     delete(levels)
     delete(res@cnLevels)
-else if time_scale .eq. "daily" then
 
-    plots = new(8,graphic)
+else if time_scale .eq. "daily" then
 
     do time = 0, total -1
 
-      ; levels = fspan(0,4,41)
-      ; res@cnLevels = levels
-      ; res@tiMainString = "TVeg"
-      ; plots(0)  = gsn_csm_contour(wks1,TVeg(time,:,:),res)
-      ; delete(levels)
-      ; delete(res@cnLevels)
-      ;
-      ; ; EVAPFBL
-      ; pres@txString = "Transpiration from ith layer of day-"+time
-      ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
-      ; levels = fspan(0,2,21)
-      ; res@cnLevels = levels
-      ; do i = 0,5
-      ;   res@tiMainString = i+1 + " layer"
-      ;   plots(i+1) = gsn_csm_contour(wks1,EVAPFBL(time,i,:,:),res)
-      ; end do
-      ; gsn_panel(wks1,(/plots/),(/3,3/),pres)
-      ; delete(levels)
-      ; delete(res@cnLevels)
+      if plot_type .eq. "trans" then
 
-      res@tiMainString = "WaterTable"
-      res@cnFillPalette = "WhiteBlueGreenYellowRed"
-      levels = fspan(0,15,31)
-      res@cnLevels = levels
-      plots(0)  = gsn_csm_contour(wks1,WaterTable(time,:,:),res)
-      delete(levels)
-      delete(res@cnLevels)
+          plots = new(7,graphic)
+          levels = fspan(0,4,41)
+          res@cnLevels = levels
+          res@tiMainString = "TVeg"
+          plots(0)  = gsn_csm_contour(wks1,TVeg(time,:,:),res)
+          delete(levels)
+          delete(res@cnLevels)
 
-      res@tiMainString = "Recharge to aquifer"
-      res@cnFillPalette = "ViBlGrWhYeOrRe"
-      levels = fspan(-0.5,0.5,21)
-      res@cnLevels = levels
-      plots(1)  = gsn_csm_contour(wks1,Qrec(time,:,:),res)
-      delete(levels)
-      delete(res@cnLevels)
+          ; EVAPFBL
+          pres@txString = "Transpiration from ith layer of day-"+time
+          res@cnFillPalette = "WhiteBlueGreenYellowRed"
+          levels = fspan(0,2,21)
+          res@cnLevels = levels
+          do i = 0,5
+            res@tiMainString = i+1 + " layer"
+            plots(i+1) = gsn_csm_contour(wks1,EVAPFBL(time,i,:,:),res)
+          end do
+          gsn_panel(wks1,(/plots/),(/3,3/),pres)
+          delete(levels)
+          delete(res@cnLevels)
 
-      ; WATMOVE
-      pres@txString = "Water move from upper layer to ith layer of day-"+time
-      res@cnFillPalette = "ViBlGrWhYeOrRe"
-      levels = fspan(-2,2,41)
-      res@cnLevels = levels
-      do i = 0,5
-        res@tiMainString = i+1 + " layer"
-        plots(i+2) = gsn_csm_contour(wks1,WATMOVE(time,i,:,:),res)
-      end do
-      gsn_panel(wks1,(/plots/),(/3,3/),pres)
-      delete(levels)
-      delete(res@cnLevels)
+          ; ; EVAPFBL/TVeg
+          ; plots = new(6,graphic)
+          ; pres@txString = "Percentage of Transpiration from ith layer"
+          ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
+          ; levels = fspan(0,50,21)
+          ; res@cnLevels = levels
+          ;
+          ; tmp = TVeg
+          ; tmp = 0.
+          ;
+          ; do i = 0,5
+          ;   res@tiMainString = i+1 + " layer"
+          ;   TVeg = where(TVeg .gt.0, TVeg, -99999.)
+          ;   tmp = tmp + EVAPFBL(i,:,:)/TVeg*100.
+          ;   plots(i) = gsn_csm_contour(wks1,EVAPFBL(i,:,:)/TVeg*100.,res)
+          ; end do
+          ; gsn_panel(wks1,(/plots/),(/2,3/),pres)
+          ; delete(levels)
+          ; delete(res@cnLevels)
 
-      ;
-      ; res@tiMainString = "Groundwater Moisture"
-      ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
-      ; levels = fspan(0,0.5,21)
-      ; res@cnLevels = levels
-      ; plots(1)  = gsn_csm_contour(wks1,GWwb(time,:,:),res)
-      ; delete(levels)
-      ; delete(res@cnLevels)
-      ;
-      ; ; SoilMoist
-      ; pres@txString = "Soil Moisture day-"+time
-      ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
-      ; levels = fspan(0,0.5,21)
-      ; res@cnLevels = levels
-      ; do i = 0,5
-      ;   res@tiMainString = i+1 + " layer"
-      ;   plots(i+2) = gsn_csm_contour(wks1,SoilMoist(time,i,:,:),res)
-      ; end do
-      ; gsn_panel(wks1,(/plots/),(/3,3/),pres)
-      ; delete(levels)
-      ; delete(res@cnLevels)
+      else if plot_type .eq. "watmove" then
 
+          plots = new(8,graphic)
+          res@tiMainString = "WaterTable"
+          res@cnFillPalette = "WhiteBlueGreenYellowRed"
+          levels = fspan(0,15,31)
+          res@cnLevels = levels
+          plots(0)  = gsn_csm_contour(wks1,WaterTable(time,:,:),res)
+          delete(levels)
+          delete(res@cnLevels)
 
-      ; ; EVAPFBL/TVeg
-      ; plots = new(6,graphic)
-      ; pres@txString = "Percentage of Transpiration from ith layer"
-      ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
-      ; levels = fspan(0,50,21)
-      ; res@cnLevels = levels
-      ;
-      ; tmp = TVeg
-      ; tmp = 0.
-      ;
-      ; do i = 0,5
-      ;   res@tiMainString = i+1 + " layer"
-      ;   TVeg = where(TVeg .gt.0, TVeg, -99999.)
-      ;   tmp = tmp + EVAPFBL(i,:,:)/TVeg*100.
-      ;   plots(i) = gsn_csm_contour(wks1,EVAPFBL(i,:,:)/TVeg*100.,res)
-      ; end do
-      ; gsn_panel(wks1,(/plots/),(/2,3/),pres)
-      ; delete(levels)
-      ; delete(res@cnLevels)
+          res@tiMainString = "Recharge to aquifer"
+          res@cnFillPalette = "ViBlGrWhYeOrRe"
+          ;levels = fspan(-0.5,0.5,21)
+          ;res@cnLevels = levels
+          plots(1)  = gsn_csm_contour(wks1,Qrec(time,:,:),res)
+          ;delete(levels)
+          ;delete(res@cnLevels)
+
+          ; WATMOVE
+          pres@txString = "Water move from upper layer to ith layer of day-"+time
+          res@cnFillPalette = "ViBlGrWhYeOrRe"
+          levels = fspan(-2,2,41)
+          res@cnLevels = levels
+          do i = 0,5
+            res@tiMainString = i+1 + " layer"
+            plots(i+2) = gsn_csm_contour(wks1,WATMOVE(time,i,:,:),res)
+          end do
+          gsn_panel(wks1,(/plots/),(/3,3/),pres)
+          delete(levels)
+          delete(res@cnLevels)
+
+      else if plot_type .eq. "soilmoist" then
+
+          plots = new(8,graphic)
+          ; res@tiMainString = "WaterTable"
+          ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
+          ; levels = fspan(0,15,31)
+          ; res@cnLevels = levels
+          ; plots(0)  = gsn_csm_contour(wks1,WaterTable(time,:,:),res)
+          ; delete(levels)
+          ; delete(res@cnLevels)
+
+          res@tiMainString = "Recharge to aquifer"
+          res@cnFillPalette = "ViBlGrWhYeOrRe"
+          ;levels = fspan(-0.5,0.5,21)
+          ;res@cnLevels = levels
+          plots(0)  = gsn_csm_contour(wks1,Qrec(time,:,:),res)
+          ;delete(levels)
+          ;delete(res@cnLevels)
+
+          res@tiMainString = "Groundwater Moisture"
+          res@cnFillPalette = "WhiteBlueGreenYellowRed"
+          levels = fspan(0,0.5,21)
+          res@cnLevels = levels
+          plots(1)  = gsn_csm_contour(wks1,GWwb(time,:,:),res)
+          delete(levels)
+          delete(res@cnLevels)
+
+          ; SoilMoist
+          pres@txString = "Soil Moisture day-"+time
+          res@cnFillPalette = "WhiteBlueGreenYellowRed"
+          levels = fspan(0,0.5,21)
+          res@cnLevels = levels
+          do i = 0,5
+            res@tiMainString = i+1 + " layer"
+            plots(i+2) = gsn_csm_contour(wks1,SoilMoist(time,i,:,:),res)
+          end do
+          gsn_panel(wks1,(/plots/),(/3,3/),pres)
+          delete(levels)
+          delete(res@cnLevels)
+
+      end if
+      end if
+      end if
     end do
 end if
 end if

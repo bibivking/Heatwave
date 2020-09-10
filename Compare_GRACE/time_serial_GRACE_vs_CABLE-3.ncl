@@ -102,7 +102,7 @@ if cable_version .eq. "LIS-CABLE" then
     D = maxlon
     delete(f)
 else if cable_version .eq. "CABLE-HESS" then
-    scale = "AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
+    scale = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 
     filename = path+case_name(0)+"/cable_out_"+year_s+".nc"
     f = addfile (filename,"r")

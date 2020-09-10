@@ -48,7 +48,7 @@ end
 ; ================================= Start ======================================
 begin
 
-case_name = (/"spinup3"/);(/"spinup1","spinup2"/)
+case_name = (/"spinup2"/);(/"spinup1","spinup2"/)
       ;(/ "Princeton_ctl_watmove_new_veg" /)
       ; (/ "GSWP" /)
 path = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
@@ -102,7 +102,7 @@ if cable_version .eq. "LIS-CABLE" then
     D = maxlon
     delete(f)
 else if cable_version .eq. "CABLE-HESS" then
-    scale = "AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
+    scale = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 
     filename = path+case_name(0)+"/cable_out_"+year_s+".nc"
     f = addfile (filename,"r")

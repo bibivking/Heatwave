@@ -14,16 +14,16 @@ end setvalues
 
 begin
 
-path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/Princeton_ctl_watmove_new_veg/LIS_output/"
+path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ERAI_ctl_watmove_new_veg/LIS_output/"
 ;path1 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl_para/outputs"
-path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/spinup2"
+path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/spinup3"
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 
 ; ____________________________ OPTIONS _______________________________
 hydr_param = True
 scale      = "AU"
-case_name  = "spinup2"
+case_name  = "spinup3"
 
 ; region: AU
 A = -44.
