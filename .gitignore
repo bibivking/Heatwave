@@ -9,11 +9,6 @@
 */*.csv
 */*.ps
 */*.txt
-*/*/*.pdf
-*/*/*.eps
-*/*/*.csv
-*/*/*.ps
-*/*/*.txt
-
+*/*.nc
 ./backup
 
