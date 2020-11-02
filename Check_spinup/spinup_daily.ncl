@@ -14,7 +14,7 @@ end setvalues
 
 begin
 
-path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ERAI_ctl_watmove_new_veg/LIS_output/"
+path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ERAI_ctl_watmove_new_veg/LIS_output_spinup1/"
 ;path1 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl_para/outputs"
 path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/spinup3"
 
@@ -33,10 +33,10 @@ D = 154.
 
 
 ;______________________________ Data _________________________________
-year_s = 1979
-year_e = 2008
+year_s = 1980
+year_e = 2018
 year_sum = year_e-year_s+1
-time_tot = 10958
+time_tot = year_sum*365 + 10
 
 ; Rain     = new((/2,time_tot/),float)
 Qle      = new((/2,time_tot/),float)
@@ -124,7 +124,7 @@ do year = year_s,year_e
         ; AvgSurfT(0,i) = avg(f->AvgSurfT_tavg(day-1,:,:))-273.15
 
         if hydr_param then
-          GWwb(0,i)    = avg(f->GWwb_tavg(day-1,:,:))
+          GWwb(0,i)    = avg(f->GWwb_inst(day-1,:,:))
           ; Fwsoil(0,i)  = avg(f->fwsoil_inst(day-1,:,:))
           WatTab(0,i)  = avg(f->WaterTableD_tavg(day-1,:,:))/1000.
           ; Rain(0,i)    = avg(f->TotalPrecip_tavg(day-1,:,:))*3600*24
@@ -135,7 +135,7 @@ do year = year_s,year_e
 
         do soil = 0,5
           ; SoilTemp(0,i,soil) = avg(f->SoilTemp_inst(day-1,soil,:,:))-273.15
-          SoilMoist(0,i,soil)= avg(f->SoilMoist_tavg(day-1,soil,:,:))
+          SoilMoist(0,i,soil)= avg(f->SoilMoist_inst(day-1,soil,:,:))
         end do
 
         ; --------------- read CABLE(HESS) ------------------

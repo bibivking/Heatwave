@@ -48,10 +48,11 @@ end
 ; ================================= Start ======================================
 begin
 
-case_name = (/"spinup3"/);(/"spinup1","spinup2"/)
+case_name = (/"PUMP"/);(/"spinup1","spinup2"/)
       ;(/ "Princeton_ctl_watmove_new_veg" /)
       ; (/ "GSWP" /)
-path = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
+path = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3_GW_pumping/outputs/"
+      ; "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
       ; "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"
       ; "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
       ; "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"
@@ -60,7 +61,7 @@ path = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
 
 ; =============================== Pre-define ===================================
-year_s   = 1979
+year_s   = 1981
 year_e   = 2010
 GRACE_start_year = 2003
 GRACE_end_year   = 2009
@@ -73,7 +74,7 @@ case_sum = dimsizes(case_name)
 use_month     = "May" ; "Jul"
 time_scale    = "monthly" ; "annual"; "monthly"
 grace_version = "Gap-fill" ;"Gap-fill"; "Original"
-output        = "daily"
+output        = "monthly"
 cable_version = "CABLE-HESS" ;"LIS-CABLE" ; "CABLE-HESS"
 
 if cable_version .eq. "LIS-CABLE" then
@@ -102,7 +103,7 @@ if cable_version .eq. "LIS-CABLE" then
     D = maxlon
     delete(f)
 else if cable_version .eq. "CABLE-HESS" then
-    scale = "AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
+    scale = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 
     filename = path+case_name(0)+"/cable_out_"+year_s+".nc"
     f = addfile (filename,"r")
@@ -120,9 +121,9 @@ else if cable_version .eq. "CABLE-HESS" then
       D = 360.
     else if scale .eq. "SE-AU" then
       A = -40.
-      B = -27.
+      B = -28.
       C = 140.
-      D = 155.
+      D = 154.
     else if scale .eq. "AU" then
       A = -44.
       B = -10.

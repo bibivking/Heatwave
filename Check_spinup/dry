@@ -1,0 +1,13 @@
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+fatal:syntax error: line 16 in file spinup_daily_LIS_dry.ncl before or near \n 
+case_name = (/"ERAI_SE39_Hyds_RUC","ERAI_SE39_AQdry","ERAI_SE39_SMdry","ERAI_SE39_SMdry_AQdry"
+-----------------------------------------------------------------------------------------------^
+
+fatal:Syntax Error in block, block not executed
+fatal:error at line 330 in file spinup_daily_LIS_dry.ncl
+
+input in flex scanner failed

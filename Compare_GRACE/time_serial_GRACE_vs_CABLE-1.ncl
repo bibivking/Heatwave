@@ -48,10 +48,11 @@ end
 ; ================================= Start ======================================
 begin
 
-case_name = (/"spinup1"/);(/"spinup1","spinup2"/)
+case_name = (/"CTL"/);(/"spinup1","spinup2"/)
       ;(/ "Princeton_ctl_watmove_new_veg" /)
       ; (/ "GSWP" /)
-path = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
+path = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3_GW/outputs/"
+      ; "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
       ; "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"
       ; "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
       ; "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"
@@ -60,7 +61,7 @@ path = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
 
 ; =============================== Pre-define ===================================
-year_s   = 1979
+year_s   = 1981
 year_e   = 2010
 GRACE_start_year = 2003
 GRACE_end_year   = 2009
@@ -102,7 +103,7 @@ if cable_version .eq. "LIS-CABLE" then
     D = maxlon
     delete(f)
 else if cable_version .eq. "CABLE-HESS" then
-    scale = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
+    scale = "AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 
     filename = path+case_name(0)+"/cable_out_"+year_s+".nc"
     f = addfile (filename,"r")

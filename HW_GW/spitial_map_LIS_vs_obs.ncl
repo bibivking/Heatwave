@@ -13,7 +13,7 @@ begin
     Opt                   = True
 
     Opt@SrcFileName       = "WRF_SCRIP.nc"      ; Name of source and ???
-    Opt@DstFileName       = "1degree.nc"    ; destination files  ???
+    Opt@DstFileName       = "1degree.nc"        ; destination files  ???
 
     Opt@InterpMethod      = interp_method
 
@@ -48,7 +48,8 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/Princeton_ctl/LIS_output"
+case_name = "Princeton_ctl_watmove_new_veg"
+path1 = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output"
 path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_Princeton/ctl_para/outputs"
 
 path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/yearly";
@@ -69,7 +70,6 @@ Soil_thickness1 = Soil_thickness
 
 ; ================================== OPTIONS ===================================
 plot_type = "all"
-force_name= "Princeton";"ERAI"
 
 
 ; ================================ Set Regrid ==================================
@@ -119,14 +119,16 @@ TVeg_LIS     = dim_sum_n_Wrap(f->TVeg_tavg,0)
 ESoil_LIS    = dim_sum_n_Wrap(f->ESoil_tavg,0)
 ECanop_LIS   = dim_sum_n_Wrap(f->ECanop_tavg,0)
 Runoff_LIS   = dim_sum_n_Wrap(f->Qs_tavg,0)
+Qrec_LIS     = dim_avg_n_Wrap(f->Qrec_tavg,0)
 Rnet_LIS     = dim_avg_n_Wrap(f->Swnet_tavg,0)
 Qle_LIS      = dim_avg_n_Wrap(f->Qle_tavg,0)
 Qh_LIS       = dim_avg_n_Wrap(f->Qh_tavg,0)
 Qg_LIS       = dim_avg_n_Wrap(f->Qg_tavg,0)
 SMsurf_LIS   = dim_avg_n_Wrap(f->SoilMoist_tavg(:,0,:,:),0)
-SoilTemp_LIS = dim_avg_n_Wrap(f->SoilTemp_tavg(:,0,:,:),0)
-SoilMoist_LIS= dim_avg_n_Wrap(f->SoilMoist_tavg(:,0,:,:),0)
+SoilTemp_LIS = dim_avg_n_Wrap(f->SoilTemp_tavg(:,:,:,:),0)
+SoilMoist_LIS= dim_avg_n_Wrap(f->SoilMoist_tavg(:,:,:,:),0)
 LAI_LIS      = dim_avg_n_Wrap(f->LAI_inst,0)
+GWwb_LIS     = dim_avg_n_Wrap(f->GWwb_tavg,0)
 
 
 ;printVarSummary(SMsurf_LIS)
@@ -142,6 +144,7 @@ TVeg_LIS     = 0.
 ESoil_LIS    = 0.
 ECanop_LIS   = 0.
 Runoff_LIS   = 0.
+Qrec_LIS     = 0.
 Rnet_LIS     = 0.
 Qle_LIS      = 0.
 Qh_LIS       = 0.
@@ -150,6 +153,7 @@ SoilTemp_LIS = 0.
 SoilMoist_LIS= 0.
 SMsurf_LIS   = 0.
 LAI_LIS      = 0.
+GWwb_LIS     = 0.
 delete(f)
 
 filename1 = path2+"/cable_out_"+year_s+".nc"
@@ -168,14 +172,16 @@ TVeg_HESS     = dim_sum_n_Wrap(f1->TVeg(:,{A:B},{C:D}),0)
 ESoil_HESS    = dim_sum_n_Wrap(f1->ESoil(:,{A:B},{C:D}),0)
 ECanop_HESS   = dim_sum_n_Wrap(f1->ECanop(:,{A:B},{C:D}),0)
 Runoff_HESS   = dim_sum_n_Wrap(f1->Qs(:,{A:B},{C:D}),0)
+Qrec_HESS     = dim_sum_n_Wrap(f1->Qrecharge(:,{A:B},{C:D}),0)
 Rnet_HESS     = dim_avg_n_Wrap(f1->Rnet(:,{A:B},{C:D}),0)
 Qle_HESS      = dim_avg_n_Wrap(f1->Qle(:,{A:B},{C:D}),0)
 Qh_HESS       = dim_avg_n_Wrap(f1->Qh(:,{A:B},{C:D}),0)
 Qg_HESS       = dim_avg_n_Wrap(f1->Qg(:,{A:B},{C:D}),0)
 SMsurf_HESS   = dim_avg_n_Wrap(f1->SoilMoist(:,0,{A:B},{C:D}),0)
-SoilTemp_HESS = dim_avg_n_Wrap(f1->SoilTemp(:,0,{A:B},{C:D}),0)
-SoilMoist_HESS= dim_avg_n_Wrap(f1->SoilMoist(:,0,{A:B},{C:D}),0)
+SoilTemp_HESS = dim_avg_n_Wrap(f1->SoilTemp(:,:,{A:B},{C:D}),0)
+SoilMoist_HESS= dim_avg_n_Wrap(f1->SoilMoist(:,:,{A:B},{C:D}),0)
 LAI_HESS      = dim_avg_n_Wrap(f1->LAI(:,{A:B},{C:D}),0)
+GWwb_HESS     = dim_avg_n_Wrap(f1->GWMoist(:,{A:B},{C:D}),0)
 
 Rain_HESS     = 0.
 Tair_HESS     = 0.
@@ -189,6 +195,7 @@ TVeg_HESS     = 0.
 ESoil_HESS    = 0.
 ECanop_HESS   = 0.
 Runoff_HESS   = 0.
+Qrec_HESS     = 0.
 Rnet_HESS     = 0.
 Qle_HESS      = 0.
 Qh_HESS       = 0.
@@ -197,6 +204,7 @@ SoilTemp_HESS = 0.
 SoilMoist_HESS= 0.
 SMsurf_HESS   = 0.
 LAI_HESS      = 0.
+GWwb_HESS     = 0.
 delete(f1)
 
 do year = year_s,year_e
@@ -227,6 +235,7 @@ do year = year_s,year_e
       ECanop_LIS   = ECanop_LIS + dim_sum_n_Wrap(f->ECanop_tavg,0)*3600*24
       Runoff_LIS   = Runoff_LIS + dim_sum_n_Wrap(f->Qs_tavg,0)*3600*24 \
                                 + dim_sum_n_Wrap(f->Qsb_tavg,0)*3600*24
+      Qrec_LIS     = Qrec_LIS   + dim_sum_n_Wrap(f->Qrec_tavg,0)*3600*24
       Tair_LIS     = Tair_LIS   + dim_avg_n_Wrap(f->Tair_f_tavg,0)-273.15
       Qair_LIS     = Qair_LIS   + dim_avg_n_Wrap(f->Qair_f_tavg,0)
       Psurf_LIS    = Psurf_LIS  + dim_avg_n_Wrap(f->Psurf_f_tavg,0)/100.
@@ -239,15 +248,17 @@ do year = year_s,year_e
       Qh_LIS       = Qh_LIS     + dim_avg_n_Wrap(f->Qh_tavg,0)
       Qg_LIS       = Qg_LIS     + dim_avg_n_Wrap(f->Qg_tavg,0)
       LAI_LIS      = LAI_LIS    + dim_avg_n_Wrap(f->LAI_inst,0)
-      SMsurf_LIS   = SMsurf_LIS + ( dim_avg_n_Wrap(f->SoilMoist_tavg(:,0,:,:),0)*0.005 \
-                                  + dim_avg_n_Wrap(f->SoilMoist_tavg(:,1,:,:),0)*0.075 \
-                                  + dim_avg_n_Wrap(f->SoilMoist_tavg(:,2,:,:),0)*(0.1 - 0.005 - 0.075)) \
+      SMsurf_LIS   = SMsurf_LIS + ( dim_avg_n_Wrap(f->SoilMoist_tavg(:,0,:,:),0)*0.022 \
+                                  + dim_avg_n_Wrap(f->SoilMoist_tavg(:,1,:,:),0)*0.058 \
+                                  + dim_avg_n_Wrap(f->SoilMoist_tavg(:,2,:,:),0)*(0.1 - 0.022 - 0.058)) \
                                   / 0.1
+      GWwb_LIS     = GWwb_LIS + dim_avg_n_Wrap(f->GWwb_tavg,0)
+
       do soil = 0,5
-        SoilTemp_LIS = SoilTemp_LIS + (dim_avg_n_Wrap(f->SoilTemp_tavg(:,soil,:,:),0)-273.15)\
-                                    * Soil_thickness1(soil)/sum(Soil_thickness1)
-        SoilMoist_LIS= SoilMoist_LIS +dim_avg_n_Wrap(f->SoilMoist_tavg(:,soil,:,:),0)\
-                                       *Soil_thickness1(soil)/sum(Soil_thickness1)
+        SoilTemp_LIS(soil,:,:) = SoilTemp_LIS(soil,:,:)  + (dim_avg_n_Wrap(f->SoilTemp_tavg(:,soil,:,:),0)-273.15)\
+                                    * Soil_thickness(soil)/sum(Soil_thickness)
+        SoilMoist_LIS(soil,:,:)= SoilMoist_LIS(soil,:,:)  +dim_avg_n_Wrap(f->SoilMoist_tavg(:,soil,:,:),0)\
+                                    * Soil_thickness(soil)/sum(Soil_thickness)
       end do ; soil
       delete(f)
 
@@ -260,7 +271,7 @@ do year = year_s,year_e
       ECanop_HESS   = ECanop_HESS + f1->ECanop(month-1,{A:B},{C:D})*dom(month-1)*3600*24
       Runoff_HESS   = Runoff_HESS + f1->Qs(month-1,{A:B},{C:D})*dom(month-1)*3600*24 \
                                   + f1->Qsb(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-
+      Qrec_HESS     = Qrec_HESS + f1->Qrecharge(month-1,{A:B},{C:D})*dom(month-1)*3600*24
     end do ; month
 
     Tair_HESS     = Tair_HESS   + dim_avg_n_Wrap(f1->Tair(:,{A:B},{C:D}),0)-273.15
@@ -278,10 +289,11 @@ do year = year_s,year_e
                                 + dim_avg_n_Wrap(f1->SoilMoist(:,1,{A:B},{C:D}),0)*0.058 \
                                 + dim_avg_n_Wrap(f1->SoilMoist(:,2,{A:B},{C:D}),0)*(0.1 - 0.022 - 0.058)) \
                                 / 0.1
+    GWwb_HESS      = GWwb_HESS   + dim_avg_n_Wrap(f1->GWMoist(:,{A:B},{C:D}),0)
     do soil = 0,5
-      SoilTemp_HESS = SoilTemp_HESS + ( dim_avg_n_Wrap(f1->SoilTemp(:,soil,{A:B},{C:D}),0)-273.15)\
+      SoilTemp_HESS(soil,:,:) = SoilTemp_HESS(soil,:,:) + ( dim_avg_n_Wrap(f1->SoilTemp(:,soil,{A:B},{C:D}),0)-273.15)\
                                  *Soil_thickness(soil)/sum(Soil_thickness)
-      SoilMoist_HESS= SoilMoist_HESS + ( dim_avg_n_Wrap(f1->SoilMoist(:,soil,{A:B},{C:D}),0))\
+      SoilMoist_HESS(soil,:,:)= SoilMoist_HESS(soil,:,:) + ( dim_avg_n_Wrap(f1->SoilMoist(:,soil,{A:B},{C:D}),0))\
                                  *Soil_thickness(soil)/sum(Soil_thickness)
     end do ; soil
     delete(f1)
@@ -292,6 +304,7 @@ TVeg_LIS     = TVeg_LIS/year_sum
 ESoil_LIS    = ESoil_LIS/year_sum
 ECanop_LIS   = ECanop_LIS/year_sum
 Runoff_LIS   = Runoff_LIS/year_sum
+Qrec_LIS     = Qrec_LIS/year_sum
 Tair_LIS     = Tair_LIS/year_sum/12
 Qair_LIS     = Qair_LIS/year_sum/12
 Psurf_LIS    = Psurf_LIS/year_sum/12
@@ -306,6 +319,8 @@ SMsurf_LIS   = SMsurf_LIS/year_sum/12
 LAI_LIS      = LAI_LIS/year_sum/12
 SoilTemp_LIS = SoilTemp_LIS/year_sum/12
 SoilMoist_LIS= SoilMoist_LIS/year_sum/12
+GWwb_LIS     = GWwb_LIS/year_sum/12
+
 
 Rain_HESS     = Rain_HESS/year_sum
 Evap_HESS     = Evap_HESS/year_sum
@@ -313,6 +328,7 @@ TVeg_HESS     = TVeg_HESS/year_sum
 ESoil_HESS    = ESoil_HESS/year_sum
 ECanop_HESS   = ECanop_HESS/year_sum
 Runoff_HESS   = Runoff_HESS/year_sum
+Qrec_HESS     = Qrec_HESS/year_sum
 Tair_HESS     = Tair_HESS/year_sum
 Qair_HESS     = Qair_HESS/year_sum
 Psurf_HESS    = Psurf_HESS/year_sum
@@ -327,6 +343,7 @@ LAI_HESS      = LAI_HESS/year_sum
 SMsurf_HESS   = SMsurf_HESS/year_sum
 SoilTemp_HESS = SoilTemp_HESS/year_sum
 SoilMoist_HESS= SoilMoist_HESS/year_sum
+GWwb_HESS     = GWwb_HESS/year_sum
 
 ; ================================== Regrid ====================================
 Rain_LIS_regrid   = regrid_data(Rain_LIS,interp_method, lat2d, lon2d, \
@@ -340,6 +357,8 @@ ESoil_LIS_regrid  = regrid_data(ESoil_LIS,interp_method, lat2d, lon2d, \
 ECanop_LIS_regrid = regrid_data(ECanop_LIS,interp_method, lat2d, lon2d, \
                         lat, lon, src_mask, dst_mask )
 Runoff_LIS_regrid = regrid_data(Runoff_LIS,interp_method, lat2d, lon2d, \
+                        lat, lon, src_mask, dst_mask )
+Qrec_LIS_regrid   = regrid_data(Qrec_LIS,interp_method, lat2d, lon2d, \
                         lat, lon, src_mask, dst_mask )
 Tair_LIS_regrid   = regrid_data(Tair_LIS,interp_method, lat2d, lon2d, \
                         lat, lon, src_mask, dst_mask )
@@ -369,7 +388,8 @@ SoilTemp_LIS_regrid  = regrid_data(SoilTemp_LIS,interp_method, lat2d, lon2d, \
                         lat, lon, src_mask, dst_mask )
 SoilMoist_LIS_regrid = regrid_data(SoilMoist_LIS,interp_method, lat2d, lon2d, \
                         lat, lon, src_mask, dst_mask )
-
+GWwb_LIS_regrid   = regrid_data(GWwb_LIS,interp_method, lat2d, lon2d, \
+                        lat, lon, src_mask, dst_mask )
 ; ================================ READ GLEAM ==================================
 gleam_ET = path_GLEAM+"/E_1980_2018_GLEAM_v3.3a_YR.nc"
 gleam_T  = path_GLEAM+"/Et_1980_2018_GLEAM_v3.3a_YR.nc"
@@ -394,11 +414,11 @@ Ec_tmp = doubletofloat(Ec_tmp)
 SM_tmp = G_SM->SMsurf(:,{C:D},{A:B})
 SM_tmp = doubletofloat(SM_tmp)
 
-Evap_GLEAM     = dim_avg_n_Wrap(E_tmp(time|:,lat|:, lon|:),0)
-TVeg_GLEAM     = dim_avg_n_Wrap(T_tmp(time|:,lat|:, lon|:),0)
-ESoil_GLEAM    = dim_avg_n_Wrap(Es_tmp(time|:,lat|:, lon|:),0)
-ECanop_GLEAM   = dim_avg_n_Wrap(Ec_tmp(time|:,lat|:, lon|:),0)
-SMsurf_GLEAM   = dim_avg_n_Wrap(SM_tmp(time|:,lat|:, lon|:),0)
+Evap_GLEAM     = dim_avg_n_Wrap(E_tmp(time|23:28,lat|:, lon|:),0)
+TVeg_GLEAM     = dim_avg_n_Wrap(T_tmp(time|23:28,lat|:, lon|:),0)
+ESoil_GLEAM    = dim_avg_n_Wrap(Es_tmp(time|23:28,lat|:, lon|:),0)
+ECanop_GLEAM   = dim_avg_n_Wrap(Ec_tmp(time|23:28,lat|:, lon|:),0)
+SMsurf_GLEAM   = dim_avg_n_Wrap(SM_tmp(time|23:28,lat|:, lon|:),0)
 ;printVarSummary(Evap_GLEAM)
 delete(G_ET)
 delete(G_T)
@@ -533,7 +553,7 @@ res@gsnRightString = ""
 ; ============================= plot met input =============================
   if (plot_type .eq. "met_force") .or. (plot_type .eq. "all") then
 
-    pic0 = "./plots/LIS_vs_obs_met_"+force_name
+    pic0 = "./plots/LIS_vs_obs_met_"+year_s+"-"+year_e+"_"+case_name
     wks0 = gsn_open_wks("pdf",pic0)
     gsn_define_colormap(wks0,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
@@ -683,7 +703,7 @@ res@gsnRightString = ""
 
   ; ============================= plot water balance ===========================
   if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
-    pic1 = "./plots/LIS_vs_obs_water_balance_"+force_name
+    pic1 = "./plots/LIS_vs_obs_water_balance_"+year_s+"-"+year_e+"_"+case_name
     wks1 = gsn_open_wks("pdf",pic1)
     gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
@@ -817,8 +837,32 @@ res@gsnRightString = ""
     gsn_panel(wks1,(/plots/),(/1,4/),pres)
     delete(levels)
     delete(res@cnLevels)
+    delete(plots)
+
+    ; Recharge
+    plots = new(3,graphic)
+    pres@txString = "Recharge (mm/y)"
+    levels = fspan(-50,50,21)
+    res@cnLevels = levels
+    res@cnFillPalette = "WhiteBlueGreenYellowRed"
+    res@tiMainString = "LIS-CABLE"
+    plots(0) = gsn_csm_contour(wks1,Qrec_LIS_regrid,res)
+    res@tiMainString = "CABLE(HESS)"
+    plots(1) = gsn_csm_contour(wks1,Qrec_HESS,res)
+    delete(levels)
+    delete(res@cnLevels)
+    levels = fspan(-50,50,21)
+    res@cnLevels = levels
+    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@tiMainString = "LIS-CABLE - CABLE(HESS)"
+    plots(2) = gsn_csm_contour(wks1,Qrec_LIS_regrid - Qrec_HESS,res)
+    gsn_panel(wks1,(/plots/),(/1,3/),pres)
+    delete(levels)
+    delete(res@cnLevels)
+    delete(plots)
 
     ; SMsurf
+    plots = new(4,graphic)
     pres@txString = "SMsurf (m3/m3)"
     levels = fspan(0,0.5,21)
     res@cnLevels = levels
@@ -841,42 +885,87 @@ res@gsnRightString = ""
     delete(res@cnLevels)
     delete(plots)
 
-    ; ET/P
-    plots = new(2,graphic)
-    pres@txString = "Evap/Rain (-)"
-    levels = fspan(0,1.,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "LIS-CABLE"
-    plots(0) = gsn_csm_contour(wks1,Evap_LIS_regrid/Rain_LIS_regrid,res)
-    res@tiMainString = "CABLE(HESS)"
-    plots(1) = gsn_csm_contour(wks1,Evap_HESS/Rain_HESS,res)
-    ; res@tiMainString = "GLEAM"
-    ; plots(2) = gsn_csm_contour(wks1,Evap_GLEAM/Rain_HESS,res)
-    ; gsn_panel(wks1,(/plots/),(/1,3/),pres)
-    gsn_panel(wks1,(/plots/),(/1,2/),pres)
+    ; ; ET/P
+    ; plots = new(2,graphic)
+    ; pres@txString = "Evap/Rain (-)"
+    ; levels = fspan(0,1.,21)
+    ; res@cnLevels = levels
+    ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
+    ; res@tiMainString = "LIS-CABLE"
+    ; plots(0) = gsn_csm_contour(wks1,Evap_LIS_regrid/Rain_LIS_regrid,res)
+    ; res@tiMainString = "CABLE(HESS)"
+    ; plots(1) = gsn_csm_contour(wks1,Evap_HESS/Rain_HESS,res)
+    ; ; res@tiMainString = "GLEAM"
+    ; ; plots(2) = gsn_csm_contour(wks1,Evap_GLEAM/Rain_HESS,res)
+    ; ; gsn_panel(wks1,(/plots/),(/1,3/),pres)
+    ; gsn_panel(wks1,(/plots/),(/1,2/),pres)
+    ;
+    ; ; R/ET
+    ; pres@txString = "Runoff/Evap (-)"
+    ; levels = fspan(0,1.,21)
+    ; res@cnLevels = levels
+    ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
+    ; res@tiMainString = "LIS-CABLE"
+    ; plots(0) = gsn_csm_contour(wks1,Runoff_LIS_regrid/Evap_LIS_regrid,res)
+    ; res@tiMainString = "CABLE(HESS)"
+    ; plots(1) = gsn_csm_contour(wks1,Runoff_HESS/Evap_HESS,res)
+    ; ; res@tiMainString = "LORA/GLEAM"
+    ; ; plots(2) = gsn_csm_contour(wks1,Runoff_LORA/Evap_GLEAM,res)
+    ; ; gsn_panel(wks1,(/plots/),(/1,3/),pres)
+    ; gsn_panel(wks1,(/plots/),(/1,2/),pres)
+    ; delete(plots)
+    ; delete(levels)
+    ; delete(res@cnLevels)
 
-    ; R/ET
-    pres@txString = "Runoff/Evap (-)"
-    levels = fspan(0,1.,21)
+
+    plots = new(3,graphic)
+    ; Soil Moist
+    do soil = 0,5
+        pres@txString = "Soil Moisture (m3/m3)"
+        levels = fspan(0,0.5,21)
+        res@cnLevels = levels
+        res@cnFillPalette = "WhiteBlueGreenYellowRed"
+        res@tiMainString = "LIS-CABLE"
+        plots(0) = gsn_csm_contour(wks1,SoilMoist_LIS_regrid(soil,:,:),res)
+        res@tiMainString = "CABLE(HESS)"
+        plots(1) = gsn_csm_contour(wks1,SoilMoist_HESS(soil,:,:),res)
+        delete(levels)
+        delete(res@cnLevels)
+        levels = fspan(-0.2,0.2,21)
+        res@cnLevels = levels
+        res@cnFillPalette = "ViBlGrWhYeOrRe"
+        res@tiMainString = "LIS-CABLE - CABLE(HESS)"
+        plots(2) = gsn_csm_contour(wks1,SoilMoist_LIS_regrid(soil,:,:) - SoilMoist_HESS(soil,:,:),res)
+        gsn_panel(wks1,(/plots/),(/1,3/),pres)
+        delete(levels)
+        delete(res@cnLevels)
+    end do
+
+    pres@txString = "Aquifer Moisture (m3/m3)"
+    levels = fspan(0,0.5,21)
     res@cnLevels = levels
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
     res@tiMainString = "LIS-CABLE"
-    plots(0) = gsn_csm_contour(wks1,Runoff_LIS_regrid/Evap_LIS_regrid,res)
+    plots(0) = gsn_csm_contour(wks1,GWwb_LIS_regrid,res)
     res@tiMainString = "CABLE(HESS)"
-    plots(1) = gsn_csm_contour(wks1,Runoff_HESS/Evap_HESS,res)
-    ; res@tiMainString = "LORA/GLEAM"
-    ; plots(2) = gsn_csm_contour(wks1,Runoff_LORA/Evap_GLEAM,res)
-    ; gsn_panel(wks1,(/plots/),(/1,3/),pres)
-    gsn_panel(wks1,(/plots/),(/1,2/),pres)
-    delete(plots)
+    plots(1) = gsn_csm_contour(wks1,GWwb_HESS,res)
     delete(levels)
     delete(res@cnLevels)
+    levels = fspan(-0.2,0.2,21)
+    res@cnLevels = levels
+    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@tiMainString = "LIS-CABLE - CABLE(HESS)"
+    plots(2) = gsn_csm_contour(wks1,GWwb_LIS_regrid - GWwb_HESS,res)
+    gsn_panel(wks1,(/plots/),(/1,3/),pres)
+    delete(levels)
+    delete(res@cnLevels)
+    delete(plots)
+
 end if
 
 ; ============================ plot energy balance =============================
   if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
-    pic2 = "./plots/LIS_vs_obs_energy_balance_"+force_name
+    pic2 = "./plots/LIS_vs_obs_energy_balance_"+year_s+"-"+year_e+"_"+case_name
     wks2 = gsn_open_wks("pdf",pic2)
     gsn_define_colormap(wks2,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
