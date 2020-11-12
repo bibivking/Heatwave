@@ -15,16 +15,28 @@ begin
 
 ; ____________________________ OPTIONS _______________________________
 hydr_param = True
-time_scale = "daily" ;"monthly" ; "daily"
+time_scale = "monthly" ;"monthly" ; "daily"
+PFT        = "all" ; "tree"
 scale      = "SE-AU"
-year_s     = 2010
-year_e     = 2012
+year_s     = 1900
+year_e     = 2200
 year_sum   = year_e-year_s+1
-pic_name   = "CABLE-HESS_GW_TREE_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
+pic_name   = "CABLE-HESS_GW_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
 
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-case_name = (/"CTL","FREE_DRAIN"/);,"PUMP","PUMPx10","PUMPx100","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
+case_name = "SPINUP"
+;(/"CTL","FREE_DRAIN"/);,"PUMP","PUMPx10","PUMPx100","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
+
+
+if PFT .eq. "all" then
+  iveg_s = 0
+  iveg_e = 20
+else PFT .eq. "tree" then
+  iveg_s = 1
+  iveg_e = 4
+end if
+end if
 
 if time_scale .eq. "monthly" then
   print("monthly")
@@ -61,7 +73,7 @@ end do
 
 filename1 = path(0)+"/cable_out_1990_SE_Aus.nc"
 f1 = addfile (filename1,"r")
-PFT_mask = where((f1->iveg({A:B},{C:D}) .ge. 1) .and. (f1->iveg({A:B},{C:D}) .le. 4), 1, 0)
+PFT_mask = where((f1->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f1->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
 
 default_val = f1->Qle@_FillValue
 
