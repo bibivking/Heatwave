@@ -32,7 +32,7 @@ Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 if PFT .eq. "all" then
   iveg_s = 0
   iveg_e = 20
-else PFT .eq. "tree" then
+else if PFT .eq. "tree" then
   iveg_s = 1
   iveg_e = 4
 end if

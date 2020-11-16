@@ -48,23 +48,18 @@ end
 ; ================================= Start ======================================
 begin
 
-case_name = (/"PUMP"/);(/"spinup1","spinup2"/)
-      ;(/ "Princeton_ctl_watmove_new_veg" /)
-      ; (/ "GSWP" /)
-path = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3_GW_pumping/outputs/"
-      ; "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
-      ; "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"
-      ; "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"
-      ; "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"
-      ; "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/"
+case_name = (/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
+;"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
+path = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
+
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
 
 ; =============================== Pre-define ===================================
-year_s   = 1981
-year_e   = 2010
-GRACE_start_year = 2003
-GRACE_end_year   = 2009
+year_s   = 2000
+year_e   = 2019
+GRACE_start_year = 2002
+GRACE_end_year   = 2017
 year_sum = year_e-year_s+1
 total    = year_sum*12
 case_sum = dimsizes(case_name)
@@ -73,8 +68,12 @@ case_sum = dimsizes(case_name)
 ; ================================ Set Regrid ==================================
 use_month     = "May" ; "Jul"
 time_scale    = "monthly" ; "annual"; "monthly"
-grace_version = "Gap-fill" ;"Gap-fill"; "Original"
-output        = "monthly"
+grace_version = "Original-fill-nan"
+                ;"Original-fill-nan": using Nan fill missing month
+                ;"Gap-fill" : Sanaa's gap fill
+                ;"Original" : if this option, should alwasy set GRACE_start_year = 2003
+                ;             GRACE_end_year <= 2010, since too many gaps after 2010
+output        = "daily" ;"monthly"
 cable_version = "CABLE-HESS" ;"LIS-CABLE" ; "CABLE-HESS"
 
 if cable_version .eq. "LIS-CABLE" then
@@ -105,7 +104,7 @@ if cable_version .eq. "LIS-CABLE" then
 else if cable_version .eq. "CABLE-HESS" then
     scale = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 
-    filename = path+case_name(0)+"/cable_out_"+year_s+".nc"
+    filename = path+case_name(0)+"/outputs-without-spinup/cable_out_"+year_s+"_SE_Aus.nc" ; MMY
     f = addfile (filename,"r")
 
     lat_size  = dimsizes(f->y)
@@ -149,27 +148,48 @@ res@gsnDraw            = True  ; Don't draw plots
 res@gsnFrame           = True  ; ?????
 
 ; =========================== Read GRACE and fill gap ==========================
-GRACE      = new((/total,360,720/),float)
-uncertainty= new((/total,360,720/),float)
-GRACE      = 0.
-uncertainty= 0.
+GRACE      = new((/total,360,720/),float, -99999.)
+uncertainty= new((/total,360,720/),float, -99999.)
+GRACE      = -99999.
+uncertainty= -99999.
 
 if GRACE_start_year .gt. year_s then
     compensate_month = (GRACE_start_year-year_s) * 12
-    ; months before 2003
+    ; months before grace start year
 else
     compensate_month = 0
 end if
 
-if grace_version .eq. "Original" then
+
+
+if grace_version .eq. "Original-fill-nan" then
+
+  filename   = "/g/data/w35/mm3972/data/GRACE/GRACE_JPL_RL06/GRCTellus.JPL.2002_2017_gap-fill.nc"
+  f          = addfile (filename,"r")
+
+  tot_grace = (GRACE_end_year-GRACE_start_year+1)*12 ; how many year will be read from GRACE
+  GRACE(compensate_month:compensate_month+tot_grace-1,:,:)      = f->lwe_thickness*10.
+  uncertainty(compensate_month:compensate_month+tot_grace-1,:,:)= f->uncertainty*10.
+
+  replace_ieeenan (GRACE, GRACE@_FillValue, 0)
+  replace_ieeenan (uncertainty, uncertainty@_FillValue, 0)
+
+  printVarSummary(GRACE)
+  printVarSummary(uncertainty)
+
+  plot = gsn_csm_contour(wks,GRACE(compensate_month,:,:),res)
+  plot = gsn_csm_contour(wks,GRACE(compensate_month+24,:,:),res)
+
+else if grace_version .eq. "Original" then
     filename   = "/g/data/w35/mm3972/data/GRACE/GRACE_JPL_RL06/GRCTellus.JPL.200204_201706.GLO.RL06M.MSCNv01CRIv01.nc"
     f          = addfile (filename,"r")
 
-    GRACE(compensate_month+0:compensate_month+4,:,:)       = dble2flt(f->lwe_thickness(7:11,:,:))*10.
-    GRACE(compensate_month+6:compensate_month+total-1,:,:) = dble2flt(f->lwe_thickness(12:total+5,:,:))*10.
+    tot_grace = (GRACE_end_year-GRACE_start_year+1)*12 ; how many year will be read from GRACE
+    GRACE(compensate_month+0:compensate_month+4,:,:)           = dble2flt(f->lwe_thickness(7:11,:,:))*10.
+    GRACE(compensate_month+6:compensate_month+tot_grace-1,:,:) = dble2flt(f->lwe_thickness(12:tot_grace+5,:,:))*10.
 
-    uncertainty(compensate_month+0:compensate_month+4,:,:) = dble2flt(f->uncertainty(7:11,:,:))*10.
-    uncertainty(compensate_month+6:compensate_month+total-1,:,:)= dble2flt(f->uncertainty(12:total+5,:,:))*10.
+    uncertainty(compensate_month+0:compensate_month+4,:,:)          = dble2flt(f->uncertainty(7:11,:,:))*10.
+    uncertainty(compensate_month+6:compensate_month+tot_grace-1,:,:)= dble2flt(f->uncertainty(12:tot_grace+5,:,:))*10.
 
     printVarSummary(GRACE)
     printVarSummary(uncertainty)
@@ -190,7 +210,7 @@ if grace_version .eq. "Original" then
     plot = gsn_csm_contour(wks,GRACE(compensate_month,:,:),res)
 
     do year = GRACE_start_year+1,GRACE_end_year
-        print("add year :" + year)
+        ; print("add year :" + year)
         May_ave = May_ave + GRACE(compensate_month+(year-GRACE_start_year)*12+4,:,:)
         Jun_ave = Jun_ave + GRACE(compensate_month+(year-GRACE_start_year)*12+5,:,:)
         Jul_ave = Jul_ave + GRACE(compensate_month+(year-GRACE_start_year)*12+6,:,:)
@@ -199,7 +219,7 @@ if grace_version .eq. "Original" then
     May_ave = May_ave/(GRACE_end_year-GRACE_start_year)
     Jun_ave = Jun_ave/(GRACE_end_year-GRACE_start_year)
     Jul_ave = Jul_ave/(GRACE_end_year-GRACE_start_year)
-    print(May_ave)
+    ; print(May_ave)
     plot = gsn_csm_contour(wks,May_ave,res)
     plot = gsn_csm_contour(wks,Jun_ave,res)
     plot = gsn_csm_contour(wks,Jul_ave,res)
@@ -260,6 +280,7 @@ else if grace_version .eq. "Gap-fill" then
 
 end if
 end if
+end if
 
 
 ; ====== post process GRACE =======
@@ -315,7 +336,7 @@ if cable_version .eq. "CABLE-HESS" then
        counter = 0
        do year = year_s,year_e
           print("year = " +year)
-          filename1 = path+case_name(case_num)+"/cable_out_"+year+".nc"
+          filename1 = path+case_name(case_num)+"/outputs-without-spinup/cable_out_"+year+"_SE_Aus.nc"
           f1 = addfile (filename1,"r")
           if output .eq. "monthly" then
             do month = 0,11
@@ -455,7 +476,7 @@ plot = gsn_csm_contour(wks,TWS(0,5,:,:),res)
 ;                         lat, lon, src_mask, dst_mask )
 
 
-; =========================== Calculate 2003-2009 avg ==========================
+; ======================= Calculate CABLE 2004-2009 avg ========================
 TWS_ave       = new((/case_sum, lat_size, lon_size/),float)
 GWMoist_ave   = new((/case_sum, lat_size, lon_size/),float)
 SoilMoist_ave = new((/case_sum, lat_size, lon_size/),float)
@@ -467,18 +488,20 @@ SoilMoist_ave = 0.0
 CanopInt_ave  = 0.0
 SWE_ave       = 0.0
 
-; Calculate 2004-2009 TWS average
-if year_e .gt. 2009 then
-  adjust  = (year_e - GRACE_end_year)*12
-else
-  adjust  = 0
-  GRACE_end_year = year_e
-end if
-TWS_ave        =  dim_avg_n_Wrap(TWS(:,compensate_month+12:total-1 - adjust,:,:),1)
-GWMoist_ave    =  dim_avg_n_Wrap(GWMoist(:,compensate_month+12:total-1 - adjust,:,:),1)
-CanopInt_ave   =  dim_avg_n_Wrap(CanopInt(:,compensate_month+12:total-1 - adjust,:,:),1)
-SWE_ave        =  dim_avg_n_Wrap(SWE(:,compensate_month+12:total-1 - adjust,:,:),1)
-SoilMoist_ave  =  dim_avg_n_Wrap(SoilMoist(:,compensate_month+12:total-1 - adjust,:,:),1)
+; ; Calculate 2004-2009 TWS average
+; if year_e .gt. 2009 then
+;   adjust  = (year_e - GRACE_end_year)*12
+; else
+;   adjust  = 0
+;   GRACE_end_year = year_e
+; end if
+tot_grace_mon = (2009-2004+1)*12
+adjust        = (2004-year_s)*12
+TWS_ave        =  dim_avg_n_Wrap(TWS(:,adjust:adjust+tot_grace_mon-1,:,:),1)
+GWMoist_ave    =  dim_avg_n_Wrap(GWMoist(:,adjust:adjust+tot_grace_mon-1,:,:),1)
+CanopInt_ave   =  dim_avg_n_Wrap(CanopInt(:,adjust:adjust+tot_grace_mon-1,:,:),1)
+SWE_ave        =  dim_avg_n_Wrap(SWE(:,adjust:adjust+tot_grace_mon-1,:,:),1)
+SoilMoist_ave  =  dim_avg_n_Wrap(SoilMoist(:,adjust:adjust+tot_grace_mon-1,:,:),1)
 
 ; Calculate TWS anormaly
 do time = 0,total -1
@@ -516,8 +539,11 @@ SoilMoist_global_ave   = 0.0
 Rain_global_ave        = 0.0
 
 do time = 0,total-1
-   GRACE_global_ave(0,time) = avg(GRACE(time,{A:B},{C:D}))
+   ; print("time = "+time)
+   ; print("average GRACE")
+   GRACE_global_ave(0,time)     = avg(GRACE(time,{A:B},{C:D}))
    uncertainty_global_ave(time) = avg(uncertainty(time,{A:B},{C:D}))
+   ; print("average CABLE")
    do case_num = 0,case_sum-1
       if cable_version .eq. "CABLE-HESS" then
           TWS_global_ave(case_num,time)       = avg(TWS(case_num,time,{A:B},{C:D}))
@@ -580,16 +606,10 @@ delete(res)
 delete(pic)
 
 ;_____________________________ PLOT ___________________________________
-pic = "./plots/time_serial_GRACE_JPL06-"+grace_version+"_vs_"+cable_version+"-"+case_name(0)+"_"+scale+"_"+time_scale
-
-wks = gsn_open_wks("pdf",pic)
-gsn_define_colormap(wks,"WhiteBlueGreenYellowRed")
-
 pres                   = True
 res                    = True              ; plot mods desired
 res@gsnDraw            = False             ; don't draw yet
 res@gsnFrame           = False             ; don't advance frame yet
-
 
 res@vpHeightF 	 = 0.4               ; change aspect ratio of plot
 res@vpWidthF 	   = 0.7
@@ -603,146 +623,101 @@ LineThicknesses	 = (/2.,2.,2.,2.,2./)      ; line thicknesses
 DashPatterns	   = (/0.,0.,0.,0.,0./)      ; make all lines solid
 Labels           = (/"TWS", "GWMoist","SoilMoist", "CanopInt", "SWE" /)
 
-if time_scale .eq. "monthly" then
+do case_num = 0,case_sum-1
+  pic = "./plots/time_serial_GRACE_JPL06-"+grace_version+"_vs_"+cable_version+"-"+case_name(case_num)+"_"+scale+"_"+time_scale
+  wks = gsn_open_wks("pdf",pic)
+  gsn_define_colormap(wks,"WhiteBlueGreenYellowRed")
 
-    x = ispan(1,total,1)
-    res@tmXBMode  = "Explicit"
-    res@tmXBValues= ispan(1,total+1,12*5)
-    res@tmXBLabels= tostring(ispan(year_s,year_e+1,5))
+  if time_scale .eq. "monthly" then
 
-    res@xyLineThicknessF       = 2.
-    res@xyLineColors           = LineColors
-    res@xyLineThicknesses      = LineThicknesses
-    res@xyDashPatterns	       = DashPatterns
-    res@xyExplicitLegendLabels = Labels
+      x = ispan(1,total,1)
+      res@tmXBMode  = "Explicit"
+      res@tmXBValues= ispan(1,total+1,12*5)
+      res@tmXBLabels= tostring(ispan(year_s,year_e+1,5))
 
-    do case_num = 0,case_sum - 1
-        res@txString           = grace_version+" vs "+cable_version+" "+case_name(case_num)
+      res@xyLineThicknessF       = 2.
+      res@xyLineColors           = LineColors
+      res@xyLineThicknesses      = LineThicknesses
+      res@xyDashPatterns	       = DashPatterns
+      res@xyExplicitLegendLabels = Labels
 
-        res@pmLegendDisplayMode= "Never"
-        res@xyLineColor        = "Blue"
-        res@xyMonoLineColor    = True             ; want colored lines
-        top_plot = gsn_csm_xy (wks,x,GRACE_global_ave(0,:),res)       ; create line plot
-        delete(res@xyLineColor)
+      do case_num = 0,case_sum - 1
+          res@txString           = grace_version+" vs "+cable_version+" "+case_name(case_num)
 
-        ; Create a rain plot
-        res@xyLineColor        = "gray"
-        bot_plot  = gsn_csm_xy (wks,x,Rain_global_ave(0,:),res)  ; Create filled XY plot.
+          res@pmLegendDisplayMode= "Never"
+          res@xyLineColor        = "Blue"
+          res@xyMonoLineColor    = True             ; want colored lines
+          top_plot = gsn_csm_xy (wks,x,GRACE_global_ave(0,:),res)       ; create line plot
+          delete(res@xyLineColor)
 
-      ; Create a plot with the area between both curves filled in blue.
-      ;  res@gsnXYFillColors = "LightBlue"
-      ;  res@xyLineColor     = -1                           ; We don't want the line, so make it transparent.
-      ;  bot_plot  = gsn_csm_xy (wks,x,GRACE_global_ave(1:2,:),res)  ; Create filled XY plot.
-      ;  delete(res@gsnXYFillColors)
+          ; Create a rain plot
+          res@xyLineColor        = "gray"
+          bot_plot  = gsn_csm_xy (wks,x,Rain_global_ave(0,:),res)  ; Create filled XY plot.
 
-      ; Create a plot with the area between both curves filled in pink.
+        ; Create a plot with the area between both curves filled in blue.
+        ;  res@gsnXYFillColors = "LightBlue"
+        ;  res@xyLineColor     = -1                           ; We don't want the line, so make it transparent.
+        ;  bot_plot  = gsn_csm_xy (wks,x,GRACE_global_ave(1:2,:),res)  ; Create filled XY plot.
+        ;  delete(res@gsnXYFillColors)
 
+        ; Create a plot with the area between both curves filled in pink.
 
-        res@pmLegendDisplayMode    = "Always"
-        res@xyMonoLineColor        = False             ; want colored lines
-        tmp = new((/5,total/),float)
+          res@pmLegendDisplayMode    = "Always"
+          res@xyMonoLineColor        = False             ; want colored lines
+          tmp = new((/5,total/),float)
 
-        tmp(0,:) = TWS_global_ave(case_num,:)
-        tmp(1,:) = GWMoist_global_ave(case_num,:)
-        tmp(2,:) = SoilMoist_global_ave(case_num,:)
-        tmp(3,:) = CanopInt_global_ave(case_num,:)
-        tmp(4,:) = SWE_global_ave(case_num,:)
+          tmp(0,:) = TWS_global_ave(case_num,:)
+          tmp(1,:) = GWMoist_global_ave(case_num,:)
+          tmp(2,:) = SoilMoist_global_ave(case_num,:)
+          tmp(3,:) = CanopInt_global_ave(case_num,:)
+          tmp(4,:) = SWE_global_ave(case_num,:)
 
-        mid_plot  = gsn_csm_xy (wks,x,tmp,res)  ; Create another filled XY plot.
-        delete(tmp)
+          mid_plot  = gsn_csm_xy (wks,x,tmp,res)  ; Create another filled XY plot.
+          delete(tmp)
 
-        overlay(mid_plot,top_plot)
-        ; overlay(bot_plot,mid_plot)
-        ; overlay(bot_plot,top_plot)
+          overlay(mid_plot,top_plot)
+          ; overlay(bot_plot,mid_plot)
+          ; overlay(bot_plot,top_plot)
 
-        maximize_output(wks,pres)
+          maximize_output(wks,pres)
 
-        delete(top_plot)
-        delete(mid_plot)
-        delete(bot_plot)
+          delete(top_plot)
+          delete(mid_plot)
+          delete(bot_plot)
 
-    end do; case_num
-else if time_scale .eq. "annual" then
+      end do; case_num
+  else if time_scale .eq. "annual" then
 
-  x = ispan(1,year_sum,1)
-  res@tmXBValues=ispan(1,year_sum,1)
-  xlabals = (/"2003","2004","2005","2006","2007","2008","2009","2010"/)
-  res@tmXBLabels=xlabals(0:year_sum-1)
+    x = ispan(1,year_sum,1)
+    res@tmXBValues=ispan(1,year_sum,1)
+    xlabals = (/"2003","2004","2005","2006","2007","2008","2009","2010"/)
+    res@tmXBLabels=xlabals(0:year_sum-1)
 
-  res@xyMonoLineColor    = False             ; want colored lines
-  res@xyLineColor        = "Blue"
-  res@xyLineThicknessF   = 2.
-  top_plot = gsn_csm_xy (wks,x,GRACE_global_ave_year(0,:),res)       ; create line plot
+    res@xyMonoLineColor    = False             ; want colored lines
+    res@xyLineColor        = "Blue"
+    res@xyLineThicknessF   = 2.
+    top_plot = gsn_csm_xy (wks,x,GRACE_global_ave_year(0,:),res)       ; create line plot
 
-; Create a plot with the area between both curves filled in blue.
- delete(res@xyLineColor)
- res@gsnXYFillColors    = "LightBlue"
- res@xyLineColor        = -1                           ; We don't want the line, so make it transparent.
- bot_plot  = gsn_csm_xy (wks,x,GRACE_global_ave_year(1:2,:),res)  ; Create filled XY plot.
+  ; Create a plot with the area between both curves filled in blue.
+   delete(res@xyLineColor)
+   res@gsnXYFillColors    = "LightBlue"
+   res@xyLineColor        = -1                           ; We don't want the line, so make it transparent.
+   bot_plot  = gsn_csm_xy (wks,x,GRACE_global_ave_year(1:2,:),res)  ; Create filled XY plot.
 
-; Create a plot with the area between both curves filled in pink.
-  delete(res@gsnXYFillColors)
-  res@xyLineColors       = LineColors
-  res@xyLineThicknesses	 = LineThicknesses
-  res@xyDashPatterns	   = DashPatterns
-  mid_plot  = gsn_csm_xy (wks,x,TWS_global_ave_year,res)  ; Create another filled XY plot.
+  ; Create a plot with the area between both curves filled in pink.
+    delete(res@gsnXYFillColors)
+    res@xyLineColors       = LineColors
+    res@xyLineThicknesses	 = LineThicknesses
+    res@xyDashPatterns	   = DashPatterns
+    mid_plot  = gsn_csm_xy (wks,x,TWS_global_ave_year(case_num,:),res)  ; Create another filled XY plot.
 
-   overlay(mid_plot,top_plot)
-;  overlay(bot_plot,mid_plot)
-;  overlay(bot_plot,top_plot)
-;  maximize_output(wks,pres)
+     overlay(mid_plot,top_plot)
+  ;  overlay(bot_plot,mid_plot)
+  ;  overlay(bot_plot,top_plot)
+  ;  maximize_output(wks,pres)
 
-end if
-end if
-
-; ;*****************************************************
-; ; Manually create and attach legend
-; ;*****************************************************
-; dum1 = new(case_sum,graphic)
-; dum2 = new(case_sum,graphic)
-;
-; res_text                = True                  ; text mods desired
-; res_text@txFontHeightF  = 0.013                ; change text size
-; res_text@txJust         = "CenterLeft"          ; text justification
-; res_lines               = True                  ; polyline mods desired
-;
-; do case_num = 0,case_sum-1
-;   if case_num .lt. case_sum then
-;      res_lines@gsLineDashPattern = DashPatterns(case_num)
-;      res_lines@gsLineThicknessF  = LineThicknesses(case_num)
-;      res_lines@gsLineColor       = LineColors(case_num)
-;   else
-;      res_lines@gsLineDashPattern = 0.
-;      res_lines@gsLineThicknessF  = 2.
-;      res_lines@gsLineColor       = "blue"                                 ; change to blue
-;   end if
-;
-;   if case_num .eq. 7 then
-;      point_xl = 1
-;      point_xr = 5
-;      point_xt = 5
-;      point_y  = 65
-;   else if case_num .ge. 0 .and. case_num .le. 2 then
-;      point_xl = (case_num+1)*24+1
-;      point_xr = (case_num+1)*24+6
-;      point_xt = (case_num+1)*24+6
-;      point_y = 65
-;   else
-;      point_xl = (case_num-3)*24+1
-;      point_xr = (case_num-3)*24+6
-;      point_xt = (case_num-3)*24+6
-;      point_y = 58
-;   end if
-;   end if
-;   xx = (/point_xl,point_xr/)
-;   yy = (/point_y,point_y/)
-;   dum1(case_num) = gsn_add_polyline(wks,mid_plot,xx,yy,res_lines)              ; add polyline
-;   if case_num .lt. case_sum then
-;      dum2(case_num) = gsn_add_text(wks,mid_plot,case_name(case_num),point_xt,point_y,res_text); add text
-;   else
-;      dum2(case_num) = gsn_add_text(wks,mid_plot,"GRACE",point_xt,point_y,res_text); add text
-;   end if
-; end do
-; maximize_output(wks,pres)
+  end if
+  end if
+end do
 
 end

@@ -14,18 +14,22 @@ end setvalues
 ;_____________________________________
 
 ; ================================== Options ===================================
-year_s    = 2010
-year_e    = 2012
-case_name = (/"CTL","FREE_DRAIN"/);,"PUMP","PUMPx10","PUMPx100","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
-heatwave  = "hw" ;"hw" ; "hot-day" ; "all-day"
+year_s    = 2017
+year_e    = 2019
+case_name = (/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
+            ;,"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
+heatwave  = "hw-90th"
+            ; 35 C HW metric : "hw", "hot-day"
+            ; 90 th HW metric : "hw-90th"
+            ; "all-day"
 
 plot_type = "all"   ;"water_bal" ;"all"
 scale     = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 threshold = 3 ; heatwave threshold, 3 refers to 3 consistant days over 35 degree
 
 obs       = False
-plot_row  = 1 ;2 ; toint(ceil(case_sum/2))
-plot_col  = 2 ;4
+plot_row  = 1 ; toint(ceil(case_sum/2))
+plot_col  = 4
 
 ; ================================= Predefine ==================================
 case_sum  = dimsizes(case_name)
@@ -45,7 +49,8 @@ pic_name  = "CTL_vs_PUMP_"+heatwave+"_"+scale+"_"+year_s+"-"+year_e
 ; =================================== Path =====================================
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
-  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)+"/outputs"
+  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)+"/outputs-without-spinup"
+  ; path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)+"/outputs"
 end do
 
 if obs .eq. True then
@@ -100,6 +105,8 @@ WatTable = new((/case_sum,lat_sum,lon_sum/),float,def_value)
 VegT     = new((/case_sum,lat_sum,lon_sum/),float,def_value)
 CanT     = new((/case_sum,lat_sum,lon_sum/),float,def_value)
 SMsurf   = new((/case_sum,lat_sum,lon_sum/),float,def_value)
+SM64cm      = new((/case_sum,lat_sum,lon_sum/),float,def_value)
+SM64_460cm  = new((/case_sum,lat_sum,lon_sum/),float,def_value)
 SoilTemp = new((/case_sum,6,lat_sum,lon_sum/),float,def_value)
 SoilMoist= new((/case_sum,6,lat_sum,lon_sum/),float,def_value)
 GWwb     = new((/case_sum,lat_sum,lon_sum/),float,def_value)
@@ -124,6 +131,8 @@ CanT     = 0.
 SoilTemp = 0.
 SoilMoist= 0.
 SMsurf   = 0.
+SM64cm      = 0.
+SM64_460cm  = 0.
 GWwb     = 0.
 Rnet     = 0.
 Qle      = 0.
@@ -132,7 +141,7 @@ Qg       = 0.
 
 print("carry out "+heatwave)
 
-if heatwave .ne. "all-day" then
+if heatwave .eq. "hot-day" .or. heatwave .eq. "hw" then
 
   HW = new((/day_sum,lat_sum,lon_sum/),float)
   i = 0
@@ -180,7 +189,30 @@ if heatwave .ne. "all-day" then
     delete(i)
   end if
   HW_tot = dim_sum_n_Wrap(HW,0)
+
+else if heatwave .eq. "hw-90th" then
+  filename_hw = "/g/data/w35/mm3972/scripts/ehfheatwaves/HW_Event_Indicator_1970-2019.nc"
+  fhw         = addfile(filename_hw,"r")
+
+  HW = new((/day_sum,lat_sum,lon_sum/),float)
+
+  day_start = 0
+  do year = 1970, year_s - 1
+    if ( mod(year,4) .eq. 0) then
+       day_start = day_start + 366
+    else
+       day_start = day_start + 365
+    end if
+  end do
+
+  HW = fhw->event(day_start:day_start+day_sum-1,:,:)*1.
+
+  HW_tot = dim_sum_n_Wrap(HW,0)
+  delete(filename_hw)
+  delete(fhw)
 end if
+end if
+
 
 day_step_s = 0
 do year = year_s,year_e
@@ -221,6 +253,15 @@ do year = year_s,year_e
                             + dim_avg_n_Wrap(f1->SoilMoist(:,1,{A:B},{C:D}),0)*0.058 \
                             + dim_avg_n_Wrap(f1->SoilMoist(:,2,{A:B},{C:D}),0)*(0.1 - 0.022 - 0.058)) \
                             / 0.1
+        SM64cm(case_num,:,:)   = SM64cm(case_num,:,:) + ( dim_avg_n_Wrap(f1->SoilMoist(:,0,{A:B},{C:D}),0)*0.022 \
+                                                        + dim_avg_n_Wrap(f1->SoilMoist(:,1,{A:B},{C:D}),0)*0.058 \
+                                                        + dim_avg_n_Wrap(f1->SoilMoist(:,2,{A:B},{C:D}),0)*0.154 \
+                                                        + dim_avg_n_Wrap(f1->SoilMoist(:,3,{A:B},{C:D}),0)*0.409)\
+                                                        / 0.643
+
+        SM64_460cm(case_num,:,:)= SM64_460cm(case_num,:,:) + ( dim_avg_n_Wrap(f1->SoilMoist(:,4,{A:B},{C:D}),0)*1.085 \
+                                                           +   dim_avg_n_Wrap(f1->SoilMoist(:,5,{A:B},{C:D}),0)*2.872)\
+                                                        / (1.085 + 2.872)
         GWwb(case_num,:,:)     = GWwb(case_num,:,:)  + dim_avg_n_Wrap(f1->GWMoist(:,{A:B},{C:D}),0)
         SoilTemp(case_num,:,:,:) = SoilTemp(case_num,:,:,:)  + dim_avg_n_Wrap(f1->SoilTemp(:,:,{A:B},{C:D}),0)
         SoilMoist(case_num,:,:,:)= SoilMoist(case_num,:,:,:) + dim_avg_n_Wrap(f1->SoilMoist(:,:,{A:B},{C:D}),0)
@@ -244,10 +285,20 @@ do year = year_s,year_e
         ; LAI(case_num,:,:)      = LAI(case_num,:,:)    + dim_sum_n_Wrap(f1->LAI(:,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)
         VegT(case_num,:,:)     = VegT(case_num,:,:)   + dim_sum_n_Wrap(f1->VegT(:,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)
         CanT(case_num,:,:)     = CanT(case_num,:,:)   + dim_sum_n_Wrap(f1->CanT(:,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)
-        SMsurf(case_num,:,:)   = SMsurf(case_num,:,:) + ( dim_sum_n_Wrap(f1->SoilMoist(:,0,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:)*0.022,0) \
-                               + dim_sum_n_Wrap(f1->SoilMoist(:,1,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:)*0.058,0) \
-                               + dim_sum_n_Wrap(f1->SoilMoist(:,2,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:)*(0.1 - 0.022 - 0.058),0)) \
+        SMsurf(case_num,:,:)   = SMsurf(case_num,:,:) + ( dim_sum_n_Wrap(f1->SoilMoist(:,0,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*0.022 \
+                               + dim_sum_n_Wrap(f1->SoilMoist(:,1,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*0.058 \
+                               + dim_sum_n_Wrap(f1->SoilMoist(:,2,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*(0.1 - 0.022 - 0.058)) \
                                / 0.1
+
+        SM64cm(case_num,:,:)   = SM64cm(case_num,:,:) + (dim_sum_n_Wrap(f1->SoilMoist(:,0,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*0.022 \
+                                                       + dim_sum_n_Wrap(f1->SoilMoist(:,1,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*0.058 \
+                                                       + dim_sum_n_Wrap(f1->SoilMoist(:,2,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*0.154 \
+                                                       + dim_sum_n_Wrap(f1->SoilMoist(:,3,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*0.409)\
+                                                       / 0.643
+
+        SM64_460cm(case_num,:,:)= SM64_460cm(case_num,:,:) + ( dim_sum_n_Wrap(f1->SoilMoist(:,4,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*1.085 \
+                                                           +   dim_sum_n_Wrap(f1->SoilMoist(:,5,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*2.872)\
+                                                          / (1.085 + 2.872)
         GWwb(case_num,:,:)     = GWwb(case_num,:,:)  + dim_sum_n_Wrap(f1->GWMoist(:,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)
         do soil = 0,5
           SoilTemp(case_num,soil,:,:) = SoilTemp(case_num,soil,:,:)  \
@@ -283,6 +334,8 @@ if heatwave .eq. "all-day" then
     CanT     = CanT/year_sum -273.15
     ; LAI      = LAI/year_sum
     SMsurf   = SMsurf/year_sum
+    SM64cm   = SM64cm/year_sum
+    SM64_460cm = SM64_460cm/year_sum
     SoilTemp = SoilTemp/year_sum-273.15
     SoilMoist= SoilMoist/year_sum
     GWwb     = GWwb/year_sum
@@ -307,6 +360,8 @@ else
       CanT(case_num,:,:)     = where(HW_tot .ne. -9999., CanT(case_num,:,:)/HW_tot-273.15, CanT@_FillValue)
       ; LAI(case_num,:,:)      = where(HW_tot .ne. -9999., LAI(case_num,:,:)/HW_tot, LAI@_FillValue)
       SMsurf(case_num,:,:)   = where(HW_tot .ne. -9999., SMsurf(case_num,:,:)/HW_tot, SMsurf@_FillValue)
+      SM64cm(case_num,:,:)   = where(HW_tot .ne. -9999., SM64cm(case_num,:,:)/HW_tot, SM64cm@_FillValue)
+      SM64_460cm(case_num,:,:)= where(HW_tot .ne. -9999., SM64_460cm(case_num,:,:)/HW_tot, SM64_460cm@_FillValue)
       GWwb(case_num,:,:)     = where(HW_tot .ne. -9999., GWwb(case_num,:,:)/HW_tot, GWwb@_FillValue)
       do soil = 0,5
         SoilTemp(case_num,soil,:,:) =  where(HW_tot .ne. -9999., SoilTemp(case_num,soil,:,:)/HW_tot-273.15, SoilTemp@_FillValue)
@@ -494,7 +549,7 @@ if heatwave .ne. "all-day" then
   wat_units       = "/d)"
   day2yr          = 1
   levels_wat      = fspan(0,5,21)
-  levels_wat_diff = fspan(-1,1,21)
+  levels_wat_diff = fspan(-1.5,1.5,31)
   levels_rchg     = fspan(-5,5,21)
   levels_rchg_diff= fspan(-1,1,21)
 else
@@ -509,16 +564,16 @@ end if
 levels_sm      = fspan(0,0.5,21)
 levels_sm_diff = fspan(-0.1,0.1,21)
 levels_fw      = fspan(0,1,21)
-levels_fw_diff = fspan(-0.4,0.4,41)
+levels_fw_diff = fspan(-0.5,0.5,51)
 levels_temp    = fspan(0,40,41)
 levels_temp_diff = fspan(-1,1,21)
 levels_eng       = fspan(-50,200,26)
-levels_eng_diff  = fspan(-5,5,21)
+levels_eng_diff  = fspan(-30,30,31)
   ; ============================= plot water balance ===========================
 if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     pic1 = "./plots/HESS_water_balance_"+pic_name
     wks1 = gsn_open_wks("pdf",pic1)
-    gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
+    gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"testcmap") ;"BlueYellowRed") ; "ViBlGrWhYeOrRe"
     plots = new(case_sum,graphic)
 
     if heatwave .ne. "all-day" then
@@ -553,7 +608,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_wat_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,Evap(case_num,:,:)*day2yr-Evap(0,:,:)*day2yr,res)
@@ -575,7 +630,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_wat_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,TVeg(case_num,:,:)*day2yr-TVeg(0,:,:)*day2yr,res)
@@ -599,7 +654,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_fw_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,Fwsoil(case_num,:,:)-Fwsoil(0,:,:),res)
@@ -623,7 +678,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_wat_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,ESoil(case_num,:,:)*day2yr-ESoil(0,:,:)*day2yr,res)
@@ -647,7 +702,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_wat_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,ECanop(case_num,:,:)*day2yr-ECanop(0,:,:)*day2yr,res)
@@ -671,7 +726,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_wat_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,Runoff(case_num,:,:)*day2yr-Runoff(0,:,:)*day2yr,res)
@@ -689,13 +744,13 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     ; Recharge
     pres@txString = "Recharge (mm"+wat_units
     res@cnLevels = levels_rchg
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     res@tiMainString = case_name(0)
     plots(0) = gsn_csm_contour(wks1,Qrec(0,:,:)*day2yr,res)
     delete(res@cnLevels)
 
     res@cnLevels = levels_rchg_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,Qrec(case_num,:,:)*day2yr-Qrec(0,:,:)*day2yr,res)
@@ -715,7 +770,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     ;
     ; levels = fspan(-10,10,41)
     ; res@cnLevels = levels
-    ; res@cnFillPalette = "ViBlGrWhYeOrRe"
+    ; res@cnFillPalette = "testcmap"
     ; do case_num = 1,case_sum-1
     ;   res@tiMainString = case_name(case_num)
     ;   plots(case_num) = gsn_csm_contour(wks1,WatTable(case_num,:,:)-WatTable(0,:,:),res)
@@ -733,17 +788,47 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_sm_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,SMsurf(case_num,:,:)-SMsurf(0,:,:),res)
     end do
     delete(res@cnLevels)
 
-    ; res@tiMainString = "GLEAM"
-    ; plots(case_sum) = gsn_csm_contour(wks1,SMsurf_GLEAM,res)
-    ; delete(levels)
-    ; delete(res@cnLevels)
+    ; SM64cm
+    pres@txString = "Soil moisture in the top 64cm (m3/m3)"
+    res@cnLevels = levels_sm
+    res@cnFillPalette = "WhiteBlueGreenYellowRed"
+    res@tiMainString = case_name(0)
+    plots(0) = gsn_csm_contour(wks1,SM64cm(0,:,:),res)
+    delete(res@cnLevels)
+
+    res@cnLevels = levels_sm_diff
+    res@cnFillPalette = "testcmap"
+    do case_num = 1,case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num) = gsn_csm_contour(wks1,SM64cm(case_num,:,:)-SM64cm(0,:,:),res)
+    end do
+    delete(res@cnLevels)
+
+    gsn_panel(wks1,(/plots/),(/plot_row,plot_col/),pres)
+
+    ; SM64_460cm
+    pres@txString = "Soil moisture in the 64-460 cm (m3/m3)"
+    res@cnLevels = levels_sm
+    res@cnFillPalette = "WhiteBlueGreenYellowRed"
+    res@tiMainString = case_name(0)
+    plots(0) = gsn_csm_contour(wks1,SM64_460cm(0,:,:),res)
+    delete(res@cnLevels)
+
+    res@cnLevels = levels_sm_diff
+    res@cnFillPalette = "testcmap"
+    do case_num = 1,case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num) = gsn_csm_contour(wks1,SM64_460cm(case_num,:,:)-SM64_460cm(0,:,:),res)
+    end do
+    delete(res@cnLevels)
+
     gsn_panel(wks1,(/plots/),(/plot_row,plot_col/),pres)
 
     ; Soil Moist
@@ -756,7 +841,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
         delete(res@cnLevels)
 
         res@cnLevels = levels_sm_diff
-        res@cnFillPalette = "ViBlGrWhYeOrRe"
+        res@cnFillPalette = "testcmap"
         do case_num = 1,case_sum-1
           res@tiMainString = case_name(case_num)
           plots(case_num) = gsn_csm_contour(wks1,SoilMoist(case_num,soil,:,:)-SoilMoist(0,soil,:,:),res)
@@ -773,7 +858,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_sm_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,GWwb(case_num,:,:)-GWwb(0,:,:),res)
@@ -790,7 +875,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_temp_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,VegT(case_num,:,:)-VegT(0,:,:),res)
@@ -808,7 +893,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_temp_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks1,CanT(case_num,:,:)-CanT(0,:,:),res)
@@ -827,7 +912,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
         delete(res@cnLevels)
 
         res@cnLevels = levels_temp_diff
-        res@cnFillPalette = "ViBlGrWhYeOrRe"
+        res@cnFillPalette = "testcmap"
         do case_num = 1,case_sum-1
           res@tiMainString = case_name(case_num)
           plots(case_num) = gsn_csm_contour(wks1,SoilTemp(case_num,soil,:,:)-SoilTemp(0,soil,:,:),res)
@@ -874,7 +959,7 @@ end if
 if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
     pic2 = "./plots/HESS_energy_balance_"+pic_name
     wks2 = gsn_open_wks("pdf",pic2)
-    gsn_define_colormap(wks2,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
+    gsn_define_colormap(wks2,"WhiteBlueGreenYellowRed") ;"testcmap") ;"BlueYellowRed")
 
     plots = new(case_sum,graphic)
 
@@ -887,7 +972,7 @@ if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_eng_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks2,Rnet(case_num,:,:)-Rnet(0,:,:),res)
@@ -910,7 +995,7 @@ if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_eng_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks2,Qle(case_num,:,:)-Qle(0,:,:),res)
@@ -932,7 +1017,7 @@ if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_eng_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks2,Qh(case_num,:,:)-Qh(0,:,:),res)
@@ -954,7 +1039,7 @@ if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
     delete(res@cnLevels)
 
     res@cnLevels = levels_eng_diff
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
+    res@cnFillPalette = "testcmap"
     do case_num = 1,case_sum-1
       res@tiMainString = case_name(case_num)
       plots(case_num) = gsn_csm_contour(wks2,Qg(case_num,:,:)-Qg(0,:,:),res)
@@ -967,5 +1052,5 @@ if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
     ; delete(res@cnLevels)
     gsn_panel(wks2,(/plots/),(/plot_row,plot_col/),pres)
 end if
-exit
+
 end
