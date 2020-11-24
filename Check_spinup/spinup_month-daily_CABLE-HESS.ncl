@@ -18,14 +18,16 @@ hydr_param = True
 time_scale = "monthly" ;"monthly" ; "daily"
 PFT        = "all" ; "tree"
 scale      = "SE-AU"
-year_s     = 1900
-year_e     = 2200
+year_s     = 1970
+year_e     = 1999
 year_sum   = year_e-year_s+1
-pic_name   = "CABLE-HESS_GW_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
+pic_name   = "CABLE-HESS_GW_SPINUP_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
 
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-case_name = "SPINUP"
-;(/"CTL","FREE_DRAIN"/);,"PUMP","PUMPx10","PUMPx100","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
+case_name = (/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
+;(/"outputs","outputs-without-spinup"/)
+;"SPINUP"
+;"PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 
 
@@ -66,15 +68,14 @@ end if
 case_sum  = dimsizes(case_name)
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
-  path(case_num) = path_mum+case_name(case_num)+"/outputs"
+  path(case_num) = path_mum+case_name(case_num)
 end do
 
 ; ___________________________ TREE Mask ______________________________
 
-filename1 = path(0)+"/cable_out_1990_SE_Aus.nc"
+filename1 = path(0)+"/outputs/cable_out_1990_SE_Aus.nc"
 f1 = addfile (filename1,"r")
 PFT_mask = where((f1->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f1->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
-
 default_val = f1->Qle@_FillValue
 
 delete(filename1)
@@ -140,7 +141,7 @@ do case_num = 0, case_sum -1
        dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
     end if
 
-    filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
+    filename1 = path(case_num)+"/outputs/cable_out_"+year+"_SE_Aus.nc"
     f1 = addfile (filename1,"r")
 
     if time_scale .eq. "monthly" then

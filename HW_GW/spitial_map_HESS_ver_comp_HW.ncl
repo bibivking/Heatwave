@@ -44,12 +44,12 @@ do year = year_s,year_e
   end if
 end do
 
-pic_name  = "CTL_vs_PUMP_"+heatwave+"_"+scale+"_"+year_s+"-"+year_e
+pic_name  = "CTL_vs_PUMP_SPINUP"+heatwave+"_"+scale+"_"+year_s+"-"+year_e
 
 ; =================================== Path =====================================
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
-  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)+"/outputs-without-spinup"
+  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)+"/outputs"
   ; path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)+"/outputs"
 end do
 

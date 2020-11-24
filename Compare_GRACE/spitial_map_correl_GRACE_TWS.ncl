@@ -7,13 +7,19 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin
 
-case_name = (/\
-              "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3/outputs/GSWP/"\
-             /)
+; ___________________________________ Time _____________________________________
+year_s = 2000
+year_e = 2019
+GRACE_start_year = year_s
+GRACE_end_year   = year_e
+year_sum = year_e-year_s+1
+total    = year_sum*12
+Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers and 1 aquifer
 
-case_name_brf = (/\
-              "GSWP"\
-               /)
+; __________________________________ Path ______________________________________
+path      = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
+
+case_name = (/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
 
 var_name= (/\
            "SoilMoist",\     ;"m^3/m^3"  Average layer soil moisture
@@ -23,32 +29,44 @@ var_name= (/\
            "GWdz"\           ;"Mean aquifer layer thickness" ;
          	 /)
 
-Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers and 1 aquifer
+var_sum  = dimsizes(var_name)
+case_sum = dimsizes(case_name)
+
 
 ; ____________________________ Options _______________________________
-deseason = True
-print(deseason)
-scale = "World" ;"AU" or "World"
-PRE   = False ; True using Precipitation-Runoff-Evaporation vs GRACE
-             ; False using SoilMoist+GWMoist+CanopInt+SWE vs GRACE
-GRACE_opt       = "TWS";"Change_Rate"
+deseason        = True
+print("deseason = " deseason)
+scale           = "Global" ;"AU"; "Global"; "SE-AU"
+PRE             = False ; True using Precipitation-Runoff-Evaporation vs GRACE
+                        ; False using SoilMoist+GWMoist+CanopInt+SWE vs GRACE
+GRACE_opt       = "TWS" ;"Change_Rate"
 
 if GRACE_opt .eq. "Change_Rate" then
   Change_Rate_opt = "CLASS" ;"Sanaa"
 else if GRACE_opt .eq. "TWS" then
-  output          = "daily"
-  use_month       = "May"
+  output          = "daily" ; "monthly"
 end if
 end if
 
+if scale .eq. "Global" then
+  A = -90.
+  B = 90.
+  C = 0.
+  D = 360.
+else if scale .eq. "SE-AU" then
+  A = -40.
+  B = -28.
+  C = 140.
+  D = 154.
+else if scale .eq. "AU" then
+  A = -44.
+  B = -10.
+  C = 112.
+  D = 154.
+end if
+end if
+end if
 
-;______________________________ Data _________________________________
-year_s = 2003
-year_e = 2010
-year_sum = year_e-year_s+1
-total    = year_sum*12
-var_sum  = dimsizes(var_name)
-case_sum = dimsizes(case_name)
 
 ; ___________________________ Plot Check ______________________________
 pic = "check"
@@ -66,9 +84,12 @@ res@lbLabelBarOn       = True
 res@cnLinesOn          = False
 
 ;_______________________________ PFT ___________________________________
-filename = case_name(0)+"/cable_out_"+year_s+".nc"
-f = addfile (filename,"r")
-iveg = f->iveg
+filename = path+case_name(0)+"/cable_out_"+year_s+"_SE_Aus.nc"
+f        = addfile (filename,"r")
+iveg     = f->iveg
+lat_size = dimsizes(f->y({A:B}})
+lon_size = dimsizes(f->x({C:D}))
+
 delete(f)
 delete(filename)
 
@@ -188,53 +209,28 @@ if GRACE_opt .eq. "Change_Rate" then
 
 else if GRACE_opt .eq. "TWS" then
 
-    filename   = "/g/data/w35/mm3972/data/GRACE/GRACE_JPL_RL06/GRCTellus.JPL.200204_201706.GLO.RL06M.MSCNv01CRIv01.nc"
+    filename   = "/g/data/w35/Shared_data/Observations/GRACE/GRACE_JPLRL06M_MASCON/GRCTellus.JPL.2002_2020_gap-fill_MMY.nc"
     f          = addfile (filename,"r")
 
-    GRACE(0:4,:,:)       = dble2flt(f->lwe_thickness(7:11,:,:))*10.
-    GRACE(6:total-1,:,:) = dble2flt(f->lwe_thickness(12:total+5,:,:))*10.
-    GRACE@_FillValue     = dble2flt(f->lwe_thickness@_FillValue)
+    tot_grace       = (GRACE_end_year-GRACE_start_year+1)*12 ; how many year will be read from GRACE
+    GRACE_ts_str_yr = (GRACE_start_year - 2002) * 12
+    GRACE_ts_tot    = (GRACE_end_year - GRACE_start_year + 1) * 12 -1
+    GRACE(compensate_month:compensate_month+tot_grace-1,{A:B},{C:D})      = \
+              f->lwe_thickness(GRACE_ts_str_yr:GRACE_ts_str_yr+GRACE_ts_tot,{A:B},{C:D})*10.
 
-    May_ave = new((/360,720/),float)
-    Jun_ave = new((/360,720/),float)
-    Jul_ave = new((/360,720/),float)
-    May_ave = 0.
-    Jun_ave = 0.
-    Jul_ave = 0.
-
-    do year = year_s+1,year_e
-      print("add year :" + year)
-      May_ave = May_ave + GRACE((year-year_s)*12+4,:,:)
-      Jun_ave = Jun_ave + GRACE((year-year_s)*12+5,:,:)
-      Jul_ave = Jul_ave + GRACE((year-year_s)*12+6,:,:)
-    end do
-
-    May_ave = May_ave/(year_e-year_s)
-    Jun_ave = Jun_ave/(year_e-year_s)
-    Jul_ave = Jul_ave/(year_e-year_s)
-
-    if use_month .eq. "Jul" then
-       GRACE(5,:,:) = GRACE(6,:,:) * (Jun_ave/Jul_ave)
-    else if use_month .eq. "May" then
-       GRACE(5,:,:) = GRACE(4,:,:) * (Jun_ave/May_ave)
-    end if
-    end if
-
-    delete(May_ave)
-    delete(Jun_ave)
-    delete(Jul_ave)
+    replace_ieeenan (GRACE, GRACE@_FillValue, 0)
 
     GRACE!0 = "time"
     GRACE!1 = "lat"
     GRACE!2 = "lon"
-    GRACE&lat = dble2flt(f->lat)
-    GRACE&lon = dble2flt(f->lon)
+    GRACE&lat = f->lat
+    GRACE&lon = f->lon
     delete(f)
 
     ;______________________________ CABLE INPUT __________________________________
-    TWS           = new((/case_sum,total,360,720/),float)
-    TWS_ave       = new((/case_sum,360,720/),float)
-    Rain          = new((/case_sum,total,360,720/),float)
+    TWS           = new((/case_sum,total,lat_size,lon_size/),float)
+    TWS_ave       = new((/case_sum,lat_size,lon_size/),float)
+    Rain          = new((/case_sum,total,lat_size,lon_size/),float)
 
     TWS           = 0.0
     TWS_ave       = 0.0
@@ -248,16 +244,16 @@ else if GRACE_opt .eq. "TWS" then
        do year = year_s,year_e
           print("year = " +year)
 
-          filename = case_name(case_num)+"/cable_out_"+year+".nc"
+          filename = case_name(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
           f = addfile (filename,"r")
 
           if output .eq. "monthly" then
 
             do month = 0,11
-               TWS(case_num,counter,:,:)       = f->GWMoist(month,:,:)*f->GWdz*1000. + f->CanopInt(month,:,:) + f->SWE(month,:,:)
-               Rain(case_num,counter,:,:)      = f->Rainf(month,:,:)
+               TWS(case_num,counter,:,:)       = f->GWMoist(month,{A:B},{C:D})*f->GWdz*1000. + f->CanopInt(month,{A:B},{C:D}) + f->SWE(month,{A:B},{C:D})
+               Rain(case_num,counter,:,:)      = f->Rainf(month,{A:B},{C:D})
                do layer = 0,5
-                  TWS(case_num,counter,:,:)    = TWS(case_num,counter,:,:) + f->SoilMoist(month,layer,:,:)*Soil_thickness(layer)*1000.
+                  TWS(case_num,counter,:,:)    = TWS(case_num,counter,{A:B},{C:D}) + f->SoilMoist(month,layer,{A:B},{C:D})*Soil_thickness(layer)*1000.
                end do
                counter = counter + 1
             end do ;month
@@ -271,13 +267,13 @@ else if GRACE_opt .eq. "TWS" then
             end if
 
             do month = 0,11
-               TWS(case_num,counter,:,:) = dim_avg_n_Wrap(f->GWMoist(dom(month):dom(month+1)-1,:,:),0) \
-                                          *f->GWdz*1000. + dim_avg_n_Wrap(f->CanopInt(dom(month):dom(month+1)-1,:,:),0)\
-                                          + dim_avg_n_Wrap(f->SWE(dom(month):dom(month+1)-1,:,:), 0)
-               Rain(case_num,counter,:,:)= dim_avg_n_Wrap(f->Rainf(dom(month):dom(month+1)-1,:,:), 0)
+               TWS(case_num,counter,:,:) = dim_avg_n_Wrap(f->GWMoist(dom(month):dom(month+1)-1,{A:B},{C:D}),0) \
+                                          *f->GWdz*1000. + dim_avg_n_Wrap(f->CanopInt(dom(month):dom(month+1)-1,{A:B},{C:D}),0)\
+                                          + dim_avg_n_Wrap(f->SWE(dom(month):dom(month+1)-1,{A:B},{C:D}), 0)
+               Rain(case_num,counter,:,:)= dim_avg_n_Wrap(f->Rainf(dom(month):dom(month+1)-1,{A:B},{C:D}), 0)
                do layer = 0,5
-                  TWS(case_num,counter,:,:) = TWS(case_num,counter,:,:) + dim_avg_n_Wrap( \
-                                             f->SoilMoist(dom(month):dom(month+1)-1,layer,:,:),0)\
+                  TWS(case_num,counter,:,:) = TWS(case_num,counter,{A:B},{C:D}) + dim_avg_n_Wrap( \
+                                             f->SoilMoist(dom(month):dom(month+1)-1,layer,{A:B},{C:D}),0)\
                                              *Soil_thickness(layer)*1000.
                end do
                counter = counter + 1
@@ -419,40 +415,60 @@ res@tmYLLabelFontThicknessF = 0.015
 res@tmXBLabelFontHeightF = 0.015
 res@tmYLLabelFontHeightF = 0.015
 
-if scale .eq. "World" then
-   res@trYMinF            = -60
-   res@trYMaxF            = 80
-   res@mpMinLatF          = -60
-   res@mpMaxLatF          = 80
-   res@mpCenterLonF       = 160
 
-   res@tmYLMode  = "Explicit"             ;��Y����������������,��ʾ�Լ���Ҫ��ֵ
-   res@tmYLValues=(/60,30,0,-30,-60/)
-   res@tmYLLabels=(/"60~S~o~N~N","30~S~o~N~N","0~S~o~N~","30~S~o~N~S","60~S~o~N~S"/)
-   res@tmXBMode  = "Explicit"
-   res@tmXBValues=(/240,300,0,60,120,180/)
-   res@tmXBLabels=(/"120~S~o~N~W","60~S~o~N~W","0~S~o~N~","60~S~o~N~E","120~S~o~N~E","180~S~o~N~"/)
 
+
+
+
+
+if scale .eq. "Global" then
+  A = -90.
+  B = 90.
+  C = 0.
+  D = 360.
+  res@trYMinF            = -60
+  res@trYMaxF            = 80
+  res@mpMinLatF          = -60
+  res@mpMaxLatF          = 80
+  res@mpCenterLonF       = 160
+
+  res@tmYLMode  = "Explicit"             ;��Y����������������,��ʾ�Լ���Ҫ��ֵ
+  res@tmYLValues=(/60,30,0,-30,-60/)
+  res@tmYLLabels=(/"60~S~o~N~N","30~S~o~N~N","0~S~o~N~","30~S~o~N~S","60~S~o~N~S"/)
+  res@tmXBMode  = "Explicit"
+  res@tmXBValues=(/240,300,0,60,120,180/)
+  res@tmXBLabels=(/"120~S~o~N~W","60~S~o~N~W","0~S~o~N~","60~S~o~N~E","120~S~o~N~E","180~S~o~N~"/)
+
+else if scale .eq. "SE-AU" then
+  A = -40.
+  B = -28.
+  C = 140.
+  D = 154.
 else if scale .eq. "AU" then
+  A = -44.
+  B = -10.
+  C = 112.
+  D = 154.
+  res@gsnAddCyclic       = False
+  res@trYMinF            = -40
+  res@trYMaxF            = -27
+  res@mpMinLatF          = -40
+  res@mpMaxLatF          = -27
+  res@trXMinF            = 140
+  res@trXMaxF            = 155
+  res@mpMinLonF          = 140
+  res@mpMaxLonF          = 155
 
-   res@gsnAddCyclic       = False
-   res@trYMinF            = -40
-   res@trYMaxF            = -27
-   res@mpMinLatF          = -40
-   res@mpMaxLatF          = -27
-   res@trXMinF            = 140
-   res@trXMaxF            = 155
-   res@mpMinLonF          = 140
-   res@mpMaxLonF          = 155
-
-   res@tmYLMode  = "Explicit"             ;��Y����������������,��ʾ�Լ���Ҫ��ֵ
-   res@tmYLValues=(/-30,-40/)
-   res@tmYLLabels=(/"30~S~o~N~S","40~S~o~N~S"/)
-   res@tmXBMode  = "Explicit"
-   res@tmXBValues=(/140,150/)
-   res@tmXBLabels=(/"140~S~o~N~E","150~S~o~N~E"/)
+  res@tmYLMode  = "Explicit"             ;��Y����������������,��ʾ�Լ���Ҫ��ֵ
+  res@tmYLValues=(/-30,-40/)
+  res@tmYLLabels=(/"30~S~o~N~S","40~S~o~N~S"/)
+  res@tmXBMode  = "Explicit"
+  res@tmXBValues=(/140,150/)
+  res@tmXBLabels=(/"140~S~o~N~E","150~S~o~N~E"/)
 end if
 end if
+end if
+
 
 ;**************** ͼ�������� *****************
 pres                    = True                                      ; ���� panel resources.
@@ -480,7 +496,7 @@ do case_num = 0,case_sum-1
 
 res@tiMainString = scale+ " "+case_name_brf(case_num)
 
-if scale .eq. "World" then
+if scale .eq. "Global" then
    print(case_name_brf(case_num)+" "+avg(GRACE_TWS(case_num,:,:)))
    levels = (/0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0/)
    res@cnLevels = levels
@@ -512,7 +528,7 @@ pres@txString = "forest"
 do case_num = 0,case_sum-1
   tmp(case_num,:,:) = where(iveg .ge. 1 .and. iveg .le. 4, GRACE_TWS(case_num,:,:), GRACE_TWS@_FillValue )
   res@tiMainString = case_name_brf(case_num)
-  if scale .eq. "World" then
+  if scale .eq. "Global" then
     print(case_name_brf(case_num)+" "+avg(tmp(case_num,:,:)))
     levels = (/0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0/)
     res@cnLevels = levels
@@ -534,7 +550,7 @@ pres@txString = "grass+shrub+crop"
 do case_num = 0,case_sum-1
   tmp(case_num,:,:) = where(iveg .ge. 5 .and. iveg .le. 11, GRACE_TWS(case_num,:,:), GRACE_TWS@_FillValue )
   res@tiMainString = case_name_brf(case_num)
-  if scale .eq. "World" then
+  if scale .eq. "Global" then
     print(case_name_brf(case_num)+" "+avg(tmp(case_num,:,:)))
     levels = (/0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0/)
     res@cnLevels = levels
