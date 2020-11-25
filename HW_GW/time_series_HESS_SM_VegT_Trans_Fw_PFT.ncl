@@ -288,7 +288,7 @@ SoilMoist!1 = "depth"
 SoilMoist!2 = "time"
 SoilMoist&depth = Depth
 SoilMoist&time  = x
-
+res@gsnMaximize         = False
 pres@gsnPanelLabelBar   = True
 res1@tmYLMode           = "Explicit"
 res1@tmBorderThicknessF = 3.0
@@ -334,6 +334,7 @@ gsn_panel(wks,(/plots/),(/3,2/),pres)
 delete(plots)
 
 ; _____________________________ VegT TVeg Fwsoil  ______________________________
+res@gsnMaximize         = True
 pres@gsnPanelLabelBar   = False
 plots = new(6,graphic)
 
@@ -442,7 +443,7 @@ print("plot EVAPFBL_diff")
 res@gsnLeftString  = "EVAPFBL_diff (SEN-CTL) (mm/d)"
 res@trYMinF        = -0.5
 res@trYMaxF        = 0.5
-EVAPFBL_diff = new ( (/3,time_tot/), float)
+EVAPFBL_diff       = new((/3,time_tot/), float)
 delete(res@xyLineThicknesses)
 delete(res@xyDashPatterns)
 delete(res@xyLineColors)

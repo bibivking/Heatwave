@@ -16,7 +16,7 @@ end setvalues
 ; ================================== Options ===================================
 
 filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL/outputs/cable_out_1971_SE_Aus.nc"
-f          = addfile (filename_hw,"r")
+f           = addfile (filename_hw,"r")
 
 var  = dim_sum_n_Wrap(dim_avg_n_Wrap(f->EVAPFBL(:,:,:,:),0),0)*365*24*3600
 var2 = dim_avg_n_Wrap(f->TVeg(:,:,:),0)*365*24*3600
@@ -24,7 +24,7 @@ var2 = dim_avg_n_Wrap(f->TVeg(:,:,:),0)*365*24*3600
 ; ================================= Plotting ===================================
 res                    = True
 res@cnFillMode         = "RasterFill"            ; Raster Mode
-res@cnFillOn           = True                            ;��ɫ
+res@cnFillOn           = True                    ;��ɫ
 res@tmBorderThicknessF = 3.0
 
 res@gsnDraw            = True  ; Don't draw plots

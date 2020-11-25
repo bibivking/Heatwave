@@ -5,40 +5,6 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 ;*******************************************
 
-undef("regrid_data")
-function regrid_data(var,interp_method,lat2d,lon2d,lat,lon,src_mask,dst_mask)
-local var_regrid
-begin
-
-    Opt                   = True
-
-    Opt@SrcFileName       = "WRF_SCRIP.nc"      ; Name of source and ???
-    Opt@DstFileName       = "1degree.nc"        ; destination files  ???
-
-    Opt@InterpMethod      = interp_method
-
-    Opt@SrcRegional       = True
-    Opt@SrcGridMask       = src_mask
-
-    Opt@DstRegional       = True
-    ; Opt@DstLLCorner       = (/ minlat,minlon /)
-    ; Opt@DstURCorner       = (/ maxlat,maxlon /)
-    Opt@DstGridType       = "rectilinear"
-    Opt@DstGridLat        = lat
-    Opt@DstGridLon        = lon
-    Opt@DstGridMask       = dst_mask
-
-    Opt@ForceOverwrite    = True
-    Opt@PrintTimings      = True
-    Opt@Debug             = True
-
-    var@lat2d = lat2d              ; This information will be used by
-    var@lon2d = lon2d              ; ESMF_regrid for the source grid
-    var_regrid = ESMF_regrid(var,Opt)     ; Do the regridding for TMP
-    printVarSummary(var_regrid)
-    return(var_regrid)
-end
-
 begin
 
 ;______ From Mark Decker's code ______
@@ -48,9 +14,14 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-case_name = "CTL_vs_PUMP"
-path1 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3_GW/outputs/CTL"
-path2 = "/g/data/w35/mm3972/model/cable/runs/my_version/run_GSWP3_GW_pumping/outputs/PUMP"
+case_name = (/"CTL","FREE_DRAIN"/) ; , "PUMPx10","PUMPx100"/)
+path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
+case_sum  = dimsizes(case_name)
+path      = new(case_sum,"string")
+
+do case_num = 0, case_sum -1
+   path(case_num) = path_mum+case_name(case_num)+"/outputs-spinup200yr"
+end do
 
 path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/yearly";
 path_CLASS= "/g/data/w35/mm3972/data/CLASS_v1"
@@ -70,16 +41,7 @@ Soil_thickness1 = Soil_thickness
 
 ; ================================== OPTIONS ===================================
 plot_type = "all"
-scale = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
-
-filename = path1+"/cable_out_"+year_s+".nc"
-f = addfile (filename,"r")
-
-lat_size  = dimsizes(f->y)
-lon_size  = dimsizes(f->x)
-CABLE_lat = f->y
-CABLE_lon = f->x
-default_value = -1.e+33
+scale     = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 
 if scale .eq. "Global" then
   A = -90.
@@ -88,9 +50,9 @@ if scale .eq. "Global" then
   D = 360.
 else if scale .eq. "SE-AU" then
   A = -40.
-  B = -27.
+  B = -28.
   C = 140.
-  D = 155.
+  D = 154.
 else if scale .eq. "AU" then
   A = -44.
   B = -10.
@@ -99,238 +61,130 @@ else if scale .eq. "AU" then
 end if
 end if
 end if
+
+filename  = path(0)+"/cable_out_"+year_s+"_SE_Aus.nc"
+f         = addfile(filename,"r")
+
+time_sum  = dimsizes(f->Rainf(:,0,0))
+lat_sum   = dimsizes(f->Rainf(0,{A:B},0))
+lon_sum   = dimsizes(f->Rainf(0,0,{C:D}))
+lat_size  = dimsizes(f->y)
+lon_size  = dimsizes(f->x)
+CABLE_lat = f->y
+CABLE_lon = f->x
+default_val = -1.e+33
 delete(f)
 
+Rain      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Tair      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Qair      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Psurf     = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+SWdown    = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+LWdown    = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Wind      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
 
-filename1 = path1+"/cable_out_"+year_s+".nc"
-f1        = addfile (filename1,"r")
+Evap      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+TVeg      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+ESoil     = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+ECanop    = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Runoff    = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Qrec      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Rnet      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
 
-Rain_CTL     = dim_sum_n_Wrap(f1->Rainf(:,{A:B},{C:D}),0)
-Tair_CTL     = dim_avg_n_Wrap(f1->Tair(:,{A:B},{C:D}),0)
-Qair_CTL     = dim_avg_n_Wrap(f1->Qair(:,{A:B},{C:D}),0)
-Psurf_CTL    = dim_avg_n_Wrap(f1->PSurf(:,{A:B},{C:D}),0)
-SWdown_CTL   = dim_avg_n_Wrap(f1->SWdown(:,{A:B},{C:D}),0)
-LWdown_CTL   = dim_avg_n_Wrap(f1->LWdown(:,{A:B},{C:D}),0)
-Wind_CTL     = dim_avg_n_Wrap(f1->Wind(:,{A:B},{C:D}),0)
+LAI       = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+GWwb      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Qle       = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Qh        = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Qg        = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+SMsurf    = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+SoilTemp  = new((/case_sum, time_sum, 6, lat_sum, lon_sum/),float, default_val)
+SoilMoist = new((/case_sum, time_sum, 6, lat_sum, lon_sum/),float, default_val)
 
-Evap_CTL     = dim_sum_n_Wrap(f1->Evap(:,{A:B},{C:D}),0)
-TVeg_CTL     = dim_sum_n_Wrap(f1->TVeg(:,{A:B},{C:D}),0)
-ESoil_CTL    = dim_sum_n_Wrap(f1->ESoil(:,{A:B},{C:D}),0)
-ECanop_CTL   = dim_sum_n_Wrap(f1->ECanop(:,{A:B},{C:D}),0)
-Runoff_CTL   = dim_sum_n_Wrap(f1->Qs(:,{A:B},{C:D}),0)
-Qrec_CTL     = dim_sum_n_Wrap(f1->Qrecharge(:,{A:B},{C:D}),0)
-Rnet_CTL     = dim_avg_n_Wrap(f1->Rnet(:,{A:B},{C:D}),0)
-Qle_CTL      = dim_avg_n_Wrap(f1->Qle(:,{A:B},{C:D}),0)
-Qh_CTL       = dim_avg_n_Wrap(f1->Qh(:,{A:B},{C:D}),0)
-Qg_CTL       = dim_avg_n_Wrap(f1->Qg(:,{A:B},{C:D}),0)
-SMsurf_CTL   = dim_avg_n_Wrap(f1->SoilMoist(:,0,{A:B},{C:D}),0)
-SoilTemp_CTL = dim_avg_n_Wrap(f1->SoilTemp(:,:,{A:B},{C:D}),0)
-SoilMoist_CTL= dim_avg_n_Wrap(f1->SoilMoist(:,:,{A:B},{C:D}),0)
-LAI_CTL      = dim_avg_n_Wrap(f1->LAI(:,{A:B},{C:D}),0)
-GWwb_CTL     = dim_avg_n_Wrap(f1->GWMoist(:,{A:B},{C:D}),0)
+Rain     = 0.
+Tair     = 0.
+Qair     = 0.
+Psurf    = 0.
+SWdown   = 0.
+LWdown   = 0.
+Wind     = 0.
+Evap     = 0.
+TVeg     = 0.
+ESoil    = 0.
+ECanop   = 0.
+Runoff   = 0.
+Qrec     = 0.
+Rnet     = 0.
+Qle      = 0.
+Qh       = 0.
+Qg       = 0.
+LAI      = 0.
+GWwb     = 0.
+SMsurf   = 0.
+SoilTemp = 0.
+SoilMoist= 0.
 
-Rain_CTL     = 0.
-Tair_CTL     = 0.
-Qair_CTL     = 0.
-Psurf_CTL    = 0.
-SWdown_CTL   = 0.
-LWdown_CTL   = 0.
-Wind_CTL     = 0.
-Evap_CTL     = 0.
-TVeg_CTL     = 0.
-ESoil_CTL    = 0.
-ECanop_CTL   = 0.
-Runoff_CTL   = 0.
-Qrec_CTL     = 0.
-Rnet_CTL     = 0.
-Qle_CTL      = 0.
-Qh_CTL       = 0.
-Qg_CTL       = 0.
-SoilTemp_CTL = 0.
-SoilMoist_CTL= 0.
-SMsurf_CTL   = 0.
-LAI_CTL      = 0.
-GWwb_CTL     = 0.
-delete(f1)
+do case_num = 0, case_sum -1
+   do year = year_s, year_e
 
-filename2 = path2+"/cable_out_"+year_s+".nc"
-f2        = addfile (filename2,"r")
+      print("year = " +year)
 
-Rain_SEN     = dim_sum_n_Wrap(f2->Rainf(:,{A:B},{C:D}),0)
-Tair_SEN     = dim_avg_n_Wrap(f2->Tair(:,{A:B},{C:D}),0)
-Qair_SEN     = dim_avg_n_Wrap(f2->Qair(:,{A:B},{C:D}),0)
-Psurf_SEN    = dim_avg_n_Wrap(f2->PSurf(:,{A:B},{C:D}),0)
-SWdown_SEN   = dim_avg_n_Wrap(f2->SWdown(:,{A:B},{C:D}),0)
-LWdown_SEN   = dim_avg_n_Wrap(f2->LWdown(:,{A:B},{C:D}),0)
-Wind_SEN     = dim_avg_n_Wrap(f2->Wind(:,{A:B},{C:D}),0)
+      if ( mod(year,4) .eq. 0) then
+         dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
+      else
+         dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
+      end if
 
-Evap_SEN     = dim_sum_n_Wrap(f2->Evap(:,{A:B},{C:D}),0)
-TVeg_SEN     = dim_sum_n_Wrap(f2->TVeg(:,{A:B},{C:D}),0)
-ESoil_SEN    = dim_sum_n_Wrap(f2->ESoil(:,{A:B},{C:D}),0)
-ECanop_SEN   = dim_sum_n_Wrap(f2->ECanop(:,{A:B},{C:D}),0)
-Runoff_SEN   = dim_sum_n_Wrap(f2->Qs(:,{A:B},{C:D}),0)
-Qrec_SEN     = dim_sum_n_Wrap(f2->Qrecharge(:,{A:B},{C:D}),0)
-Rnet_SEN     = dim_avg_n_Wrap(f2->Rnet(:,{A:B},{C:D}),0)
-Qle_SEN      = dim_avg_n_Wrap(f2->Qle(:,{A:B},{C:D}),0)
-Qh_SEN       = dim_avg_n_Wrap(f2->Qh(:,{A:B},{C:D}),0)
-Qg_SEN       = dim_avg_n_Wrap(f2->Qg(:,{A:B},{C:D}),0)
-SMsurf_SEN   = dim_avg_n_Wrap(f2->SoilMoist(:,0,{A:B},{C:D}),0)
-SoilTemp_SEN = dim_avg_n_Wrap(f2->SoilTemp(:,:,{A:B},{C:D}),0)
-SoilMoist_SEN= dim_avg_n_Wrap(f2->SoilMoist(:,:,{A:B},{C:D}),0)
-LAI_SEN      = dim_avg_n_Wrap(f2->LAI(:,{A:B},{C:D}),0)
-GWwb_SEN     = dim_avg_n_Wrap(f2->GWMoist(:,{A:B},{C:D}),0)
+      filename = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
+      f        = addfile (filename,"r")
 
-Rain_SEN     = 0.
-Tair_SEN     = 0.
-Qair_SEN     = 0.
-Psurf_SEN    = 0.
-SWdown_SEN   = 0.
-LWdown_SEN   = 0.
-Wind_SEN     = 0.
-Evap_SEN     = 0.
-TVeg_SEN     = 0.
-ESoil_SEN    = 0.
-ECanop_SEN   = 0.
-Runoff_SEN   = 0.
-Qrec_SEN     = 0.
-Rnet_SEN     = 0.
-Qle_SEN      = 0.
-Qh_SEN       = 0.
-Qg_SEN       = 0.
-SoilTemp_SEN = 0.
-SoilMoist_SEN= 0.
-SMsurf_SEN   = 0.
-LAI_SEN      = 0.
-GWwb_SEN     = 0.
-delete(f2)
+      Rain(case_num,year-year_s,:,:)     = dim_sum_n_Wrap(f->Rainf(:,{A:B},{C:D}),0)
+      Tair(case_num,year-year_s,:,:)     = dim_avg_n_Wrap(f->Tair(:,{A:B},{C:D}),0)
+      Qair(case_num,year-year_s,:,:)     = dim_avg_n_Wrap(f->Qair(:,{A:B},{C:D}),0)
+      Psurf(case_num,year-year_s,:,:)    = dim_avg_n_Wrap(f->PSurf(:,{A:B},{C:D}),0)
+      SWdown(case_num,year-year_s,:,:)   = dim_avg_n_Wrap(f->SWdown(:,{A:B},{C:D}),0)
+      LWdown(case_num,year-year_s,:,:)   = dim_avg_n_Wrap(f->LWdown(:,{A:B},{C:D}),0)
+      Wind(case_num,year-year_s,:,:)     = dim_avg_n_Wrap(f->Wind(:,{A:B},{C:D}),0)
+      Rnet(case_num,year-year_s,:,:)     = dim_avg_n_Wrap(f->Rnet(:,{A:B},{C:D}),0)
 
-do year = year_s,year_e
-    print("year = " +year)
+      Evap(case_num,year-year_s,:,:)     = dim_sum_n_Wrap(f->Evap(:,{A:B},{C:D}),0)
+      TVeg(case_num,year-year_s,:,:)     = dim_sum_n_Wrap(f->TVeg(:,{A:B},{C:D}),0)
+      ESoil(case_num,year-year_s,:,:)    = dim_sum_n_Wrap(f->ESoil(:,{A:B},{C:D}),0)
+      ECanop(case_num,year-year_s,:,:)   = dim_sum_n_Wrap(f->ECanop(:,{A:B},{C:D}),0)
+      Runoff(case_num,year-year_s,:,:)   = dim_sum_n_Wrap(f->Qs(:,{A:B},{C:D}),0) \
+                                           + dim_sum_n_Wrap(f->Qsb(:,{A:B},{C:D}),0)
+      Qrec(case_num,year-year_s,:,:)     = dim_sum_n_Wrap(f->Qrecharge(:,{A:B},{C:D}),0)
 
-    if ( mod(year,4) .eq. 0) then
-       dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
-    else
-       dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
-    end if
+      Qle(case_num,year-year_s,:,:)      = dim_avg_n_Wrap(f->Qle(:,{A:B},{C:D}),0)
+      Qh(case_num,year-year_s,:,:)       = dim_avg_n_Wrap(f->Qh(:,{A:B},{C:D}),0)
+      Qg(case_num,year-year_s,:,:)       = dim_avg_n_Wrap(f->Qg(:,{A:B},{C:D}),0)
+      LAI(case_num,year-year_s,:,:)      = dim_avg_n_Wrap(f->LAI(:,{A:B},{C:D}),0)
+      SMsurf(case_num,year-year_s,:,:)   = (dim_avg_n_Wrap(f->SoilMoist(:,0,{A:B},{C:D}),0)*0.022 \
+                                            + dim_avg_n_Wrap(f->SoilMoist(:,1,{A:B},{C:D}),0)*0.058 \
+                                            + dim_avg_n_Wrap(f->SoilMoist(:,2,{A:B},{C:D}),0)*(0.1 - 0.022 - 0.058)) \
+                                            / 0.1
+      GWwb(case_num,year-year_s,:,:)     = dim_avg_n_Wrap(f->GWMoist(:,{A:B},{C:D}),0)
 
-    filename1 = path1+"/cable_out_"+year+".nc"
-    f1 = addfile (filename1,"r")
 
-    filename2 = path2+"/cable_out_"+year+".nc"
-    f2 = addfile (filename2,"r")
+      SoilTemp(case_num,year-year_s,:,:,:)  = dim_avg_n_Wrap(f->SoilTemp(:,:,{A:B},{C:D}),0)
+      SoilMoist(case_num,year-year_s,:,:,:) = dim_avg_n_Wrap(f->SoilMoist(:,:,{A:B},{C:D}),0)
 
-    do month = 1, 12
-      Rain_CTL     = Rain_CTL   + f1->Rainf(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      Evap_CTL     = Evap_CTL   + f1->Evap(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      TVeg_CTL     = TVeg_CTL   + f1->TVeg(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      ESoil_CTL    = ESoil_CTL  + f1->ESoil(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      ECanop_CTL   = ECanop_CTL + f1->ECanop(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      Runoff_CTL   = Runoff_CTL + f1->Qs(month-1,{A:B},{C:D})*dom(month-1)*3600*24 \
-                                  + f1->Qsb(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      Qrec_CTL     = Qrec_CTL + f1->Qrecharge(month-1,{A:B},{C:D})*dom(month-1)*3600*24
+      delete(f)
+   end do ; year
+end do ; case_num
 
-      Rain_SEN     = Rain_SEN   + f2->Rainf(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      Evap_SEN     = Evap_SEN   + f2->Evap(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      TVeg_SEN     = TVeg_SEN   + f2->TVeg(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      ESoil_SEN    = ESoil_SEN  + f2->ESoil(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      ECanop_SEN   = ECanop_SEN + f2->ECanop(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      Runoff_SEN   = Runoff_SEN + f2->Qs(month-1,{A:B},{C:D})*dom(month-1)*3600*24 \
-                                  + f2->Qsb(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-      Qrec_SEN     = Qrec_SEN + f2->Qrecharge(month-1,{A:B},{C:D})*dom(month-1)*3600*24
-    end do ; month
-
-    Tair_CTL     = Tair_CTL   + dim_avg_n_Wrap(f1->Tair(:,{A:B},{C:D}),0)-273.15
-    Qair_CTL     = Qair_CTL   + dim_avg_n_Wrap(f1->Qair(:,{A:B},{C:D}),0)
-    Psurf_CTL    = Psurf_CTL  + dim_avg_n_Wrap(f1->PSurf(:,{A:B},{C:D}),0)
-    SWdown_CTL   = SWdown_CTL + dim_avg_n_Wrap(f1->SWdown(:,{A:B},{C:D}),0)
-    LWdown_CTL   = LWdown_CTL + dim_avg_n_Wrap(f1->LWdown(:,{A:B},{C:D}),0)
-    Wind_CTL     = Wind_CTL   + dim_avg_n_Wrap(f1->Wind(:,{A:B},{C:D}),0)
-    Rnet_CTL     = Rnet_CTL   + dim_avg_n_Wrap(f1->Rnet(:,{A:B},{C:D}),0)
-    Qle_CTL      = Qle_CTL    + dim_avg_n_Wrap(f1->Qle(:,{A:B},{C:D}),0)
-    Qh_CTL       = Qh_CTL     + dim_avg_n_Wrap(f1->Qh(:,{A:B},{C:D}),0)
-    Qg_CTL       = Qg_CTL     + dim_avg_n_Wrap(f1->Qg(:,{A:B},{C:D}),0)
-    LAI_CTL      = LAI_CTL    + dim_avg_n_Wrap(f1->LAI(:,{A:B},{C:D}),0)
-    SMsurf_CTL   = SMsurf_CTL + ( dim_avg_n_Wrap(f1->SoilMoist(:,0,{A:B},{C:D}),0)*0.022 \
-                                + dim_avg_n_Wrap(f1->SoilMoist(:,1,{A:B},{C:D}),0)*0.058 \
-                                + dim_avg_n_Wrap(f1->SoilMoist(:,2,{A:B},{C:D}),0)*(0.1 - 0.022 - 0.058)) \
-                                / 0.1
-    GWwb_CTL      = GWwb_CTL   + dim_avg_n_Wrap(f1->GWMoist(:,{A:B},{C:D}),0)
-
-    Tair_SEN     = Tair_SEN   + dim_avg_n_Wrap(f2->Tair(:,{A:B},{C:D}),0)-273.15
-    Qair_SEN     = Qair_SEN   + dim_avg_n_Wrap(f2->Qair(:,{A:B},{C:D}),0)
-    Psurf_SEN    = Psurf_SEN  + dim_avg_n_Wrap(f2->PSurf(:,{A:B},{C:D}),0)
-    SWdown_SEN   = SWdown_SEN + dim_avg_n_Wrap(f2->SWdown(:,{A:B},{C:D}),0)
-    LWdown_SEN   = LWdown_SEN + dim_avg_n_Wrap(f2->LWdown(:,{A:B},{C:D}),0)
-    Wind_SEN     = Wind_SEN   + dim_avg_n_Wrap(f2->Wind(:,{A:B},{C:D}),0)
-    Rnet_SEN     = Rnet_SEN   + dim_avg_n_Wrap(f2->Rnet(:,{A:B},{C:D}),0)
-    Qle_SEN      = Qle_SEN    + dim_avg_n_Wrap(f2->Qle(:,{A:B},{C:D}),0)
-    Qh_SEN       = Qh_SEN     + dim_avg_n_Wrap(f2->Qh(:,{A:B},{C:D}),0)
-    Qg_SEN       = Qg_SEN     + dim_avg_n_Wrap(f2->Qg(:,{A:B},{C:D}),0)
-    LAI_SEN      = LAI_SEN    + dim_avg_n_Wrap(f2->LAI(:,{A:B},{C:D}),0)
-    SMsurf_SEN   = SMsurf_SEN + ( dim_avg_n_Wrap(f2->SoilMoist(:,0,{A:B},{C:D}),0)*0.022 \
-                                + dim_avg_n_Wrap(f2->SoilMoist(:,1,{A:B},{C:D}),0)*0.058 \
-                                + dim_avg_n_Wrap(f2->SoilMoist(:,2,{A:B},{C:D}),0)*(0.1 - 0.022 - 0.058)) \
-                                / 0.1
-    GWwb_SEN      = GWwb_SEN   + dim_avg_n_Wrap(f2->GWMoist(:,{A:B},{C:D}),0)
-    do soil = 0,5
-      SoilTemp_CTL(soil,:,:) = SoilTemp_CTL(soil,:,:) + ( dim_avg_n_Wrap(f1->SoilTemp(:,soil,{A:B},{C:D}),0)-273.15)\
-                                 *Soil_thickness(soil)/sum(Soil_thickness)
-      SoilMoist_CTL(soil,:,:)= SoilMoist_CTL(soil,:,:) + ( dim_avg_n_Wrap(f1->SoilMoist(:,soil,{A:B},{C:D}),0))\
-                                 *Soil_thickness(soil)/sum(Soil_thickness)
-      SoilTemp_SEN(soil,:,:) = SoilTemp_SEN(soil,:,:) + ( dim_avg_n_Wrap(f2->SoilTemp(:,soil,{A:B},{C:D}),0)-273.15)\
-                                 *Soil_thickness(soil)/sum(Soil_thickness)
-      SoilMoist_SEN(soil,:,:)= SoilMoist_SEN(soil,:,:) + ( dim_avg_n_Wrap(f2->SoilMoist(:,soil,{A:B},{C:D}),0))\
-                                 *Soil_thickness(soil)/sum(Soil_thickness)
-    end do ; soil
-    delete(f1)
-end do ; year
-Rain_CTL     = Rain_CTL/year_sum
-Evap_CTL     = Evap_CTL/year_sum
-TVeg_CTL     = TVeg_CTL/year_sum
-ESoil_CTL    = ESoil_CTL/year_sum
-ECanop_CTL   = ECanop_CTL/year_sum
-Runoff_CTL   = Runoff_CTL/year_sum
-Qrec_CTL     = Qrec_CTL/year_sum
-Tair_CTL     = Tair_CTL/year_sum
-Qair_CTL     = Qair_CTL/year_sum
-Psurf_CTL    = Psurf_CTL/year_sum
-SWdown_CTL   = SWdown_CTL/year_sum
-LWdown_CTL   = LWdown_CTL/year_sum
-Wind_CTL     = Wind_CTL/year_sum
-Rnet_CTL     = Rnet_CTL/year_sum
-Qle_CTL      = Qle_CTL/year_sum
-Qh_CTL       = Qh_CTL/year_sum
-Qg_CTL       = Qg_CTL/year_sum
-LAI_CTL      = LAI_CTL/year_sum
-SMsurf_CTL   = SMsurf_CTL/year_sum
-SoilTemp_CTL = SoilTemp_CTL/year_sum
-SoilMoist_CTL= SoilMoist_CTL/year_sum
-GWwb_CTL     = GWwb_CTL/year_sum
-
-Rain_SEN     = Rain_SEN/year_sum
-Evap_SEN     = Evap_SEN/year_sum
-TVeg_SEN     = TVeg_SEN/year_sum
-ESoil_SEN    = ESoil_SEN/year_sum
-ECanop_SEN   = ECanop_SEN/year_sum
-Runoff_SEN   = Runoff_SEN/year_sum
-Qrec_SEN     = Qrec_SEN/year_sum
-Tair_SEN     = Tair_SEN/year_sum
-Qair_SEN     = Qair_SEN/year_sum
-Psurf_SEN    = Psurf_SEN/year_sum
-SWdown_SEN   = SWdown_SEN/year_sum
-LWdown_SEN   = LWdown_SEN/year_sum
-Wind_SEN     = Wind_SEN/year_sum
-Rnet_SEN     = Rnet_SEN/year_sum
-Qle_SEN      = Qle_SEN/year_sum
-Qh_SEN       = Qh_SEN/year_sum
-Qg_SEN       = Qg_SEN/year_sum
-LAI_SEN      = LAI_SEN/year_sum
-SMsurf_SEN   = SMsurf_SEN/year_sum
-SoilTemp_SEN = SoilTemp_SEN/year_sum
-SoilMoist_SEN= SoilMoist_SEN/year_sum
-GWwb_SEN     = GWwb_SEN/year_sum
+Rain     = Rain*3600.*24.
+Evap     = Evap*3600.*24.
+TVeg     = TVeg*3600.*24.
+ESoil    = ESoil*3600.*24.
+ECanop   = ECanop*3600.*24.
+Runoff   = Runoff*3600.*24.
+Qrec     = Qrec*3600.*24.
+SoilTemp = SoilTemp - 273.15
+Tair     = Tair - 273.15
 
 ; ================================ READ GLEAM ==================================
+; use 2000-2019
+
 gleam_ET = path_GLEAM+"/E_1980_2018_GLEAM_v3.3a_YR.nc"
 gleam_T  = path_GLEAM+"/Et_1980_2018_GLEAM_v3.3a_YR.nc"
 gleam_Es = path_GLEAM+"/Eb_1980_2018_GLEAM_v3.3a_YR.nc"
@@ -354,11 +208,11 @@ Ec_tmp = doubletofloat(Ec_tmp)
 SM_tmp = G_SM->SMsurf(:,{C:D},{A:B})
 SM_tmp = doubletofloat(SM_tmp)
 
-Evap_GLEAM     = dim_avg_n_Wrap(E_tmp(time|23:28,lat|:, lon|:),0)
-TVeg_GLEAM     = dim_avg_n_Wrap(T_tmp(time|23:28,lat|:, lon|:),0)
-ESoil_GLEAM    = dim_avg_n_Wrap(Es_tmp(time|23:28,lat|:, lon|:),0)
-ECanop_GLEAM   = dim_avg_n_Wrap(Ec_tmp(time|23:28,lat|:, lon|:),0)
-SMsurf_GLEAM   = dim_avg_n_Wrap(SM_tmp(time|23:28,lat|:, lon|:),0)
+Evap_GLEAM     = dim_avg_n_Wrap(E_tmp(time|20:38,lat|:, lon|:),0)
+TVeg_GLEAM     = dim_avg_n_Wrap(T_tmp(time|20:38,lat|:, lon|:),0)
+ESoil_GLEAM    = dim_avg_n_Wrap(Es_tmp(time|20:38,lat|:, lon|:),0)
+ECanop_GLEAM   = dim_avg_n_Wrap(Ec_tmp(time|20:38,lat|:, lon|:),0)
+SMsurf_GLEAM   = dim_avg_n_Wrap(SM_tmp(time|20:38,lat|:, lon|:),0)
 ;printVarSummary(Evap_GLEAM)
 delete(G_ET)
 delete(G_T)
@@ -367,56 +221,79 @@ delete(G_Ec)
 delete(G_SM)
 
 ; ================================ READ CLASS ==================================
-file_CLASS = path_CLASS + "/CLASS_v1.1_"+year_s+".nc"
-CL = addfile (file_CLASS,"r")
+; use 2003-2009
 
-Rnet_CLASS= dim_avg_n_Wrap(CL->rs(:,{A:B},{C:D}),0)
-Qle_CLASS = dim_avg_n_Wrap(CL->hfls(:,{A:B},{C:D}),0)
-Qh_CLASS  = dim_avg_n_Wrap(CL->hfss(:,{A:B},{C:D}),0)
-Qg_CLASS  = dim_avg_n_Wrap(CL->hfds(:,{A:B},{C:D}),0)
-delete(CL)
-if year_e .gt. 2009 then
-  CL_year_end = 2009
-else
-  CL_year_end = year_e
-end if
-do year = year_s+1,CL_year_end
+file_CLASS = path_CLASS + "/CLASS_v1.1_2003.nc"
+CL         = addfile (file_CLASS,"r")
+CLASS_lat  = dimsizes(CL->hfls(0,{A:B},0))
+CLASS_lon  = dimsizes(CL->hfls(0,0,{C:D}))
 
+Rnet_CLASS= new((/CLASS_lat, CLASS_lon/),float)
+Qle_CLASS = new((/CLASS_lat, CLASS_lon/),float)
+Qh_CLASS  = new((/CLASS_lat, CLASS_lon/),float)
+Qg_CLASS  = new((/CLASS_lat, CLASS_lon/),float)
+
+Rnet_CLASS= 0.
+Qle_CLASS = 0.
+Qh_CLASS  = 0.
+Qg_CLASS  = 0.
+
+
+do year = 2003,2009
     file_CLASS = path_CLASS + "/CLASS_v1.1_"+year+".nc"
     CL = addfile (file_CLASS,"r")
 
-    Rnet_CLASS= Rnet_CLASS + dim_avg_n_Wrap(CL->rs(:,{A:B},{C:D}),0)
-    Qle_CLASS = Qle_CLASS + dim_avg_n_Wrap(CL->hfls(:,{A:B},{C:D}),0)
-    Qh_CLASS  = Qh_CLASS + dim_avg_n_Wrap(CL->hfss(:,{A:B},{C:D}),0)
-    Qg_CLASS  = Qg_CLASS + dim_avg_n_Wrap(CL->hfds(:,{A:B},{C:D}),0)
+    Rnet_CLASS = Rnet_CLASS + dim_avg_n_Wrap(CL->rs(:,{A:B},{C:D}),0)
+    Qle_CLASS  = Qle_CLASS  + dim_avg_n_Wrap(CL->hfls(:,{A:B},{C:D}),0)
+    Qh_CLASS   = Qh_CLASS   + dim_avg_n_Wrap(CL->hfss(:,{A:B},{C:D}),0)
+    Qg_CLASS   = Qg_CLASS   + dim_avg_n_Wrap(CL->hfds(:,{A:B},{C:D}),0)
     delete(CL)
 end do ;year
-Qle_CLASS  = Qle_CLASS/year_sum
-Qh_CLASS   = Qh_CLASS/year_sum
-Qg_CLASS   = Qg_CLASS/year_sum
 
+Rnet_CLASS = Rnet_CLASS/(2009-2003+1)
+Qle_CLASS  = Qle_CLASS/(2009-2003+1)
+Qh_CLASS   = Qh_CLASS/(2009-2003+1)
+Qg_CLASS   = Qg_CLASS/(2009-2003+1)
+
+delete(CLASS_lat)
+delete(CLASS_lon)
 
 ; ================================ READ DOLCE ==================================
-file_DOLCE = path_DOLCE +"/DOLCE_v1.0_"+year_s+".nc"
-;print(file_DOLCE)
-DOLCE      = addfile (file_DOLCE,"r")
-Qle_DOLCE  = dim_avg_n_Wrap(DOLCE->ET(:,{A:B},{C:D}),0)
+; ; 2000-2009
+; 2003-2009
 
-do year = year_s+1,year_e
+file_DOLCE = path_DOLCE +"/DOLCE_v1.0_"+year_s+".nc"
+DOLCE      = addfile (file_DOLCE,"r")
+DOLCE_lat  = dimsizes(DOLCE->ET(0,{A:B},0))
+DOLCE_lon  = dimsizes(DOLCE->ET(0,0,{C:D}))
+
+Qle_DOLCE  = new((/DOLCE_lat, DOLCE_lon/),float)
+Qle_DOLCE  = 0.
+
+do year = 2003,2009 ;2000, 2009
   file_DOLCE = path_DOLCE +"/DOLCE_v1.0_"+year+".nc"
   DOLCE      = addfile (file_DOLCE,"r")
   Qle_DOLCE  = Qle_DOLCE + dim_avg_n_Wrap(DOLCE->ET(:,{A:B},{C:D}),0)
   delete(DOLCE)
 end do ;year
-Qle_DOLCE   = Qle_DOLCE/year_sum
+; Qle_DOLCE   = Qle_DOLCE/(2009-2000+1)
+Qle_DOLCE   = Qle_DOLCE/(2009-2003+1)
+
+delete(DOLCE_lat)
+delete(DOLCE_lon)
 
 ; ================================ READ LORA ===================================
+; 2000-2009
+
 file_LORA   = path_LORA +"/LORA_v1.0_"+year_s+".nc"
 L           = addfile (file_LORA,"r")
-Runoff_LORA = dim_avg_n_Wrap(L->mrro(:,{A:B},{C:D}),0)
+LORA_lat    = dimsizes(L->mrro(0,{A:B},0))
+LORA_lon    = dimsizes(L->mrro(0,0,{C:D}))
+
+Runoff_LORA = new((/LORA_lat, LORA_lon/),float)
 Runoff_LORA = 0.
 
-do year = year_s,year_e
+do year = 2000,2009
   if ( mod(year,4) .eq. 0) then
      dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
   else
@@ -432,12 +309,18 @@ do year = year_s,year_e
   delete(L)
 end do ;year
 
-Runoff_LORA   = Runoff_LORA/year_sum
+Runoff_LORA   = Runoff_LORA/(2009-2000+1)
+delete(LORA_lat)
+delete(LORA_lon)
 
 ; ================================ READ CERES ==================================
-file_CERES = path_CERES +"/CERES_EBAF-Surface_Ed2.8_Subset_200003-201502.nc"
+; 2001 -2018
+file_CERES = path_CERES +"/CERES_EBAF-Surface_Ed4.1_Subset_200003-201911.nc"
 CERES      = addfile (file_CERES,"r")
-Rnet_CERES = dim_avg_n_Wrap(CERES->sfc_net_tot_all_mon(34:105,{A:B},{C:D}),0) ; 2003-2008
+; 2001 -2018
+; Rnet_CERES = dim_avg_n_Wrap(CERES->sfc_net_tot_all_mon(9:225,{A:B},{C:D}),0)
+; 2003 -2009
+Rnet_CERES = dim_avg_n_Wrap(CERES->sfc_net_tot_all_mon(9+24:225-9*12,{A:B},{C:D}),0)
 ; sfc_net_tot_all_mon "Surface Net Total Flux, Monthly Means, All-Sky conditions"
 ; sfc_net_tot_clr_mon "Surface Net Total Flux, Monthly Means, Clear-Sky conditions"
 delete(CERES)
@@ -495,340 +378,278 @@ pres@lbLabelFontHeightF = 0.01
 res@gsnLeftString = ""
 res@gsnRightString = ""
 
-; ============================= plot met input =============================
-  if (plot_type .eq. "met_force") .or. (plot_type .eq. "all") then
+; =============================== plot met input ===============================
+row_sum = 3
+col_sum = 2
 
-    pic0 = "./plots/LIS_vs_obs_met_"+year_s+"-"+year_e+"_"+case_name
+if (plot_type .eq. "met_force") .or. (plot_type .eq. "all") then
+
+    plots = new(dimsizes(case_name)+1,graphic)
+
+    pic0 = "./plots/HESS_vs_obs_met_"+year_s+"-"+year_e
     wks0 = gsn_open_wks("pdf",pic0)
     gsn_define_colormap(wks0,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
     ; Rain
-    plots = new(3,graphic)
     pres@txString = "Rain (mm/y)"
-    levels = fspan(0,1000,21)
-    res@cnLevels = levels
-
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks0,Rain_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks0,Rain_SEN,res)
-
-    levels = fspan(-100.,100.,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks0,Rain_CTL - Rain_SEN,res)
-    gsn_panel(wks0,(/plots/),(/1,3/),pres)
-    delete(levels)
+    res@cnLevels  = fspan(0,1000,21)
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num) = gsn_csm_contour(wks0,dim_avg_n_Wrap(Rain(case_num,:,:,:),0),res)
+    end do
+    gsn_panel(wks0,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
 
     ; Tair
     pres@txString = "Tair (C)"
-    levels = fspan(0,30,16)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(0,30,16)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks0,Tair_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks0,Tair_SEN,res)
-    delete(levels)
+    res@tiMainString = case_name(0)
+    plots(0) = gsn_csm_contour(wks0,dim_avg_n_Wrap(Tair(0,:,:,:),0),res)
     delete(res@cnLevels)
-    levels = fspan(-5.,5.,10)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks0,Tair_CTL - Tair_SEN,res)
-    gsn_panel(wks0,(/plots/),(/1,3/),pres)
-    delete(levels)
+    do case_num = 1, case_sum-1
+      res@cnFillPalette = "ViBlGrWhYeOrRe"
+      res@tiMainString = case_name(case_num) +" - "+ case_name(0)
+      res@cnLevels     = fspan(-5.,5.,10)
+      plots(case_num)  = gsn_csm_contour(wks0,dim_avg_n_Wrap(Tair(case_num,:,:,:),0)-dim_avg_n_Wrap(Tair(0,:,:,:),0),res)
+    end do
+    gsn_panel(wks0,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
 
     ; Qair
-    pres@txString = "Qair (%)"
-    levels = fspan(0,1,21)
-    res@cnLevels = levels
+    pres@txString =  "Qair (%)"
+    res@cnLevels  = fspan(0,1,21)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks0,Qair_CTL*100.,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks0,Qair_SEN*100.,res)
-    delete(levels)
+    res@tiMainString = case_name(0)
+    plots(0) = gsn_csm_contour(wks0,dim_avg_n_Wrap(Qair(0,:,:,:),0)*100.,res)
     delete(res@cnLevels)
-    levels = fspan(-0.5,0.5,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks0,Qair_CTL*100. - Qair_SEN*100.,res)
-    gsn_panel(wks0,(/plots/),(/1,3/),pres)
-    delete(levels)
+    do case_num = 1, case_sum-1
+      res@cnFillPalette = "ViBlGrWhYeOrRe"
+      res@tiMainString = case_name(case_num) +" - "+ case_name(0)
+      res@cnLevels     = fspan(-0.5,0.5,21)
+      plots(case_num)  = gsn_csm_contour(wks0, dim_avg_n_Wrap(Qair(case_num,:,:,:),0)*100. - \
+                                               dim_avg_n_Wrap(Qair(0,:,:,:),0)*100.,res)
+    end do
+    gsn_panel(wks0,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
+
 
     ; Psurf
     pres@txString = "Psurf (hPa)"
-    levels = fspan(900,1200,31)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(900,1200,31)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks0,Psurf_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks0,Psurf_SEN,res)
-    delete(levels)
+    res@tiMainString = case_name(0)
+    plots(0) = gsn_csm_contour(wks0,dim_avg_n_Wrap(Psurf(0,:,:,:),0)*100.,res)
     delete(res@cnLevels)
-    levels = fspan(-100,100,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks0,Psurf_CTL - Psurf_SEN,res)
-    gsn_panel(wks0,(/plots/),(/1,3/),pres)
-    delete(levels)
+    do case_num = 1, case_sum-1
+      res@cnFillPalette = "ViBlGrWhYeOrRe"
+      res@tiMainString = case_name(case_num) +" - "+ case_name(0)
+      res@cnLevels     = fspan(-100,100,21)
+      plots(case_num)  = gsn_csm_contour(wks0, dim_avg_n_Wrap(Psurf(case_num,:,:,:),0)*100. - \
+                                               dim_avg_n_Wrap(Psurf(0,:,:,:),0)*100.,res)
+    end do
+    gsn_panel(wks0,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
 
     ; SWdown
     pres@txString = "SWdown (W/m^2)"
-    levels = fspan(0,500,51)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(0,500,51)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks0,SWdown_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks0,SWdown_SEN,res)
-    delete(levels)
+    res@tiMainString = case_name(0)
+    plots(0) = gsn_csm_contour(wks0,dim_avg_n_Wrap(SWdown(0,:,:,:),0),res)
     delete(res@cnLevels)
-    levels = fspan(-100,100,41)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks0,SWdown_CTL - SWdown_SEN,res)
-    gsn_panel(wks0,(/plots/),(/1,3/),pres)
-    delete(levels)
+    do case_num = 1, case_sum-1
+      res@cnFillPalette = "ViBlGrWhYeOrRe"
+      res@tiMainString = case_name(case_num) +" - "+ case_name(0)
+      res@cnLevels     = fspan(-100,100,41)
+      plots(case_num)  = gsn_csm_contour(wks0, dim_avg_n_Wrap(SWdown(case_num,:,:,:),0) - \
+                                               dim_avg_n_Wrap(SWdown(0,:,:,:),0),res)
+    end do
+    gsn_panel(wks0,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
 
     ; LWdown
     pres@txString = "LWdown (W/m^2)"
-    levels = fspan(0,500,51)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(0,500,51)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks0,LWdown_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks0,LWdown_SEN,res)
-    delete(levels)
+    res@tiMainString = case_name(0)
+    plots(0) = gsn_csm_contour(wks0,dim_avg_n_Wrap(LWdown(0,:,:,:),0),res)
     delete(res@cnLevels)
-    levels = fspan(-100,100,41)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks0,LWdown_CTL - LWdown_SEN,res)
-    gsn_panel(wks0,(/plots/),(/1,3/),pres)
-    delete(levels)
+    do case_num = 1, case_sum-1
+      res@cnFillPalette = "ViBlGrWhYeOrRe"
+      res@tiMainString = case_name(case_num) +" - "+ case_name(0)
+      res@cnLevels     = fspan(-100,100,41)
+      plots(case_num)  = gsn_csm_contour(wks0, dim_avg_n_Wrap(LWdown(case_num,:,:,:),0) - \
+                                               dim_avg_n_Wrap(LWdown(0,:,:,:),0),res)
+    end do
+    gsn_panel(wks0,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
 
     ; Wind
     pres@txString = "Wind (m/s)"
-    levels = fspan(0,10,21)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(0,10,21)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks0,Wind_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks0,Wind_SEN,res)
-    delete(levels)
+    res@tiMainString = case_name(0)
+    plots(0) = gsn_csm_contour(wks0,dim_avg_n_Wrap(Wind(0,:,:,:),0),res)
     delete(res@cnLevels)
-    levels = fspan(-3,3,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks0,Wind_CTL - Wind_SEN,res)
-    gsn_panel(wks0,(/plots/),(/1,3/),pres)
-    delete(levels)
+    do case_num = 1, case_sum-1
+      res@cnFillPalette = "ViBlGrWhYeOrRe"
+      res@tiMainString = case_name(case_num) +" - "+ case_name(0)
+      res@cnLevels     = fspan(-3,3,21)
+      plots(case_num)  = gsn_csm_contour(wks0, dim_avg_n_Wrap(Wind(case_num,:,:,:),0) - \
+                                               dim_avg_n_Wrap(Wind(0,:,:,:),0),res)
+    end do
+    gsn_panel(wks0,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
     delete(plots)
-  end if
+end if
 
 
-  ; ============================= plot water balance ===========================
-  if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
-    pic1 = "./plots/LIS_vs_obs_water_balance_"+year_s+"-"+year_e+"_"+case_name
+; ============================== plot water balance ============================
+if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
+
+    plots = new(dimsizes(case_name)+1,graphic)
+
+    pic1 = "./plots/HESS_vs_obs_water_balance_"+year_s+"-"+year_e
     wks1 = gsn_open_wks("pdf",pic1)
     gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
     ; LAI
-    plots = new(3,graphic)
-    pres@txString = "LAI (mm/y)"
-    levels = fspan(0,6,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks1,LAI_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks1,LAI_SEN,res)
-    delete(levels)
+    pres@txString = "LAI (-)"
+    res@cnLevels  = fspan(0,6,21)
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num) = gsn_csm_contour(wks1,dim_avg_n_Wrap(Rain(case_num,0:18,:,:),0),res)
+    end do
+    gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
-    levels = fspan(-3,3,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks1,LAI_CTL - LAI_SEN,res)
-    gsn_panel(wks1,(/plots/),(/1,3/),pres)
-    delete(plots)
 
     ; Evap
-    plots = new(4,graphic)
     pres@txString = "Evap (mm/y)"
-    levels = fspan(0,1000,21)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(0,1000,21)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks1,Evap_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks1,Evap_SEN,res)
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks1, dim_avg_n_Wrap(Evap(case_num,0:18,:,:),0),res)
+    end do
     res@tiMainString = "GLEAM"
-    plots(2) = gsn_csm_contour(wks1,Evap_GLEAM,res)
-    delete(levels)
+    plots(case_sum) = gsn_csm_contour(wks1,Evap_GLEAM,res)
+    gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
-    levels = fspan(-300,300,31)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(3) = gsn_csm_contour(wks1,Evap_CTL - Evap_SEN,res)
-    gsn_panel(wks1,(/plots/),(/1,4/),pres)
-    delete(levels)
-    delete(res@cnLevels)
+
 
     ; TVeg
     pres@txString = "TVeg (mm/y)"
-    levels = fspan(0,1000,21)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(0,1000,21)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks1,TVeg_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks1,TVeg_SEN,res)
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks1, dim_avg_n_Wrap(TVeg(case_num,0:18,:,:),0),res)
+    end do
     res@tiMainString = "GLEAM"
-    plots(2) = gsn_csm_contour(wks1,TVeg_GLEAM,res)
-    delete(levels)
-    delete(res@cnLevels)
-    levels = fspan(-300,300,31)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(3) = gsn_csm_contour(wks1,TVeg_CTL - TVeg_SEN,res)
-    gsn_panel(wks1,(/plots/),(/1,4/),pres)
-    delete(levels)
+    plots(case_sum)  = gsn_csm_contour(wks1,TVeg_GLEAM,res)
+    gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
 
     ; ESoil
     pres@txString = "ESoil (mm/y)"
-    levels = fspan(0,1000,21)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(0,1000,21)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks1,ESoil_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks1,ESoil_SEN,res)
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks1, dim_avg_n_Wrap(ESoil(case_num,0:18,:,:),0),res)
+    end do
     res@tiMainString = "GLEAM"
-    plots(2) = gsn_csm_contour(wks1,ESoil_GLEAM,res)
-    delete(levels)
-    delete(res@cnLevels)
-    levels = fspan(-300,300,31)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(3) = gsn_csm_contour(wks1,ESoil_CTL - ESoil_SEN,res)
-    gsn_panel(wks1,(/plots/),(/1,4/),pres)
-    delete(levels)
+    plots(case_sum)  = gsn_csm_contour(wks1,ESoil_GLEAM,res)
+    gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
 
     ; ECanop
     pres@txString = "ECanop (mm/y)"
-    levels = fspan(0,1000,21)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(0,1000,21)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks1,ECanop_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks1,ECanop_SEN,res)
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks1, dim_avg_n_Wrap(ECanop(case_num,0:18,:,:),0),res)
+    end do
     res@tiMainString = "GLEAM"
-    plots(2) = gsn_csm_contour(wks1,ECanop_GLEAM,res)
-    delete(levels)
-    delete(res@cnLevels)
-    levels = fspan(-300,300,31)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(3) = gsn_csm_contour(wks1,ECanop_CTL - ECanop_SEN,res)
-    gsn_panel(wks1,(/plots/),(/1,4/),pres)
-    delete(levels)
+    plots(case_sum)  = gsn_csm_contour(wks1,ECanop_GLEAM,res)
+    gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
 
     ; Runoff
     pres@txString = "Runoff (mm/y)"
-    levels = fspan(0,1000,21)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(0,1000,21)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks1,Runoff_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks1,Runoff_SEN,res)
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks1, dim_avg_n_Wrap(Runoff(case_num,0:9,:,:),0),res)
+    end do
     res@tiMainString = "LORA"
-    plots(2) = gsn_csm_contour(wks1,Runoff_LORA,res)
-    delete(levels)
+    plots(case_sum)  = gsn_csm_contour(wks1,Runoff_LORA,res)
+    gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
-    levels = fspan(-300,300,31)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(3) = gsn_csm_contour(wks1,Runoff_CTL - Runoff_SEN,res)
-    gsn_panel(wks1,(/plots/),(/1,4/),pres)
-    delete(levels)
-    delete(res@cnLevels)
-    delete(plots)
 
     ; Recharge
-    plots = new(3,graphic)
     pres@txString = "Recharge (mm/y)"
-    levels = fspan(-50,50,21)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(-50,50,21)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks1,Qrec_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks1,Qrec_SEN,res)
-    delete(levels)
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks1, dim_avg_n_Wrap(Qrec(case_num,0:18,:,:),0),res)
+    end do
+    gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
-    levels = fspan(-50,50,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks1,Qrec_CTL - Qrec_SEN,res)
-    gsn_panel(wks1,(/plots/),(/1,3/),pres)
-    delete(levels)
-    delete(res@cnLevels)
-    delete(plots)
 
     ; SMsurf
-    plots = new(4,graphic)
     pres@txString = "SMsurf (m3/m3)"
-    levels = fspan(0,0.5,21)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(0,0.5,21)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks1,SMsurf_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks1,SMsurf_SEN,res)
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks1, dim_avg_n_Wrap(SMsurf(case_num,0:18,:,:),0),res)
+    end do
     res@tiMainString = "GLEAM"
-    plots(2) = gsn_csm_contour(wks1,SMsurf_GLEAM,res)
-    delete(levels)
+    plots(case_sum)  = gsn_csm_contour(wks1,SMsurf_GLEAM,res)
+    gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
-    levels = fspan(-0.2,0.2,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(3) = gsn_csm_contour(wks1,SMsurf_CTL - SMsurf_SEN,res)
-    gsn_panel(wks1,(/plots/),(/1,4/),pres)
-    delete(levels)
+
+    ; Soil Moist
+    do soil = 0,5
+        pres@txString = "Soil Moisture in "+(soil+1)+" layer (m3/m3)"
+        res@cnLevels  = fspan(0,0.5,21)
+        res@cnFillPalette = "WhiteBlueGreenYellowRed"
+        do case_num = 0, case_sum-1
+          res@tiMainString = case_name(case_num)
+          plots(case_num)  = gsn_csm_contour(wks1, dim_avg_n_Wrap(SoilMoist(case_num,0:18,soil,:,:),0),res)
+        end do
+        gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
+        delete(res@cnLevels)
+    end do
+
+    ; GWwb
+    pres@txString = "Aquifer Moisture (m3/m3)"
+    res@cnLevels  = fspan(0,0.5,21)
+    res@cnFillPalette = "WhiteBlueGreenYellowRed"
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks1, dim_avg_n_Wrap(GWwb(case_num,0:18,:,:),0),res)
+    end do
+    gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
     delete(res@cnLevels)
-    delete(plots)
+
+    ; Soil Temp
+    do soil = 0,5
+        pres@txString = "Soil Temperature in "+(soil+1)+" layer (C)"
+        res@cnLevels  = fspan(0,40,21)
+        res@cnFillPalette = "WhiteBlueGreenYellowRed"
+        do case_num = 0, case_sum-1
+          res@tiMainString = case_name(case_num)
+          plots(case_num)  = gsn_csm_contour(wks1, dim_avg_n_Wrap(SoilTemp(case_num,0:18,soil,:,:),0),res)
+        end do
+        gsn_panel(wks1,(/plots/),(/row_sum,col_sum/),pres)
+        delete(res@cnLevels)
+    end do
 
     ; ; ET/P
     ; plots = new(2,graphic)
@@ -837,7 +658,7 @@ res@gsnRightString = ""
     ; res@cnLevels = levels
     ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
     ; res@tiMainString = "CTL"
-    ; plots(0) = gsn_csm_contour(wks1,Evap_CTL/Rain_CTL,res)
+    ; plots(0) = gsn_csm_contour(wks1,Evap/Rain,res)
     ; res@tiMainString = "SEN"
     ; plots(1) = gsn_csm_contour(wks1,Evap_SEN/Rain_SEN,res)
     ; ; res@tiMainString = "GLEAM"
@@ -851,7 +672,7 @@ res@gsnRightString = ""
     ; res@cnLevels = levels
     ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
     ; res@tiMainString = "CTL"
-    ; plots(0) = gsn_csm_contour(wks1,Runoff_CTL/Evap_CTL,res)
+    ; plots(0) = gsn_csm_contour(wks1,Runoff/Evap,res)
     ; res@tiMainString = "SEN"
     ; plots(1) = gsn_csm_contour(wks1,Runoff_SEN/Evap_SEN,res)
     ; ; res@tiMainString = "LORA/GLEAM"
@@ -861,173 +682,73 @@ res@gsnRightString = ""
     ; delete(plots)
     ; delete(levels)
     ; delete(res@cnLevels)
-
-
-    plots = new(3,graphic)
-    ; Soil Moist
-    do soil = 0,5
-        pres@txString = "Soil Moisture (m3/m3)"
-        levels = fspan(0,0.5,21)
-        res@cnLevels = levels
-        res@cnFillPalette = "WhiteBlueGreenYellowRed"
-        res@tiMainString = "CTL"
-        plots(0) = gsn_csm_contour(wks1,SoilMoist_CTL(soil,:,:),res)
-        res@tiMainString = "SEN"
-        plots(1) = gsn_csm_contour(wks1,SoilMoist_SEN(soil,:,:),res)
-        delete(levels)
-        delete(res@cnLevels)
-        levels = fspan(-0.2,0.2,21)
-        res@cnLevels = levels
-        res@cnFillPalette = "ViBlGrWhYeOrRe"
-        res@tiMainString = "CTL - SEN"
-        plots(2) = gsn_csm_contour(wks1,SoilMoist_CTL(soil,:,:) - SoilMoist_SEN(soil,:,:),res)
-        gsn_panel(wks1,(/plots/),(/1,3/),pres)
-        delete(levels)
-        delete(res@cnLevels)
-    end do
-
-    pres@txString = "Aquifer Moisture (m3/m3)"
-    levels = fspan(0,0.5,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks1,GWwb_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks1,GWwb_SEN,res)
-    delete(levels)
-    delete(res@cnLevels)
-    levels = fspan(-0.2,0.2,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks1,GWwb_CTL - GWwb_SEN,res)
-    gsn_panel(wks1,(/plots/),(/1,3/),pres)
-    delete(levels)
-    delete(res@cnLevels)
     delete(plots)
-
 end if
 
 ; ============================ plot energy balance =============================
-  if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
-    pic2 = "./plots/LIS_vs_obs_energy_balance_"+year_s+"-"+year_e+"_"+case_name
+if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
+
+    plots = new(dimsizes(case_name)+2,graphic)
+
+    pic2 = "./plots/HESS_vs_obs_energy_balance_"+year_s+"-"+year_e
     wks2 = gsn_open_wks("pdf",pic2)
     gsn_define_colormap(wks2,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
     ; Rnet
-    plots = new(4,graphic)
     pres@txString = "Rnet (W/m2)"
-    levels = fspan(-50,200,51)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(-50,200,51)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks2,Rnet_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks2,Rnet_SEN,res)
-    delete(levels)
-    delete(res@cnLevels)
-
-    levels = fspan(-50,50,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks2,Rnet_CTL - Rnet_SEN,res)
-    delete(levels)
-    delete(res@cnLevels)
-
-    levels = fspan(-50,200,51)
-    res@cnLevels = levels
-    res@cnFillPalette = "WhiteBlueGreenYellowRed"
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks2, dim_avg_n_Wrap(Rnet(case_num,3:9,:,:),0),res)
+    end do
     res@tiMainString = "CERES"
-    plots(3) = gsn_csm_contour(wks2,Rnet_CERES,res)
-    gsn_panel(wks2,(/plots/),(/1,4/),pres)
-    delete(plots)
+    plots(case_sum)  = gsn_csm_contour(wks2,Rnet_CERES,res)
+    res@tiMainString = "CLASS"
+    plots(case_sum+1)  = gsn_csm_contour(wks2,Rnet_CLASS,res)
+    gsn_panel(wks2,(/plots/),(/row_sum,col_sum/),pres)
+    delete(res@cnLevels)
 
     ; Qle
-    plots = new(5,graphic)
     pres@txString = "Qle (W/m2)"
-    levels = fspan(-50,200,51)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(-50,200,51)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks2,Qle_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks2,Qle_SEN,res)
-    delete(levels)
-    delete(res@cnLevels)
-
-    levels = fspan(-50,50,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks2,Qle_CTL - Qle_SEN,res)
-    delete(levels)
-    delete(res@cnLevels)
-
-    levels = fspan(-50,200,51)
-    res@cnLevels = levels
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks2, dim_avg_n_Wrap(Qle(case_num,3:9,:,:),0),res)
+    end do
     res@tiMainString = "CLASS"
-    res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    plots(3) = gsn_csm_contour(wks2,Qle_CLASS,res)
+    plots(case_sum)  = gsn_csm_contour(wks2,Qle_CLASS,res)
     res@tiMainString = "DOLCE"
-    plots(4) = gsn_csm_contour(wks2,Qle_DOLCE,res)
-    gsn_panel(wks2,(/plots/),(/2,3/),pres)
-    delete(plots)
+    plots(case_sum+1)= gsn_csm_contour(wks2,Qle_DOLCE,res)
+    gsn_panel(wks2,(/plots/),(/row_sum,col_sum/),pres)
+    delete(res@cnLevels)
 
     ; Qh
-    plots = new(4,graphic)
     pres@txString = "Qh (W/m2)"
-    levels = fspan(-50,200,51)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(-50,200,51)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks2,Qh_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks2,Qh_SEN,res)
-    delete(levels)
-    delete(res@cnLevels)
-
-    levels = fspan(-50,50,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks2,Qh_CTL - Qh_SEN,res)
-    delete(levels)
-    delete(res@cnLevels)
-
-    levels = fspan(-50,200,51)
-    res@cnLevels = levels
-    res@cnFillPalette = "WhiteBlueGreenYellowRed"
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks2, dim_avg_n_Wrap(Qh(case_num,3:9,:,:),0),res)
+    end do
     res@tiMainString = "CLASS"
-    plots(3) = gsn_csm_contour(wks2,Qh_CLASS,res)
-    gsn_panel(wks2,(/plots/),(/1,4/),pres)
+    plots(case_sum)  = gsn_csm_contour(wks2,Qh_CLASS,res)
+    gsn_panel(wks2,(/plots/),(/row_sum,col_sum/),pres)
+    delete(res@cnLevels)
 
     ; Qg
     pres@txString = "Qg (W/m2)"
-    levels = fspan(-50,200,51)
-    res@cnLevels = levels
+    res@cnLevels  = fspan(-50,200,51)
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
-    res@tiMainString = "CTL"
-    plots(0) = gsn_csm_contour(wks2,Qg_CTL,res)
-    res@tiMainString = "SEN"
-    plots(1) = gsn_csm_contour(wks2,Qg_SEN,res)
-    delete(levels)
-    delete(res@cnLevels)
-
-    levels = fspan(-50,50,21)
-    res@cnLevels = levels
-    res@cnFillPalette = "ViBlGrWhYeOrRe"
-    res@tiMainString = "CTL - SEN"
-    plots(2) = gsn_csm_contour(wks2,Qg_CTL - Qg_SEN,res)
-    delete(levels)
-    delete(res@cnLevels)
-
-    levels = fspan(-50,200,51)
-    res@cnLevels = levels
-    res@cnFillPalette = "WhiteBlueGreenYellowRed"
+    do case_num = 0, case_sum-1
+      res@tiMainString = case_name(case_num)
+      plots(case_num)  = gsn_csm_contour(wks2, dim_avg_n_Wrap(Qg(case_num,3:9,:,:),0),res)
+    end do
     res@tiMainString = "CLASS"
-    plots(3) = gsn_csm_contour(wks2,Qg_CLASS,res)
-    gsn_panel(wks2,(/plots/),(/1,4/),pres)
-  end if
+    plots(case_sum)  = gsn_csm_contour(wks2,Qg_CLASS,res)
+    gsn_panel(wks2,(/plots/),(/row_sum,col_sum/),pres)
+    delete(res@cnLevels)
+end if
 
 end

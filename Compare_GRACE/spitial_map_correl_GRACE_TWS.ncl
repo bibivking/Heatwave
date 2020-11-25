@@ -8,35 +8,31 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 begin
 
 ; ___________________________________ Time _____________________________________
-year_s = 2000
-year_e = 2019
-GRACE_start_year = year_s
-GRACE_end_year   = year_e
-year_sum = year_e-year_s+1
-total    = year_sum*12
-Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers and 1 aquifer
+year_s           = 2000
+year_e           = 2019
+GRACE_start_year = 2002
+GRACE_end_year   = 2019
+year_sum         = year_e-year_s+1
+total            = year_sum*12
+Soil_thickness   = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers and 1 aquifer
 
 ; __________________________________ Path ______________________________________
 path      = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-
 case_name = (/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
+case_sum  = dimsizes(case_name)
+case_path = new(case_sum,"string")
+row_sum   = 2
+col_sum   = 2
 
-var_name= (/\
-           "SoilMoist",\     ;"m^3/m^3"  Average layer soil moisture
-           "GWMoist",\       ;"mm3/mm3" Aquifer mositure content, Groundwater_off doesn't have
-           "CanopInt",\      ;"kg/m^2", "Canopy intercepted water storage"
-           "SWE",\           ;"kg/m^2", "Snow water equivalent"
-           "GWdz"\           ;"Mean aquifer layer thickness" ;
-         	 /)
 
-var_sum  = dimsizes(var_name)
-case_sum = dimsizes(case_name)
-
+do case_num = 0, case_sum -1
+   case_path(case_num) = path+case_name(case_num)+"/outputs-spinup200yr"
+end do
 
 ; ____________________________ Options _______________________________
 deseason        = True
-print("deseason = " deseason)
-scale           = "Global" ;"AU"; "Global"; "SE-AU"
+; print("deseason = " deseason)
+scale           = "SE-AU" ;"AU"; "Global"; "SE-AU"
 PRE             = False ; True using Precipitation-Runoff-Evaporation vs GRACE
                         ; False using SoilMoist+GWMoist+CanopInt+SWE vs GRACE
 GRACE_opt       = "TWS" ;"Change_Rate"
@@ -84,21 +80,21 @@ res@lbLabelBarOn       = True
 res@cnLinesOn          = False
 
 ;_______________________________ PFT ___________________________________
-filename = path+case_name(0)+"/cable_out_"+year_s+"_SE_Aus.nc"
+filename = case_path(0)+"/cable_out_"+year_s+"_SE_Aus.nc"
 f        = addfile (filename,"r")
-iveg     = f->iveg
-lat_size = dimsizes(f->y({A:B}})
+iveg     = f->iveg({A:B},{C:D})
+lat_size = dimsizes(f->y({A:B}))
 lon_size = dimsizes(f->x({C:D}))
+lat_crop = f->y({A:B})
+lon_crop = f->x({C:D})
 
 delete(f)
 delete(filename)
 
 ;______________________________ Read Data __________________________________
-GRACE      = new((/total,360,720/),float)
-GRACE      = 0.0
-
 if GRACE_opt .eq. "Change_Rate" then
-
+   GRACE   = new((/total,360,720/),float)
+   GRACE   = 0.0
    TWS     = new((/case_sum,total,360,720/),float)
    TWS     = 0.0
    counter = 0
@@ -209,25 +205,33 @@ if GRACE_opt .eq. "Change_Rate" then
 
 else if GRACE_opt .eq. "TWS" then
 
+    ; ______________________________ GRACE __________________________________
     filename   = "/g/data/w35/Shared_data/Observations/GRACE/GRACE_JPLRL06M_MASCON/GRCTellus.JPL.2002_2020_gap-fill_MMY.nc"
-    f          = addfile (filename,"r")
+    f          = addfile (filename, "r")
 
-    tot_grace       = (GRACE_end_year-GRACE_start_year+1)*12 ; how many year will be read from GRACE
-    GRACE_ts_str_yr = (GRACE_start_year - 2002) * 12
-    GRACE_ts_tot    = (GRACE_end_year - GRACE_start_year + 1) * 12 -1
-    GRACE(compensate_month:compensate_month+tot_grace-1,{A:B},{C:D})      = \
-              f->lwe_thickness(GRACE_ts_str_yr:GRACE_ts_str_yr+GRACE_ts_tot,{A:B},{C:D})*10.
+    GRACE_lat_size = dimsizes(f->lwe_thickness(0,{A:B},0))
+    GRACE_lon_size = dimsizes(f->lwe_thickness(0,0,{C:D}))
+    GRACE          = new((/total, GRACE_lat_size, GRACE_lon_size/), float)
+    GRACE          = 0.0
+
+    ; find time_start and time_end in GRACE input
+    tot_grace        = (GRACE_end_year-GRACE_start_year+1)*12
+    compensate_month = (GRACE_start_year - year_s)*12
+
+    ; give value
+    GRACE(compensate_month:compensate_month+tot_grace-1,:,:) = \
+                                 f->lwe_thickness(0:tot_grace-1,{A:B},{C:D})*10.
 
     replace_ieeenan (GRACE, GRACE@_FillValue, 0)
 
-    GRACE!0 = "time"
-    GRACE!1 = "lat"
-    GRACE!2 = "lon"
-    GRACE&lat = f->lat
-    GRACE&lon = f->lon
+    GRACE!0   = "time"
+    GRACE!1   = "lat"
+    GRACE!2   = "lon"
+    GRACE&lat = f->lat({A:B})
+    GRACE&lon = f->lon({C:D})
     delete(f)
 
-    ;______________________________ CABLE INPUT __________________________________
+    ;______________________________ CABLE  __________________________________
     TWS           = new((/case_sum,total,lat_size,lon_size/),float)
     TWS_ave       = new((/case_sum,lat_size,lon_size/),float)
     Rain          = new((/case_sum,total,lat_size,lon_size/),float)
@@ -244,22 +248,19 @@ else if GRACE_opt .eq. "TWS" then
        do year = year_s,year_e
           print("year = " +year)
 
-          filename = case_name(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
-          f = addfile (filename,"r")
+          filename = case_path(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
+          f        = addfile (filename,"r")
 
           if output .eq. "monthly" then
-
             do month = 0,11
                TWS(case_num,counter,:,:)       = f->GWMoist(month,{A:B},{C:D})*f->GWdz*1000. + f->CanopInt(month,{A:B},{C:D}) + f->SWE(month,{A:B},{C:D})
                Rain(case_num,counter,:,:)      = f->Rainf(month,{A:B},{C:D})
                do layer = 0,5
-                  TWS(case_num,counter,:,:)    = TWS(case_num,counter,{A:B},{C:D}) + f->SoilMoist(month,layer,{A:B},{C:D})*Soil_thickness(layer)*1000.
+                  TWS(case_num,counter,:,:)    = TWS(case_num,counter,:,:) + f->SoilMoist(month,layer,{A:B},{C:D})*Soil_thickness(layer)*1000.
                end do
                counter = counter + 1
             end do ;month
-
           else if output .eq. "daily" then
-
             if ( mod(year,4) .eq. 0) then
                dom = (/0,31,60,91,121,152,182,213,244,274,305,335,366/)
             else
@@ -272,55 +273,53 @@ else if GRACE_opt .eq. "TWS" then
                                           + dim_avg_n_Wrap(f->SWE(dom(month):dom(month+1)-1,{A:B},{C:D}), 0)
                Rain(case_num,counter,:,:)= dim_avg_n_Wrap(f->Rainf(dom(month):dom(month+1)-1,{A:B},{C:D}), 0)
                do layer = 0,5
-                  TWS(case_num,counter,:,:) = TWS(case_num,counter,{A:B},{C:D}) + dim_avg_n_Wrap( \
+                  TWS(case_num,counter,:,:) = TWS(case_num,counter,:,:) + dim_avg_n_Wrap( \
                                              f->SoilMoist(dom(month):dom(month+1)-1,layer,{A:B},{C:D}),0)\
                                              *Soil_thickness(layer)*1000.
                end do
                counter = counter + 1
             end do ;month
-          end if
-          end if
+          end if ; output
+          end if ; output
        end do ;year
     end do ;case
 
     ; Calculate 2004-2009 TWS average
-    GRACE_end_year = 2009
-    if year_e .gt. 2009 then
-      adjust  = (year_e - GRACE_end_year)*12
-    else
-      adjust  = 0
-      GRACE_end_year = year_e
-    end if
-    TWS_ave        =  dim_avg_n_Wrap(TWS(:,12:total-1 - adjust,:,:),1)
+    tot_TWS       = (2009-2004+1) * 12 -1
+    TWS_ts_str_yr = (2004 - year_s) * 1
+    TWS_ave =  dim_avg_n_Wrap(TWS(:, TWS_ts_str_yr:TWS_ts_str_yr + tot_TWS,:,:),1)
 
     ; Calculate TWS anormaly
     do time = 0,total -1
       TWS(:,time,:,:)      = TWS(:,time,:,:) - TWS_ave
     end do
 
+    TWS_regid = linint2(GRACE&lon,GRACE&lat,TWS,True,lon_crop,lat_crop,0)
+
+    res@cnLevels = fspan(-100,100,10)
+    plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(GRACE(:,:,:),0),res)
+    plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS_regid(0,:,:,:),0),res)
+    plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS(0,:,:,:),0),res)
+    GRACE = where( .not. ismissing(TWS_regid(0,:,:,:)), GRACE, GRACE@_FillValue)
+
+    delete(TWS)
     delete(TWS_ave)
-    levels = fspan(-100,100,10)
-    res@cnLevels = levels
-    plot  = gsn_csm_contour(wks,GRACE(0,:,:)*1.0,res)
-    GRACE = where( .not. ismissing(TWS(0,:,:,:)), GRACE, GRACE@_FillValue)
-    delete(levels)
     delete(res@cnLevels)
 
-    TWS!0 = "case"
-    TWS!1 = "time"
-    TWS!2 = "lat"
-    TWS!3 = "lon"
-    TWS&lat = f->Qle&y
-    TWS&lon = f->Qle&x
-    TWS@_FillValue   = f->Qle@_FillValue
+    TWS_regid!0   = "case"
+    TWS_regid!1   = "time"
+    TWS_regid!2   = "lat"
+    TWS_regid!3   = "lon"
+    TWS_regid&lat = GRACE&lat
+    TWS_regid&lon = GRACE&lon
+    TWS_regid@_FillValue = f->Qle@_FillValue
 
     delete(counter)
     delete(f)
 
-end if
-end if
+end if ; GRACE_opt
+end if ; GRACE_opt
 
-plot = gsn_csm_contour(wks,TWS(0,0,:,:)*1.0,res)
 
 ; __________________________ Deseasonalize _____________________________
 ; rmMonAnnCycTLL : Removes the annual cycle from "monthly" data.
@@ -333,17 +332,17 @@ if deseason .eq. True then
     if GRACE_opt .eq. "Change_Rate" then
        TWS_change(case_num,:,:,:) = rmMonAnnCycTLL(TWS_change(case_num,:,:,:))
     else if GRACE_opt .eq. "TWS" then
-       TWS(case_num,:,:,:) = rmMonAnnCycTLL(TWS(case_num,:,:,:))
+       TWS_regrid(case_num,:,:,:) = rmMonAnnCycTLL(TWS_regrid(case_num,:,:,:))
     end if
     end if
   end do
 end if
 
-plot = gsn_csm_contour(wks,GRACE(0,:,:)*1.0,res)
-plot = gsn_csm_contour(wks,TWS(0,0,:,:)*1.0,res)
+plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(GRACE(:,:,:),0),res)
+plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS_regid(0,:,:,:),0),res)
 
 ; _____________________  CALCULATE CORRELATION ________________________
-GRACE_TWS  = new((/case_sum,360,720/),float)
+GRACE_TWS  = new((/case_sum,GRACE_lat_size,GRACE_lon_size/),float)
 GRACE_TWS  = 0.0
 
 do case_num = 0,case_sum-1
@@ -352,13 +351,14 @@ do case_num = 0,case_sum-1
       GRACE_TWS(case_num,:,:) = escorc(TWS_change(case|case_num,lat|:,lon|:,time|:), GRACE(lat|:,lon|:,time|:))
       delete(TWS_change)
   else if GRACE_opt .eq. "TWS" then
-      GRACE_TWS(case_num,:,:) = escorc(TWS(case|case_num,lat|:,lon|:,time|:), GRACE(lat|:,lon|:,time|:))
+      GRACE_TWS(case_num,:,:) = escorc(TWS_regrid(case|case_num,lat|:,lon|:,time|:), GRACE(lat|:,lon|:,time|:))
       delete(TWS)
   end if
   end if
 ; escorc: Computes the (Pearson) sample linear cross-correlations at lag 0 only.
 ; The rightmost dimension is usually time.
 end do
+
 GRACE_TWS!0 = "case"
 GRACE_TWS!1 = "lat"
 GRACE_TWS!2 = "lon"
@@ -367,6 +367,7 @@ GRACE_TWS&lon = GRACE&lon
 
 plot = gsn_csm_contour(wks,GRACE_TWS(0,:,:)*1.0,res)
 delete(GRACE)
+delete(TWS_regrid)
 delete(res)
 delete(pic)
 delete(wks)
@@ -415,56 +416,50 @@ res@tmYLLabelFontThicknessF = 0.015
 res@tmXBLabelFontHeightF = 0.015
 res@tmYLLabelFontHeightF = 0.015
 
-
-
-
-
-
-
 if scale .eq. "Global" then
-  A = -90.
-  B = 90.
-  C = 0.
-  D = 360.
-  res@trYMinF            = -60
-  res@trYMaxF            = 80
-  res@mpMinLatF          = -60
-  res@mpMaxLatF          = 80
-  res@mpCenterLonF       = 160
-
-  res@tmYLMode  = "Explicit"             ;��Y����������������,��ʾ�Լ���Ҫ��ֵ
-  res@tmYLValues=(/60,30,0,-30,-60/)
-  res@tmYLLabels=(/"60~S~o~N~N","30~S~o~N~N","0~S~o~N~","30~S~o~N~S","60~S~o~N~S"/)
-  res@tmXBMode  = "Explicit"
-  res@tmXBValues=(/240,300,0,60,120,180/)
-  res@tmXBLabels=(/"120~S~o~N~W","60~S~o~N~W","0~S~o~N~","60~S~o~N~E","120~S~o~N~E","180~S~o~N~"/)
-
+  res@trYMinF         = -60
+  res@trYMaxF         = 80
+  res@mpMinLatF       = -60
+  res@mpMaxLatF       = 80
+  res@mpCenterLonF    = 160
+  res@tmYLMode        = "Explicit"
+  res@tmYLValues      =(/60,30,0,-30,-60/)
+  res@tmYLLabels      =(/"60~S~o~N~N","30~S~o~N~N","0~S~o~N~","30~S~o~N~S","60~S~o~N~S"/)
+  res@tmXBMode        = "Explicit"
+  res@tmXBValues      =(/240,300,0,60,120,180/)
+  res@tmXBLabels      =(/"120~S~o~N~W","60~S~o~N~W","0~S~o~N~","60~S~o~N~E","120~S~o~N~E","180~S~o~N~"/)
 else if scale .eq. "SE-AU" then
-  A = -40.
-  B = -28.
-  C = 140.
-  D = 154.
+  res@gsnAddCyclic    = False
+  res@trYMinF         = -40.
+  res@trYMaxF         = -28.
+  res@mpMinLatF       = -40.
+  res@mpMaxLatF       = -28.
+  res@trXMinF         = 140.
+  res@trXMaxF         = 154.
+  res@mpMinLonF       = 140.
+  res@mpMaxLonF       = 154.
+  res@tmYLMode        = "Explicit"
+  res@tmYLValues      = (/-40,-35,-30,-25/)
+  res@tmYLLabels      = (/"40~S~o~N~N","35~S~o~N~N","30~S~o~N~","25~S~o~N~S"/)
+  res@tmXBMode        = "Explicit"
+  res@tmXBValues      = (/140,145,150/)
+  res@tmXBLabels      = (/"140~S~o~N~W","145~S~o~N~W","150~S~o~N~"/)
 else if scale .eq. "AU" then
-  A = -44.
-  B = -10.
-  C = 112.
-  D = 154.
-  res@gsnAddCyclic       = False
-  res@trYMinF            = -40
-  res@trYMaxF            = -27
-  res@mpMinLatF          = -40
-  res@mpMaxLatF          = -27
-  res@trXMinF            = 140
-  res@trXMaxF            = 155
-  res@mpMinLonF          = 140
-  res@mpMaxLonF          = 155
-
-  res@tmYLMode  = "Explicit"             ;��Y����������������,��ʾ�Լ���Ҫ��ֵ
-  res@tmYLValues=(/-30,-40/)
-  res@tmYLLabels=(/"30~S~o~N~S","40~S~o~N~S"/)
-  res@tmXBMode  = "Explicit"
-  res@tmXBValues=(/140,150/)
-  res@tmXBLabels=(/"140~S~o~N~E","150~S~o~N~E"/)
+  res@gsnAddCyclic    = False
+  res@trYMinF         = -44
+  res@trYMaxF         = -10
+  res@mpMinLatF       = -44
+  res@mpMaxLatF       = -10
+  res@trXMinF         = 112
+  res@trXMaxF         = 154
+  res@mpMinLonF       = 112
+  res@mpMaxLonF       = 154
+  res@tmYLMode        = "Explicit"
+  res@tmYLValues      = (/-40,-35,-30,-25,-20,-15,-10/)
+  res@tmYLLabels      = (/"40~S~o~N~N","35~S~o~N~N","30~S~o~N~","25~S~o~N~S","20~S~o~N~N","15~S~o~N~N","10~S~o~N~"/)
+  res@tmXBMode        = "Explicit"
+  res@tmXBValues      = (/115,120,125,130,135,140,145,150/)
+  res@tmXBLabels      = (/"115~S~o~N~W","120~S~o~N~W","125~S~o~N~","130~S~o~N~W","135~S~o~N~W","140~S~o~N~","145~S~o~N~W","150~S~o~N~"/)
 end if
 end if
 end if
@@ -493,76 +488,64 @@ plots = new(case_sum,graphic)
 ; ____________________ all PFT __________________________
 print("for all PFTs")
 do case_num = 0,case_sum-1
-
-res@tiMainString = scale+ " "+case_name_brf(case_num)
-
-if scale .eq. "Global" then
-   print(case_name_brf(case_num)+" "+avg(GRACE_TWS(case_num,:,:)))
-   levels = (/0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0/)
-   res@cnLevels = levels
-   plots(case_num) = gsn_csm_contour_map(wks,GRACE_TWS(case_num,:,:),res)
-else if scale .eq. "AU" then
-   print(case_name_brf(case_num)+" "+avg(GRACE_TWS(case_num,{-40:-27},{140:155})))
-   levels = (/0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0/)
-   res@cnLevels = levels
-   plots(case_num) = gsn_csm_contour_map(wks,GRACE_TWS(case_num,{-40:-27},{140:155}),res)
-end if
-end if
-
+    print(case_name(case_num)+" "+avg(GRACE_TWS(case_num,{A:B},{C:D})))
+    res@tiMainString = case_name(case_num)
+    res@cnLevels = (/0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0/)
+    plots(case_num) = gsn_csm_contour_map(wks,GRACE_TWS(case_num,{A:B},{C:D}),res)
 end do
-gsn_panel(wks,(/plots/),(/1,1/),pres)
+gsn_panel(wks,(/plots/),(/row_sum,col_sum/),pres)
 
-; tmp var
-tmp   = new((/case_sum,360,720/),float)
-tmp   = 0.0
-tmp!0 = "case"
-tmp!1 = "lat"
-tmp!2 = "lon"
-tmp&lat = GRACE_TWS&lat
-tmp&lon = GRACE_TWS&lon
-tmp@_FillValue = GRACE_TWS@_FillValue
-
-; ____________________ forest __________________________
-print("for forest")
-pres@txString = "forest"
-do case_num = 0,case_sum-1
-  tmp(case_num,:,:) = where(iveg .ge. 1 .and. iveg .le. 4, GRACE_TWS(case_num,:,:), GRACE_TWS@_FillValue )
-  res@tiMainString = case_name_brf(case_num)
-  if scale .eq. "Global" then
-    print(case_name_brf(case_num)+" "+avg(tmp(case_num,:,:)))
-    levels = (/0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0/)
-    res@cnLevels = levels
-    plots(case_num) = gsn_csm_contour_map(wks,tmp(case_num,:,:),res)
-  else if scale .eq. "AU" then
-    print(case_name_brf(case_num)+" "+avg(tmp(case_num,{-40:-27},{140:155})))
-    levels = (/0.,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6/)
-    res@cnLevels = levels
-    plots(case_num) = gsn_csm_contour_map(wks,tmp(case_num,{-40:-27},{140:155}),res)
-  end if
-  end if
-end do
-gsn_panel(wks,(/plots/),(/1,1/),pres)
-
-
-; ____________________ grass+shrub+crop __________________________
-print("for grass+shrub+crop")
-pres@txString = "grass+shrub+crop"
-do case_num = 0,case_sum-1
-  tmp(case_num,:,:) = where(iveg .ge. 5 .and. iveg .le. 11, GRACE_TWS(case_num,:,:), GRACE_TWS@_FillValue )
-  res@tiMainString = case_name_brf(case_num)
-  if scale .eq. "Global" then
-    print(case_name_brf(case_num)+" "+avg(tmp(case_num,:,:)))
-    levels = (/0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0/)
-    res@cnLevels = levels
-    plots(case_num) = gsn_csm_contour_map(wks,tmp(case_num,:,:),res)
-  else if scale .eq. "AU" then
-    print(case_name_brf(case_num)+" "+avg(tmp(case_num,{-40:-27},{140:155})))
-    levels = (/0.,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6/)
-    res@cnLevels = levels
-    plots(case_num) = gsn_csm_contour_map(wks,tmp(case_num,{-40:-27},{140:155}),res)
-  end if
-  end if
-end do
-gsn_panel(wks,(/plots/),(/1,1/),pres)
+;
+; ; ____________________ forest __________________________
+; ; tmp var
+; tmp   = new((/case_sum, GRACE_lat_size, GRACE_lon_size/),float)
+; tmp   = 0.0
+; tmp!0 = "case"
+; tmp!1 = "lat"
+; tmp!2 = "lon"
+; tmp&lat = GRACE_TWS&lat
+; tmp&lon = GRACE_TWS&lon
+; tmp@_FillValue = GRACE_TWS@_FillValue
+; print("for forest")
+; pres@txString = "forest"
+; do case_num = 0,case_sum-1
+;   tmp(case_num,:,:) = where(iveg .ge. 1 .and. iveg .le. 4, GRACE_TWS(case_num,:,:), GRACE_TWS@_FillValue )
+;   res@tiMainString = case_name(case_num)
+;   if scale .eq. "Global" then
+;     print(case_name_brf(case_num)+" "+avg(tmp(case_num,:,:)))
+;     levels = (/0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0/)
+;     res@cnLevels = levels
+;     plots(case_num) = gsn_csm_contour_map(wks,tmp(case_num,:,:),res)
+;   else if scale .eq. "AU" then
+;     print(case_name_brf(case_num)+" "+avg(tmp(case_num,{-40:-27},{140:155})))
+;     levels = (/0.,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6/)
+;     res@cnLevels = levels
+;     plots(case_num) = gsn_csm_contour_map(wks,tmp(case_num,{-40:-27},{140:155}),res)
+;   end if
+;   end if
+; end do
+; gsn_panel(wks,(/plots/),(/1,1/),pres)
+;
+;
+; ; ____________________ grass+shrub+crop __________________________
+; print("for grass+shrub+crop")
+; pres@txString = "grass+shrub+crop"
+; do case_num = 0,case_sum-1
+;   tmp(case_num,:,:) = where(iveg .ge. 5 .and. iveg .le. 11, GRACE_TWS(case_num,:,:), GRACE_TWS@_FillValue )
+;   res@tiMainString = case_name_brf(case_num)
+;   if scale .eq. "Global" then
+;     print(case_name_brf(case_num)+" "+avg(tmp(case_num,:,:)))
+;     levels = (/0.,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0/)
+;     res@cnLevels = levels
+;     plots(case_num) = gsn_csm_contour_map(wks,tmp(case_num,:,:),res)
+;   else if scale .eq. "AU" then
+;     print(case_name_brf(case_num)+" "+avg(tmp(case_num,{-40:-27},{140:155})))
+;     levels = (/0.,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6/)
+;     res@cnLevels = levels
+;     plots(case_num) = gsn_csm_contour_map(wks,tmp(case_num,{-40:-27},{140:155}),res)
+;   end if
+;   end if
+; end do
+; gsn_panel(wks,(/plots/),(/1,1/),pres)
 
 end
