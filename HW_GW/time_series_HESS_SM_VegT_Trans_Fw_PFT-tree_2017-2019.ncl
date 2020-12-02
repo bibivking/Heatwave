@@ -17,7 +17,7 @@ begin
 hydr_param = True
 time_scale = "daily" ;"monthly" ; "daily"
 scale      = "SE-AU"
-PFT        = "all" ; "tree" ;"all"
+PFT        = "tree" ; "tree" ;"all"
 year_s     = 2017
 year_e     = 2019
 year_sum   = year_e-year_s+1
@@ -27,7 +27,7 @@ path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 case_name = (/"CTL","FREE_DRAIN"/);
            ;"FREE_DRAIN","PUMPx10","PUMPx100"/)
            ;,"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
-pic_message = "outputs-spinup200yr"
+pic_message = "no-spinup"
 pic_name   = "HESS_SM_VegT_Trans_Fw_"+case_name(0)+"_vs_"+case_name(1)+"_"+pic_message+"_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 Depth          = (/1.1, 5.1, 15.7, 43.85, 118.55, 316.4, 1710/) ; including aquifer
@@ -69,7 +69,7 @@ end if
 case_sum  = dimsizes(case_name)
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
-  path(case_num) = path_mum+case_name(case_num)+"/outputs-spinup200yr"
+  path(case_num) = path_mum+case_name(case_num)+"/outputs-without-spinup"
 end do
 
 ; ___________________________ TREE Mask ______________________________
@@ -89,8 +89,8 @@ Qrec      = new((/case_sum+1,time_tot/),float,default_val)
 VegT     = new((/case_sum,time_tot/),float,default_val)
 TVeg     = new((/case_sum,time_tot/),float,default_val)
 Fwsoil   = new((/case_sum,time_tot/),float,default_val)
-EVAP64cm = new((/case_sum,time_tot/),float,default_val)
-EVAPFBL  = new((/case_sum,6,time_tot/),float,default_val)
+; EVAP64cm = new((/case_sum,time_tot/),float,default_val)
+; EVAPFBL  = new((/case_sum,6,time_tot/),float,default_val)
 
 ; Rain     = 0.
 SoilMoist= 0.
@@ -99,8 +99,8 @@ Qrec     = 0.
 VegT     = 0.
 TVeg     = 0.
 Fwsoil   = 0.
-EVAP64cm = 0.
-EVAPFBL  = 0.
+; EVAP64cm = 0.
+; EVAPFBL  = 0.
 
 do case_num = 0, case_sum -1
   print("case_num = " +case_num)
@@ -138,20 +138,20 @@ do case_num = 0, case_sum -1
           + f1->SoilMoist(:,2,{A:B},{C:D})*0.154 + f1->SoilMoist(:,3,{A:B},{C:D})*0.409)/0.643
     SM64cm(case_num,i:i+ts-1) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, tmp, default_val), (/1,2/))
 
-    tmp1 = f1->EVAPFBL(:,0,{A:B},{C:D}) + f1->EVAPFBL(:,1,{A:B},{C:D}) \
-          + f1->EVAPFBL(:,2,{A:B},{C:D}) + f1->EVAPFBL(:,3,{A:B},{C:D})
-    EVAP64cm(case_num,i:i+ts-1) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, tmp1*3600*24, default_val), (/1,2/))
+    ; tmp1 = f1->EVAPFBL(:,0,{A:B},{C:D}) + f1->EVAPFBL(:,1,{A:B},{C:D}) \
+    ;       + f1->EVAPFBL(:,2,{A:B},{C:D}) + f1->EVAPFBL(:,3,{A:B},{C:D})
+    ; EVAP64cm(case_num,i:i+ts-1) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, tmp1*3600*24, default_val), (/1,2/))
 
     Qrec(case_num,i:i+ts-1)   = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->Qrecharge(:,{A:B},{C:D}),default_val) ,(/1,2/))*3600*24
     do soil = 0,5
        SoilMoist(case_num, soil, i:i+ts-1)= dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->SoilMoist(:,soil,{A:B},{C:D}),default_val), (/1,2/))
-       EVAPFBL(case_num, soil, i:i+ts-1)  = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->EVAPFBL(:,soil,{A:B},{C:D})*3600*24,default_val), (/1,2/))
+       ; EVAPFBL(case_num, soil, i:i+ts-1)  = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->EVAPFBL(:,soil,{A:B},{C:D})*3600*24,default_val), (/1,2/))
     end do
     ; aquifer
     SoilMoist(case_num, 6, i:i+ts-1)= dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->GWMoist(:,{A:B},{C:D}),default_val), (/1,2/))
     i = i + ts
     delete(tmp)
-    delete(tmp1)
+    ; delete(tmp1)
     delete(PFT_mask_multi)
   end do ; year
 end do ; case_num
@@ -309,8 +309,8 @@ res2@tmYLValues         = ispan(1,7,1)
 res2@tiYAxisString      = "Depth (cm)"
 res2@tmYLLabels         = tostring(toint(Depth(0:6:-1)))
 res2@tmBorderThicknessF = 2.0
-; res2@trXMinF            = 0
-; res2@trXMaxF            = 0.40
+;res2@trXMinF            = 0
+;res2@trXMaxF            = 0.40
 delete(res2@tiXAxisString)
 
 res1@cnLevels      = fspan(0.0,0.4,41)
@@ -328,9 +328,9 @@ res1@cnLevels      = fspan(-0.1,0.1,21)
 res1@cnFillPalette = "MPL_BrBG" ;"ViBlGrWhYeOrRe"
 res1@gsnLeftString =  case_name(1) +" - "+  case_name(0)
 plots(4)           = gsn_csm_contour(wks, SoilMoist(1,0:6:-1,:) - SoilMoist(0,0:6:-1,:),res1)
-; res2@trXMinF       = -0.1
-; res2@trXMaxF       = 0.1
-plots(5)           = gsn_csm_xy(wks,dim_avg_n_Wrap(SoilMoist(1,0:6:-1,:)-SoilMoist(0,0:6:-1,:),1),ispan(1,7,1),res2)
+;res2@trXMinF       = -0.1
+;res2@trXMaxF       = 0.1
+plots(5)           = gsn_csm_xy(wks,dim_avg_n_Wrap(SoilMoist(:,0:6:-1,:),2),ispan(1,7,1),res2)
 gsn_panel(wks,(/plots/),(/3,2/),pres)
 
 delete(plots)
@@ -401,61 +401,61 @@ gsn_panel(wks,(/plots/),(/3,2/),pres)
 delete(res@trYMinF)
 delete(res@trYMaxF)
 delete(plots)
-
-; _________________________________ EVAPFBL ____________________________________
-res@trYMinF = 0.
-res@trYMaxF = 1.2
-
-plots = new(4,graphic)
-print("plot EVAP64cm")
-res@gsnLeftString  = "Transpiration taken from the top 64cm (mm/d)"
-EVAP64cm_arry      = new ( (/4,time_tot/), typeof(EVAP64cm))
-EVAP64cm_rc_ctl    = regline(x, EVAP64cm(0,:))          ; slope
-EVAP64cm_rc_sen    = regline(x, EVAP64cm(1,:))          ; slope
-EVAP64cm_arry(0,:) = EVAP64cm(0,:)
-EVAP64cm_arry(1,:) = EVAP64cm_rc_ctl*x + EVAP64cm_rc_ctl@yintercept
-EVAP64cm_arry(2,:) = EVAP64cm(1,:)
-EVAP64cm_arry(3,:) = EVAP64cm_rc_sen*x + EVAP64cm_rc_sen@yintercept
-plots(0) = gsn_csm_xy(wks,x,EVAP64cm_arry,res)
-
-print("plot 4th EVAPFBL")
-res@gsnLeftString  = "Transpiration taken from 64-173cm (mm/d)"
-EVAP4th_arry      = new ( (/4,time_tot/), float)
-EVAP4th_rc_ctl    = regline(x, EVAPFBL(0,4,:))          ; slope
-EVAP4th_rc_sen    = regline(x, EVAPFBL(1,4,:))          ; slope
-EVAP4th_arry(0,:) = EVAPFBL(0,4,:)
-EVAP4th_arry(1,:) = EVAP4th_rc_ctl*x + EVAP4th_rc_ctl@yintercept
-EVAP4th_arry(2,:) = EVAPFBL(1,4,:)
-EVAP4th_arry(3,:) = EVAP4th_rc_sen*x + EVAP4th_rc_sen@yintercept
-plots(1) = gsn_csm_xy(wks,x,EVAP4th_arry,res)
-
-print("plot 5th EVAPFBL")
-res@gsnLeftString  = "Transpiration taken from 173-460cm (mm/d)"
-EVAP5th_arry      = new ( (/4,time_tot/), float)
-EVAP5th_rc_ctl    = regline(x, EVAPFBL(0,5,:))          ; slope
-EVAP5th_rc_sen    = regline(x, EVAPFBL(1,5,:))          ; slope
-EVAP5th_arry(0,:) = EVAPFBL(0,5,:)
-EVAP5th_arry(1,:) = EVAP5th_rc_ctl*x + EVAP5th_rc_ctl@yintercept
-EVAP5th_arry(2,:) = EVAPFBL(1,5,:)
-EVAP5th_arry(3,:) = EVAP5th_rc_sen*x + EVAP5th_rc_sen@yintercept
-plots(2) = gsn_csm_xy(wks,x,EVAP5th_arry,res)
-
-
-print("plot EVAPFBL_diff")
-res@gsnLeftString  = "EVAPFBL_diff (SEN-CTL) (mm/d)"
-res@trYMinF        = -0.5
-res@trYMaxF        = 0.5
-EVAPFBL_diff       = new((/3,time_tot/), float)
-delete(res@xyLineThicknesses)
-delete(res@xyDashPatterns)
-delete(res@xyLineColors)
-res@xyLineThicknesses   = (/  1.5, 1.5, 1.5/)
-res@xyDashPatterns      = (/0, 0, 0/)
-res@xyLineColors        = (/"blue","red","green"/)
-EVAPFBL_diff(0,:) = EVAP64cm(1,:) - EVAP64cm(0,:)
-EVAPFBL_diff(1,:) = EVAPFBL(1,4,:) - EVAPFBL(0,4,:)
-EVAPFBL_diff(2,:) = EVAPFBL(1,5,:) - EVAPFBL(0,5,:)
-plots(3) = gsn_csm_xy(wks,x,EVAPFBL_diff,res)
-gsn_panel(wks,(/plots/),(/4,1/),pres)
+;
+; ; _________________________________ EVAPFBL ____________________________________
+; res@trYMinF = 0.
+; res@trYMaxF = 1.2
+;
+; plots = new(4,graphic)
+; print("plot EVAP64cm")
+; res@gsnLeftString  = "Transpiration taken from the top 64cm (mm/d)"
+; EVAP64cm_arry      = new ( (/4,time_tot/), typeof(EVAP64cm))
+; EVAP64cm_rc_ctl    = regline(x, EVAP64cm(0,:))          ; slope
+; EVAP64cm_rc_sen    = regline(x, EVAP64cm(1,:))          ; slope
+; EVAP64cm_arry(0,:) = EVAP64cm(0,:)
+; EVAP64cm_arry(1,:) = EVAP64cm_rc_ctl*x + EVAP64cm_rc_ctl@yintercept
+; EVAP64cm_arry(2,:) = EVAP64cm(1,:)
+; EVAP64cm_arry(3,:) = EVAP64cm_rc_sen*x + EVAP64cm_rc_sen@yintercept
+; plots(0) = gsn_csm_xy(wks,x,EVAP64cm_arry,res)
+;
+; print("plot 4th EVAPFBL")
+; res@gsnLeftString  = "Transpiration taken from 64-173cm (mm/d)"
+; EVAP4th_arry      = new ( (/4,time_tot/), float)
+; EVAP4th_rc_ctl    = regline(x, EVAPFBL(0,4,:))          ; slope
+; EVAP4th_rc_sen    = regline(x, EVAPFBL(1,4,:))          ; slope
+; EVAP4th_arry(0,:) = EVAPFBL(0,4,:)
+; EVAP4th_arry(1,:) = EVAP4th_rc_ctl*x + EVAP4th_rc_ctl@yintercept
+; EVAP4th_arry(2,:) = EVAPFBL(1,4,:)
+; EVAP4th_arry(3,:) = EVAP4th_rc_sen*x + EVAP4th_rc_sen@yintercept
+; plots(1) = gsn_csm_xy(wks,x,EVAP4th_arry,res)
+;
+; print("plot 5th EVAPFBL")
+; res@gsnLeftString  = "Transpiration taken from 173-460cm (mm/d)"
+; EVAP5th_arry      = new ( (/4,time_tot/), float)
+; EVAP5th_rc_ctl    = regline(x, EVAPFBL(0,5,:))          ; slope
+; EVAP5th_rc_sen    = regline(x, EVAPFBL(1,5,:))          ; slope
+; EVAP5th_arry(0,:) = EVAPFBL(0,5,:)
+; EVAP5th_arry(1,:) = EVAP5th_rc_ctl*x + EVAP5th_rc_ctl@yintercept
+; EVAP5th_arry(2,:) = EVAPFBL(1,5,:)
+; EVAP5th_arry(3,:) = EVAP5th_rc_sen*x + EVAP5th_rc_sen@yintercept
+; plots(2) = gsn_csm_xy(wks,x,EVAP5th_arry,res)
+;
+;
+; print("plot EVAPFBL_diff")
+; res@gsnLeftString  = "EVAPFBL_diff (SEN-CTL) (mm/d)"
+; res@trYMinF        = -0.5
+; res@trYMaxF        = 0.5
+; EVAPFBL_diff       = new((/3,time_tot/), float)
+; delete(res@xyLineThicknesses)
+; delete(res@xyDashPatterns)
+; delete(res@xyLineColors)
+; res@xyLineThicknesses   = (/  1.5, 1.5, 1.5/)
+; res@xyDashPatterns      = (/0, 0, 0/)
+; res@xyLineColors        = (/"blue","red","green"/)
+; EVAPFBL_diff(0,:) = EVAP64cm(1,:) - EVAP64cm(0,:)
+; EVAPFBL_diff(1,:) = EVAPFBL(1,4,:) - EVAPFBL(0,4,:)
+; EVAPFBL_diff(2,:) = EVAPFBL(1,5,:) - EVAPFBL(0,5,:)
+; plots(3) = gsn_csm_xy(wks,x,EVAPFBL_diff,res)
+; gsn_panel(wks,(/plots/),(/4,1/),pres)
 
 end

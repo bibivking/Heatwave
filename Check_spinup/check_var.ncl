@@ -13,32 +13,36 @@ end setvalues
 
 begin
 
-path1 = "/g/data/w35/mm3972/model/cable/runs/test_mpi_serial/"
+; ================================ Pre-define ==================================
+path = "/g/data/w35/mm3972/model/cable/runs/mmy_trunk_merged/"
+case_name = (/"serial","mpi"/)
+case_sum  = dimsizes(case_name)
+filename  = new(case_sum,string)
 
-filename1 = path1+"cable_out_serial.nc"
-filename2 = path1+"cable_out_mpi.nc"
-filename3 = path1+"cable_out_serial_monthly.nc"
-filename4 = path1+"cable_out_mpi_monthly.nc"
+var_2D_name = (/ "SWdown","LWdown","Tair","Rainf","Snowf","Qair","Wind","PSurf", \
+                 "CO2air","Qmom","Qle","Qh","Qg","Qs","Qsb","Evap","ECanop","TVeg",\
+                 "ESoil","HVeg","HSoil","RnetSoil","NEE","BaresoilT","SWE","SnowMelt",\
+                 "SnowT","SnowDepth","SWnet","LWnet","Rnet","Albedo","RadT",\
+                 "Tscrn","Qscrn","VegT","CanT","Fwsoil","CanopInt","LAI",\
+                 "Ebal","Wbal","AutoResp","LeafResp","HeteroResp","GPP",\
+                 "NPP","WatTable","GWMoist","SatFrac","Qrecharge","Area"/)
 
-f1 = addfile (filename1,"r")
-f2 = addfile (filename2,"r")
-f3 = addfile (filename3,"r")
-f4 = addfile (filename4,"r")
+var_3D_name = (/ "SoilMoist","SoilMoistIce","SoilTemp","SMP"/)
 
-Fwsoil_all = new((/2,70128/),float)
-Fwsoil_all(0,:) = f1->Fwsoil(:,0,0)
-Fwsoil_all(1,:) = f2->Fwsoil(:,0,0)
+; ================================ Dimsizes ====================================
+do case_num = 0, case_sum-1
+  filename(case_num) = path+"cable_out_"+case_name(case_num)+".nc"
+end do
 
-printVarSummary(f3->Fwsoil)
-printVarSummary(f4->Fwsoil)
+f        = addfile (filename(0),"r")
+time_sum = dimsizes(f->time)
+delete(f)
 
-Fwsoil_mon = new((/2,44/),float)
-Fwsoil_mon(0,:) = f3->Fwsoil(0:43,0,0)
-Fwsoil_mon(1,:) = f4->Fwsoil(0:43,0,0)
+var_2D_sum = dimsizes(var_2D_name)
+var_3D_sum = dimsizes(var_3D_name)
 
-;_____________________________ PLOT ___________________________________
-
-wks = gsn_open_wks("pdf","serial_vs_mpi")
+; ================================== PLOT ======================================
+wks = gsn_open_wks("pdf","serial_vs_mpi_merged")
 gsn_define_colormap(wks,"BlueYellowRed")
 res                    = True
 res@gsnMaximize        = True
@@ -49,21 +53,45 @@ res@gsnMaximize        = True
 ; res@pmLegendWidthF     = 0.14                     ; Resize legend width
 ; res@pmLegendHeightF    = 0.11                     ; and height
 
-res@xyLineThicknesses  = (/  1.0, 1.0, 1.0, 1.0, 1.0, 1.0,1.0/)          ; make second line thicker
 res@pmLegendDisplayMode = "Always"
-res@xyLineColors       = (/"blue","red","green","orange","red","red","red"/)          ; change line color
-res@xyExplicitLegendLabels = (/"serial","mpi","GW_1-60","NoAQ"/)
-;
+res@xyLineThicknesses  = (/  1.0, 1.0/)          ; make second line thicker
+res@xyDashPatterns     = (/0, 0/)
+res@xyLineColors       = (/"blue","red"/)          ; change line color
+res@xyExplicitLegendLabels = case_name
 
 
-x                  = ispan(1,70128,1)
-res@trYMaxF = 2.5
-res@trYMinF = 0.0
+x                  = ispan(1,time_sum,1)
+; res@trYMaxF        = 2.5
+; res@trYMinF        = 0.0
 res@tiXAxisString  = "time step"
-plot = gsn_csm_xy(wks,x,Fwsoil_all,res)
 
-delete(x)
-x                  = ispan(1,44,1)
-res@tiXAxisString  = "month"
-plot = gsn_csm_xy(wks,x,Fwsoil_mon,res)
+; =============================== Read and Plot ================================
+do var_num = 0, var_2D_sum -1
+  var_2D = new((/case_sum, time_sum/),float)
+  do case_num = 0,case_sum -1
+    f = addfile(filename(case_num),"r")
+    var_2D(case_num,:) = f->$var_2D_name(var_num)$(:,0,0)
+    delete(f)
+  end do
+
+  res@tiYAxisString  = var_2D_name(var_num)
+  plot = gsn_csm_xy(wks,x,runave(var_2D(1,:),1000,0)-runave(var_2D(0,:),1000,0),res)
+  delete(var_2D)
+  delete(plot)
+end do
+
+do var_num = 0, var_3D_sum -1
+  var_3D = new((/case_sum, time_sum/),float)
+  do case_num = 0,case_sum -1
+    f = addfile(filename(case_num),"r")
+    var_3D(case_num,:) = dim_avg_n_Wrap(f->$var_3D_name(var_num)$(:,:,0,0),1)
+    delete(f)
+  end do
+
+  res@tiYAxisString  = var_3D_name(var_num)
+  plot = gsn_csm_xy(wks,x,runave(var_3D(1,:),1000,0)-runave(var_3D(0,:),1000,0),res)
+  delete(var_3D)
+  delete(plot)
+end do
+
 end

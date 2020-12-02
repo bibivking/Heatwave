@@ -23,10 +23,10 @@ case_sum  = dimsizes(case_name)
 case_path = new(case_sum,"string")
 row_sum   = 2
 col_sum   = 2
-
+pic_message = "no-spinup"
 
 do case_num = 0, case_sum -1
-   case_path(case_num) = path+case_name(case_num)+"/outputs-spinup200yr"
+   case_path(case_num) = path+case_name(case_num)+"/outputs-without-spinup"
 end do
 
 ; ____________________________ Options _______________________________
@@ -294,25 +294,25 @@ else if GRACE_opt .eq. "TWS" then
       TWS(:,time,:,:)      = TWS(:,time,:,:) - TWS_ave
     end do
 
-    TWS_regid = linint2(GRACE&lon,GRACE&lat,TWS,True,lon_crop,lat_crop,0)
+    TWS_regrid = linint2(lon_crop,lat_crop,TWS,True,GRACE&lon,GRACE&lat,0)
 
     res@cnLevels = fspan(-100,100,10)
     plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(GRACE(:,:,:),0),res)
-    plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS_regid(0,:,:,:),0),res)
+    plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS_regrid(0,:,:,:),0),res)
     plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS(0,:,:,:),0),res)
-    GRACE = where( .not. ismissing(TWS_regid(0,:,:,:)), GRACE, GRACE@_FillValue)
+    GRACE = where( .not. ismissing(TWS_regrid(0,:,:,:)), GRACE, GRACE@_FillValue)
 
     delete(TWS)
     delete(TWS_ave)
     delete(res@cnLevels)
 
-    TWS_regid!0   = "case"
-    TWS_regid!1   = "time"
-    TWS_regid!2   = "lat"
-    TWS_regid!3   = "lon"
-    TWS_regid&lat = GRACE&lat
-    TWS_regid&lon = GRACE&lon
-    TWS_regid@_FillValue = f->Qle@_FillValue
+    TWS_regrid!0   = "case"
+    TWS_regrid!1   = "time"
+    TWS_regrid!2   = "lat"
+    TWS_regrid!3   = "lon"
+    TWS_regrid&lat = GRACE&lat
+    TWS_regrid&lon = GRACE&lon
+    TWS_regrid@_FillValue = f->Qle@_FillValue
 
     delete(counter)
     delete(f)
@@ -339,7 +339,7 @@ if deseason .eq. True then
 end if
 
 plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(GRACE(:,:,:),0),res)
-plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS_regid(0,:,:,:),0),res)
+plot  = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS_regrid(0,:,:,:),0),res)
 
 ; _____________________  CALCULATE CORRELATION ________________________
 GRACE_TWS  = new((/case_sum,GRACE_lat_size,GRACE_lon_size/),float)
@@ -349,10 +349,8 @@ do case_num = 0,case_sum-1
 
   if GRACE_opt .eq. "Change_Rate" then
       GRACE_TWS(case_num,:,:) = escorc(TWS_change(case|case_num,lat|:,lon|:,time|:), GRACE(lat|:,lon|:,time|:))
-      delete(TWS_change)
   else if GRACE_opt .eq. "TWS" then
       GRACE_TWS(case_num,:,:) = escorc(TWS_regrid(case|case_num,lat|:,lon|:,time|:), GRACE(lat|:,lon|:,time|:))
-      delete(TWS)
   end if
   end if
 ; escorc: Computes the (Pearson) sample linear cross-correlations at lag 0 only.
@@ -366,17 +364,22 @@ GRACE_TWS&lat = GRACE&lat
 GRACE_TWS&lon = GRACE&lon
 
 plot = gsn_csm_contour(wks,GRACE_TWS(0,:,:)*1.0,res)
+if GRACE_opt .eq. "Change_Rate" then
+  delete(TWS_change)
+else if GRACE_opt .eq. "TWS" then
+  delete(TWS_regrid)
+end if
+end if
 delete(GRACE)
-delete(TWS_regrid)
 delete(res)
 delete(pic)
 delete(wks)
 
 ;_____________________________ PLOT ___________________________________
 if deseason .eq. True then
-   pic = "./plots/"+GRACE_opt+"-GRACE_TWS_correl_"+scale+"_deseasonal_"+year_s+"-"+year_e
+   pic = "./plots/"+GRACE_opt+"-GRACE_TWS_correl_"+pic_message+"_"+scale+"_deseasonal_"+year_s+"-"+year_e
 else
-   pic = "./plots/"+GRACE_opt+"-GRACE_TWS_correl_"+scale+"_"+year_s+"-"+year_e
+   pic = "./plots/"+GRACE_opt+"-GRACE_TWS_correl_"+pic_message+"_"+scale+"_"+year_s+"-"+year_e
 end if
 
 wks = gsn_open_wks("pdf",pic)
@@ -464,7 +467,6 @@ end if
 end if
 end if
 
-
 ;**************** ͼ�������� *****************
 pres                    = True                                      ; ���� panel resources.
 pres@gsnMaximize        = True
@@ -547,5 +549,5 @@ gsn_panel(wks,(/plots/),(/row_sum,col_sum/),pres)
 ;   end if
 ; end do
 ; gsn_panel(wks,(/plots/),(/1,1/),pres)
-
+exit
 end

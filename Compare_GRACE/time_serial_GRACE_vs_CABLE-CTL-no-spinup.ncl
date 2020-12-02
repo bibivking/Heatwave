@@ -51,7 +51,7 @@ begin
 case_name = "CTL" ;(/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
 ;"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
 path      = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-pic_message = "spinup200yr"
+pic_message = "no-spinup"
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
 
@@ -104,7 +104,7 @@ if cable_version .eq. "LIS-CABLE" then
 else if cable_version .eq. "CABLE-HESS" then
     scale = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 
-    filename = path+case_name(0)+"/outputs-spinup200yr/cable_out_"+year_s+"_SE_Aus.nc" ; MMY
+    filename = path+case_name(0)+"/outputs-without-spinup/cable_out_"+year_s+"_SE_Aus.nc" ; MMY
     f = addfile (filename,"r")
 
     lat_size  = dimsizes(f->y)
@@ -333,7 +333,7 @@ if cable_version .eq. "CABLE-HESS" then
        counter = 0
        do year = year_s,year_e
           print("year = " +year)
-          filename1 = path+case_name(case_num)+"/outputs-spinup200yr/cable_out_"+year+"_SE_Aus.nc"
+          filename1 = path+case_name(case_num)+"/outputs-without-spinup/cable_out_"+year+"_SE_Aus.nc"
           f1 = addfile (filename1,"r")
           if output .eq. "monthly" then
             do month = 0,11

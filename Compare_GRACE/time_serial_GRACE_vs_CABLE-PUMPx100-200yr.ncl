@@ -48,7 +48,7 @@ end
 ; ================================= Start ======================================
 begin
 
-case_name = "CTL" ;(/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
+case_name = "PUMPx100" ;(/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
 ;"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
 path      = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 pic_message = "spinup200yr"
