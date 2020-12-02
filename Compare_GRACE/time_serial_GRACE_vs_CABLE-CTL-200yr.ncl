@@ -64,8 +64,8 @@ year_sum = year_e-year_s+1
 total    = year_sum*12
 case_sum = dimsizes(case_name)
 
-
 ; ================================ Set Regrid ==================================
+PFT           = "tree" ; "tree" ;"all"
 use_month     = "May" ; "Jul"
 time_scale    = "monthly" ; "annual"; "monthly"
 grace_version = "Original-fill-nan"
@@ -76,6 +76,17 @@ grace_version = "Original-fill-nan"
 output        = "daily" ;"monthly"
 cable_version = "CABLE-HESS" ;"LIS-CABLE" ; "CABLE-HESS"
 
+; set PFT
+if PFT .eq. "all" then
+  iveg_s = 0
+  iveg_e = 20
+else if PFT .eq. "tree" then
+  iveg_s = 1
+  iveg_e = 4
+end if
+end if
+
+; ================================== Set Dim ===================================
 if cable_version .eq. "LIS-CABLE" then
     scale = "AU-domain"
     interp_method = "neareststod"  ;"neareststod"; "conserve" "patch";"bilinear"
@@ -131,6 +142,13 @@ else if cable_version .eq. "CABLE-HESS" then
     end if
     end if
     end if
+
+    ; PFT mask
+    PFT_mask  = where((f->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
+    PFT_mask_multi = new((/total,dimsizes(PFT_mask(:,0)),dimsizes(PFT_mask(0,:))/),float)
+    do z = 0, total-1
+      PFT_mask_multi(z,:,:) = PFT_mask
+    end do
     delete(f)
 end if
 end if
@@ -172,7 +190,6 @@ if grace_version .eq. "Original-fill-nan" then
             f->lwe_thickness(GRACE_ts_str_yr:GRACE_ts_str_yr+GRACE_ts_tot, :, :)*10.
   uncertainty(compensate_month:compensate_month+tot_grace-1,:,:)= \
             f->uncertainty(GRACE_ts_str_yr:GRACE_ts_str_yr+GRACE_ts_tot, :, :)*10.
-
   replace_ieeenan (GRACE, GRACE@_FillValue, 0)
   replace_ieeenan (uncertainty, uncertainty@_FillValue, 0)
 
@@ -206,6 +223,7 @@ else if grace_version .eq. "Original" then
     printVarSummary(GRACE)
     printVarSummary(uncertainty)
 
+    res@tiMainString = "GRACE(compensate_month,:,:)"
     plot = gsn_csm_contour(wks,GRACE(compensate_month,:,:),res)
 
     do year = GRACE_start_year+1,GRACE_end_year
@@ -219,6 +237,7 @@ else if grace_version .eq. "Original" then
     Jun_ave = Jun_ave/(GRACE_end_year-GRACE_start_year)
     Jul_ave = Jul_ave/(GRACE_end_year-GRACE_start_year)
     ; print(May_ave)
+
     plot = gsn_csm_contour(wks,May_ave,res)
     plot = gsn_csm_contour(wks,Jun_ave,res)
     plot = gsn_csm_contour(wks,Jul_ave,res)
@@ -276,7 +295,9 @@ end if
 end if
 
 ; ++++++++ check GRACE input ++++++++
+res@tiMainString = "GRACE(compensate_month+24,:,:)"
 plot = gsn_csm_contour(wks,GRACE(compensate_month+24,:,:),res)
+res@tiMainString = "uncertainty(compensate_month+24,:,:)"
 plot = gsn_csm_contour(wks,uncertainty(compensate_month+24,:,:),res)
 ; +++++++++++++++++++++++++++++++++++
 
@@ -308,6 +329,27 @@ end do
 printVarSummary(GRACE)
 printVarSummary(uncertainty)
 
+printVarSummary(GRACE_lat)
+printVarSummary(GRACE_lon)
+; regrid
+
+GRACE_regrid       = linint2_Wrap(GRACE&lon,GRACE&lat,GRACE,True,CABLE_lon({C:D}),CABLE_lat({A:B}),0)
+uncertainty_regrid = linint2_Wrap(uncertainty&lon,uncertainty&lat,uncertainty,True,CABLE_lon({C:D}),CABLE_lat({A:B}),0)
+printVarSummary(GRACE_regrid)
+printVarSummary(uncertainty_regrid)
+; ++++++++ check GRACE input ++++++++
+res@tiMainString = "dim_avg_n_Wrap(GRACE,0)"
+plot = gsn_csm_contour(wks,dim_avg_n_Wrap(GRACE,0),res)
+res@tiMainString = "dim_avg_n_Wrap(GRACE_regrid,0)"
+plot = gsn_csm_contour(wks,dim_avg_n_Wrap(GRACE_regrid,0),res)
+res@tiMainString = "dim_avg_n_Wrap(uncertainty,0)"
+plot = gsn_csm_contour(wks,dim_avg_n_Wrap(uncertainty,0),res)
+res@tiMainString = "dim_avg_n_Wrap(uncertainty_regrid,0)"
+plot = gsn_csm_contour(wks,dim_avg_n_Wrap(uncertainty_regrid,0),res)
+; +++++++++++++++++++++++++++++++++++
+
+delete(GRACE)
+delete(uncertainty)
 delete(f)
 delete(filename)
 delete(landmask)
@@ -465,17 +507,17 @@ SWE@_FillValue       = default_value
 SoilMoist@_FillValue = default_value
 Rain@_FillValue      = default_value
 
-
 ; Rain_LIS_regrid   = regrid_data(Rain_LIS,interp_method, lat2d, lon2d, \
 ;                         lat, lon, src_mask, dst_mask )
 
 ; ++++++++ check GRACE input ++++++++
-plot = gsn_csm_contour(wks,dim_avg_n_Wrap(GRACE,0),res)
-plot = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS(0,:,:,:),0),res)
-plot = gsn_csm_contour(wks,dim_avg_n_Wrap(uncertainty,0),res)
+res@tiMainString = "dim_avg_n_Wrap(GRACE_regrid,0)"
+plot = gsn_csm_contour(wks,dim_avg_n_Wrap(GRACE_regrid,0),res)
+res@tiMainString = "dim_avg_n_Wrap(TWS(0,:,{A:B},{C:D}),0),0)"
+plot = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS(0,:,{A:B},{C:D}),0),res)
+res@tiMainString = "dim_avg_n_Wrap(uncertainty_regrid,0),0)"
+plot = gsn_csm_contour(wks,dim_avg_n_Wrap(uncertainty_regrid,0),res)
 ; +++++++++++++++++++++++++++++++++++
-
-
 
 ; ======================= Calculate CABLE 2004-2009 avg ========================
 TWS_ave       = new((/case_sum, lat_size, lon_size/),float)
@@ -521,14 +563,14 @@ delete(SoilMoist_ave)
 
 ; =============================  Regional AVE  =================================
 print("global average")
-GRACE_global_ave       = new((/3,total/),float)
-uncertainty_global_ave = new(total,float)
-TWS_global_ave         = new((/case_sum,total/),float)
-GWMoist_global_ave     = new((/case_sum,total/),float)
-CanopInt_global_ave    = new((/case_sum,total/),float)
-SWE_global_ave         = new((/case_sum,total/),float)
-SoilMoist_global_ave   = new((/case_sum,total/),float)
-Rain_global_ave        = new((/case_sum,total/),float)
+GRACE_global_ave       = new((/3,total/),float, -99999.)
+uncertainty_global_ave = new(total,float, -99999.)
+TWS_global_ave         = new((/case_sum,total/),float,default_value)
+GWMoist_global_ave     = new((/case_sum,total/),float,default_value)
+CanopInt_global_ave    = new((/case_sum,total/),float,default_value)
+SWE_global_ave         = new((/case_sum,total/),float,default_value)
+SoilMoist_global_ave   = new((/case_sum,total/),float,default_value)
+Rain_global_ave        = new((/case_sum,total/),float,default_value)
 
 GRACE_global_ave       = 0.0
 uncertainty_global_ave = 0.0
@@ -539,30 +581,67 @@ SWE_global_ave         = 0.0
 SoilMoist_global_ave   = 0.0
 Rain_global_ave        = 0.0
 
-do time = 0,total-1
-   ; print("time = "+time)
-   ; print("average GRACE")
-   GRACE_global_ave(0,time)     = avg(GRACE(time,{A:B},{C:D}))
-   uncertainty_global_ave(time) = avg(uncertainty(time,{A:B},{C:D}))
-   ; print("average CABLE")
-   do case_num = 0,case_sum-1
-      if cable_version .eq. "CABLE-HESS" then
-          TWS_global_ave(case_num,time)       = avg(TWS(case_num,time,{A:B},{C:D}))
-          GWMoist_global_ave(case_num,time)   = avg(GWMoist(case_num,time,{A:B},{C:D}))
-          CanopInt_global_ave(case_num,time)  = avg(CanopInt(case_num,time,{A:B},{C:D}))
-          SWE_global_ave(case_num,time)       = avg(SWE(case_num,time,{A:B},{C:D}))
-          SoilMoist_global_ave(case_num,time) = avg(SoilMoist(case_num,time,{A:B},{C:D}))
-          Rain_global_ave(case_num,time)      = avg(Rain(case_num,time,{A:B},{C:D}))
-      else if cable_version .eq. "LIS-CABLE" then
-          TWS_global_ave(case_num,time)       = avg(TWS(case_num,time,:,:))
-          GWMoist_global_ave(case_num,time)   = avg(GWMoist(case_num,time,:,:))
-          CanopInt_global_ave(case_num,time)  = avg(CanopInt(case_num,time,:,:))
-          SWE_global_ave(case_num,time)       = avg(SWE(case_num,time,:,:))
-          SoilMoist_global_ave(case_num,time) = avg(SoilMoist(case_num,time,:,:))
-          Rain_global_ave(case_num,time)      = avg(Rain(case_num,time,:,:))
-      end if
-      end if
-   end do
+; print("average GRACE")
+GRACE_tmp = where(PFT_mask_multi .eq. 1, GRACE_regrid,  -99999.)
+GRACE_tmp@_FillValue = -99999.
+uncertainty_tmp = where(PFT_mask_multi .eq. 1, uncertainty_regrid,  -99999.)
+uncertainty_tmp@_FillValue = -99999.
+
+GRACE_global_ave(0,:)     = dim_avg_n_Wrap(GRACE_tmp,(/1,2/))
+uncertainty_global_ave    = dim_avg_n_Wrap(uncertainty_tmp,(/1,2/))
+
+; ++++++++ check GRACE input ++++++++
+res@tiMainString = "dim_avg_n_Wrap(GRACE_tmp,0),0)"
+plot = gsn_csm_contour(wks,dim_avg_n_Wrap(GRACE_tmp,0),res)
+; +++++++++++++++++++++++++++++++++++
+delete(GRACE_regrid)
+delete(uncertainty_regrid)
+delete(GRACE_tmp)
+delete(uncertainty_tmp)
+
+; print("average CABLE")
+do case_num = 0,case_sum-1
+  if cable_version .eq. "CABLE-HESS" then
+      TWS_tmp = where(PFT_mask_multi .eq. 1, TWS(case_num,:,{A:B},{C:D}),  default_value)
+      TWS_tmp@_FillValue = default_value
+      GWMoist_tmp = where(PFT_mask_multi .eq. 1, GWMoist(case_num,:,{A:B},{C:D}),  default_value)
+      GWMoist_tmp@_FillValue = default_value
+      CanopInt_tmp = where(PFT_mask_multi .eq. 1, CanopInt(case_num,:,{A:B},{C:D}),  default_value)
+      CanopInt_tmp@_FillValue = default_value
+      SWE_tmp = where(PFT_mask_multi .eq. 1, SWE(case_num,:,{A:B},{C:D}),  default_value)
+      SWE_tmp@_FillValue = default_value
+      SoilMoist_tmp = where(PFT_mask_multi .eq. 1, SoilMoist(case_num,:,{A:B},{C:D}),  default_value)
+      SoilMoist_tmp@_FillValue = default_value
+      Rain_tmp = where(PFT_mask_multi .eq. 1, Rain(case_num,:,{A:B},{C:D}),  default_value)
+      Rain_tmp@_FillValue = default_value
+
+      TWS_global_ave(case_num,:)       = dim_avg_n_Wrap(TWS_tmp,(/1,2/))
+      GWMoist_global_ave(case_num,:)   = dim_avg_n_Wrap(GWMoist_tmp,(/1,2/))
+      CanopInt_global_ave(case_num,:)  = dim_avg_n_Wrap(CanopInt_tmp,(/1,2/))
+      SWE_global_ave(case_num,:)       = dim_avg_n_Wrap(SWE_tmp,(/1,2/))
+      SoilMoist_global_ave(case_num,:) = dim_avg_n_Wrap(SoilMoist_tmp,(/1,2/))
+      Rain_global_ave(case_num,:)      = dim_avg_n_Wrap(Rain_tmp,(/1,2/))
+
+      ; ++++++++ check GRACE input ++++++++
+      res@tiMainString = "dim_avg_n_Wrap(TWS_tmp,0)"
+      plot = gsn_csm_contour(wks,dim_avg_n_Wrap(TWS_tmp,0),res)
+      ; +++++++++++++++++++++++++++++++++++
+
+      delete(TWS_tmp)
+      delete(GWMoist_tmp)
+      delete(CanopInt_tmp)
+      delete(SWE_tmp)
+      delete(SoilMoist_tmp)
+      delete(Rain_tmp)
+  else if cable_version .eq. "LIS-CABLE" then
+      TWS_global_ave(case_num,:)       = dim_avg_n_Wrap(TWS(case_num,time,:,:),(/1,2/))
+      GWMoist_global_ave(case_num,:)   = dim_avg_n_Wrap(GWMoist(case_num,time,:,:),(/1,2/))
+      CanopInt_global_ave(case_num,:)  = dim_avg_n_Wrap(CanopInt(case_num,time,:,:),(/1,2/))
+      SWE_global_ave(case_num,:)       = dim_avg_n_Wrap(SWE(case_num,time,:,:),(/1,2/))
+      SoilMoist_global_ave(case_num,:) = dim_avg_n_Wrap(SoilMoist(case_num,time,:,:),(/1,2/))
+      Rain_global_ave(case_num,:)      = dim_avg_n_Wrap(Rain(case_num,time,:,:),(/1,2/))
+  end if
+  end if
 end do
 
 GRACE_global_ave(1,:) = GRACE_global_ave(0,:) - uncertainty_global_ave
@@ -597,9 +676,12 @@ do year = year_s,year_e
   uncertainty_global_ave_year(year-year_s) = dim_avg_n_Wrap(uncertainty_global_ave(((year-year_s)*12):((year-year_s)*12+11)),0)
 end do
 
-delete(GRACE)
 delete(TWS)
-delete(uncertainty)
+delete(GWMoist)
+delete(CanopInt)
+delete(SWE)
+delete(SoilMoist)
+delete(Rain)
 
 ;GRACE & TWS is anormaly here
 delete(wks)
@@ -625,7 +707,7 @@ DashPatterns	   = (/0.,0.,0.,0.,0./)      ; make all lines solid
 Labels           = (/"TWS", "GWMoist","SoilMoist", "CanopInt", "SWE" /)
 
 do case_num = 0,case_sum-1
-  pic = "./plots/time_serial_GRACE_JPL06-"+grace_version+"_vs_"+cable_version+"-"+case_name(case_num)+"_"+pic_message+"_"+scale+"_"+time_scale
+  pic = "./plots/time_serial_GRACE_JPL06-"+grace_version+"_vs_"+cable_version+"-"+case_name(case_num)+"_PFT-"+PFT+"_"+pic_message+"_"+scale+"_"+time_scale
   wks = gsn_open_wks("pdf",pic)
   gsn_define_colormap(wks,"WhiteBlueGreenYellowRed")
 

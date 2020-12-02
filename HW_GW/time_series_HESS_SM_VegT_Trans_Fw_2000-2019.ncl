@@ -17,7 +17,7 @@ begin
 hydr_param = True
 time_scale = "daily" ;"monthly" ; "daily"
 scale      = "SE-AU"
-PFT        = "tree" ; "tree" ;"all"
+PFT        = "all" ; "tree" ;"all"
 year_s     = 2000
 year_e     = 2019
 year_sum   = year_e-year_s+1
@@ -27,7 +27,7 @@ path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 case_name = (/"CTL","FREE_DRAIN"/);
            ;"FREE_DRAIN","PUMPx10","PUMPx100"/)
            ;,"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
-pic_message = "no-spinup"
+pic_message = "outputs-spinup200yr"
 pic_name   = "HESS_SM_VegT_Trans_Fw_"+case_name(0)+"_vs_"+case_name(1)+"_"+pic_message+"_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 Depth          = (/1.1, 5.1, 15.7, 43.85, 118.55, 316.4, 1710/) ; including aquifer
@@ -69,7 +69,7 @@ end if
 case_sum  = dimsizes(case_name)
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
-  path(case_num) = path_mum+case_name(case_num)+"/outputs-without-spinup"
+  path(case_num) = path_mum+case_name(case_num)+"/outputs-spinup200yr"
 end do
 
 ; ___________________________ TREE Mask ______________________________
@@ -402,60 +402,60 @@ delete(res@trYMinF)
 delete(res@trYMaxF)
 delete(plots)
 
-; ; _________________________________ EVAPFBL ____________________________________
-; res@trYMinF = 0.
-; res@trYMaxF = 1.2
-;
-; plots = new(4,graphic)
-; print("plot EVAP64cm")
-; res@gsnLeftString  = "Transpiration taken from the top 64cm (mm/d)"
-; EVAP64cm_arry      = new ( (/4,time_tot/), typeof(EVAP64cm))
-; EVAP64cm_rc_ctl    = regline(x, EVAP64cm(0,:))          ; slope
-; EVAP64cm_rc_sen    = regline(x, EVAP64cm(1,:))          ; slope
-; EVAP64cm_arry(0,:) = EVAP64cm(0,:)
-; EVAP64cm_arry(1,:) = EVAP64cm_rc_ctl*x + EVAP64cm_rc_ctl@yintercept
-; EVAP64cm_arry(2,:) = EVAP64cm(1,:)
-; EVAP64cm_arry(3,:) = EVAP64cm_rc_sen*x + EVAP64cm_rc_sen@yintercept
-; plots(0) = gsn_csm_xy(wks,x,EVAP64cm_arry,res)
-;
-; print("plot 4th EVAPFBL")
-; res@gsnLeftString  = "Transpiration taken from 64-173cm (mm/d)"
-; EVAP4th_arry      = new ( (/4,time_tot/), float)
-; EVAP4th_rc_ctl    = regline(x, EVAPFBL(0,4,:))          ; slope
-; EVAP4th_rc_sen    = regline(x, EVAPFBL(1,4,:))          ; slope
-; EVAP4th_arry(0,:) = EVAPFBL(0,4,:)
-; EVAP4th_arry(1,:) = EVAP4th_rc_ctl*x + EVAP4th_rc_ctl@yintercept
-; EVAP4th_arry(2,:) = EVAPFBL(1,4,:)
-; EVAP4th_arry(3,:) = EVAP4th_rc_sen*x + EVAP4th_rc_sen@yintercept
-; plots(1) = gsn_csm_xy(wks,x,EVAP4th_arry,res)
-;
-; print("plot 5th EVAPFBL")
-; res@gsnLeftString  = "Transpiration taken from 173-460cm (mm/d)"
-; EVAP5th_arry      = new ( (/4,time_tot/), float)
-; EVAP5th_rc_ctl    = regline(x, EVAPFBL(0,5,:))          ; slope
-; EVAP5th_rc_sen    = regline(x, EVAPFBL(1,5,:))          ; slope
-; EVAP5th_arry(0,:) = EVAPFBL(0,5,:)
-; EVAP5th_arry(1,:) = EVAP5th_rc_ctl*x + EVAP5th_rc_ctl@yintercept
-; EVAP5th_arry(2,:) = EVAPFBL(1,5,:)
-; EVAP5th_arry(3,:) = EVAP5th_rc_sen*x + EVAP5th_rc_sen@yintercept
-; plots(2) = gsn_csm_xy(wks,x,EVAP5th_arry,res)
-;
-;
-; print("plot EVAPFBL_diff")
-; res@gsnLeftString  = "EVAPFBL_diff (SEN-CTL) (mm/d)"
-; res@trYMinF        = -0.5
-; res@trYMaxF        = 0.5
-; EVAPFBL_diff       = new((/3,time_tot/), float)
-; delete(res@xyLineThicknesses)
-; delete(res@xyDashPatterns)
-; delete(res@xyLineColors)
-; res@xyLineThicknesses   = (/  1.5, 1.5, 1.5/)
-; res@xyDashPatterns      = (/0, 0, 0/)
-; res@xyLineColors        = (/"blue","red","green"/)
-; EVAPFBL_diff(0,:) = EVAP64cm(1,:) - EVAP64cm(0,:)
-; EVAPFBL_diff(1,:) = EVAPFBL(1,4,:) - EVAPFBL(0,4,:)
-; EVAPFBL_diff(2,:) = EVAPFBL(1,5,:) - EVAPFBL(0,5,:)
-; plots(3) = gsn_csm_xy(wks,x,EVAPFBL_diff,res)
-; gsn_panel(wks,(/plots/),(/4,1/),pres)
+; _________________________________ EVAPFBL ____________________________________
+res@trYMinF = 0.
+res@trYMaxF = 1.2
+
+plots = new(4,graphic)
+print("plot EVAP64cm")
+res@gsnLeftString  = "Transpiration taken from the top 64cm (mm/d)"
+EVAP64cm_arry      = new ( (/4,time_tot/), typeof(EVAP64cm))
+EVAP64cm_rc_ctl    = regline(x, EVAP64cm(0,:))          ; slope
+EVAP64cm_rc_sen    = regline(x, EVAP64cm(1,:))          ; slope
+EVAP64cm_arry(0,:) = EVAP64cm(0,:)
+EVAP64cm_arry(1,:) = EVAP64cm_rc_ctl*x + EVAP64cm_rc_ctl@yintercept
+EVAP64cm_arry(2,:) = EVAP64cm(1,:)
+EVAP64cm_arry(3,:) = EVAP64cm_rc_sen*x + EVAP64cm_rc_sen@yintercept
+plots(0) = gsn_csm_xy(wks,x,EVAP64cm_arry,res)
+
+print("plot 4th EVAPFBL")
+res@gsnLeftString  = "Transpiration taken from 64-173cm (mm/d)"
+EVAP4th_arry      = new ( (/4,time_tot/), float)
+EVAP4th_rc_ctl    = regline(x, EVAPFBL(0,4,:))          ; slope
+EVAP4th_rc_sen    = regline(x, EVAPFBL(1,4,:))          ; slope
+EVAP4th_arry(0,:) = EVAPFBL(0,4,:)
+EVAP4th_arry(1,:) = EVAP4th_rc_ctl*x + EVAP4th_rc_ctl@yintercept
+EVAP4th_arry(2,:) = EVAPFBL(1,4,:)
+EVAP4th_arry(3,:) = EVAP4th_rc_sen*x + EVAP4th_rc_sen@yintercept
+plots(1) = gsn_csm_xy(wks,x,EVAP4th_arry,res)
+
+print("plot 5th EVAPFBL")
+res@gsnLeftString  = "Transpiration taken from 173-460cm (mm/d)"
+EVAP5th_arry      = new ( (/4,time_tot/), float)
+EVAP5th_rc_ctl    = regline(x, EVAPFBL(0,5,:))          ; slope
+EVAP5th_rc_sen    = regline(x, EVAPFBL(1,5,:))          ; slope
+EVAP5th_arry(0,:) = EVAPFBL(0,5,:)
+EVAP5th_arry(1,:) = EVAP5th_rc_ctl*x + EVAP5th_rc_ctl@yintercept
+EVAP5th_arry(2,:) = EVAPFBL(1,5,:)
+EVAP5th_arry(3,:) = EVAP5th_rc_sen*x + EVAP5th_rc_sen@yintercept
+plots(2) = gsn_csm_xy(wks,x,EVAP5th_arry,res)
+
+
+print("plot EVAPFBL_diff")
+res@gsnLeftString  = "EVAPFBL_diff (SEN-CTL) (mm/d)"
+res@trYMinF        = -0.5
+res@trYMaxF        = 0.5
+EVAPFBL_diff       = new((/3,time_tot/), float)
+delete(res@xyLineThicknesses)
+delete(res@xyDashPatterns)
+delete(res@xyLineColors)
+res@xyLineThicknesses   = (/  1.5, 1.5, 1.5/)
+res@xyDashPatterns      = (/0, 0, 0/)
+res@xyLineColors        = (/"blue","red","green"/)
+EVAPFBL_diff(0,:) = EVAP64cm(1,:) - EVAP64cm(0,:)
+EVAPFBL_diff(1,:) = EVAPFBL(1,4,:) - EVAPFBL(0,4,:)
+EVAPFBL_diff(2,:) = EVAPFBL(1,5,:) - EVAPFBL(0,5,:)
+plots(3) = gsn_csm_xy(wks,x,EVAPFBL_diff,res)
+gsn_panel(wks,(/plots/),(/4,1/),pres)
 
 end

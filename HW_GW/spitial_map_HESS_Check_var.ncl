@@ -14,12 +14,12 @@ end setvalues
 ;_____________________________________
 
 ; ================================== Options ===================================
-
-filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL/outputs/cable_out_1971_SE_Aus.nc"
+year        = 2009
+filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL/outputs-spinup70yr/cable_out_"+year+"_SE_Aus.nc"
 f           = addfile (filename_hw,"r")
 
-var  = dim_sum_n_Wrap(dim_avg_n_Wrap(f->EVAPFBL(:,:,:,:),0),0)*365*24*3600
-var2 = dim_avg_n_Wrap(f->TVeg(:,:,:),0)*365*24*3600
+var  = dim_avg_n_Wrap(f->WatTable,0)
+; var2 = dim_avg_n_Wrap(f->TVeg(:,:,:),0)*365*24*3600
 
 ; ================================= Plotting ===================================
 res                    = True
@@ -62,18 +62,18 @@ res@gsnMaximize         = True
 res@gsnLeftString       = ""
 res@gsnRightString      = ""
 
-pic1 = "./plots/Check_var"
+pic1 = "./plots/Check_WatTable_sp70yr_"+year
 wks1 = gsn_open_wks("pdf",pic1)
-gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
+gsn_define_colormap(wks1,"GMT_haxby");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
-res@txString = "watmove" ;var@long_name
-levels = fspan(0,1000,51)
+res@txString = "Water Table Depth" ;var@long_name
+levels = fspan(0,20,21)
 res@cnLevels = levels
 plots = gsn_csm_contour(wks1,var,res)
-plots = gsn_csm_contour(wks1,var2,res)
+; plots = gsn_csm_contour(wks1,var2,res)
 delete(levels)
 delete(res@cnLevels)
-levels = fspan(-10,10,21)
-res@cnLevels = levels
-plots = gsn_csm_contour(wks1,var-var2,res)
+; levels = fspan(-10,10,21)
+; res@cnLevels = levels
+; plots = gsn_csm_contour(wks1,var-var2,res)
 end
