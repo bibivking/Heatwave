@@ -17,17 +17,17 @@ begin
 hydr_param = True
 time_scale = "daily" ;"monthly" ; "daily"
 scale      = "SE-AU"
-PFT        = "all" ; "tree" ;"all"
-year_s     = 2017
+PFT        = "tree" ; "tree" ;"all"
+year_s     = 2019
 year_e     = 2019
 year_sum   = year_e-year_s+1
 
 ; ______________________________ Path _________________________________
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-case_name = (/"CTL","FREE_DRAIN"/);
+case_name = (/"CTL","CTL_RST_2019"/);,"FREE_DRAIN"/);
            ;"FREE_DRAIN","PUMPx10","PUMPx100"/)
            ;,"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
-pic_message = "outputs-spinup200yr"
+pic_message = "spinup200yr"
 pic_name   = "HESS_SM_VegT_Trans_Fw_"+case_name(0)+"_vs_"+case_name(1)+"_"+pic_message+"_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 Depth          = (/1.1, 5.1, 15.7, 43.85, 118.55, 316.4, 1710/) ; including aquifer
@@ -375,8 +375,8 @@ TVeg_arry(3,:) = TVeg_rc_sen*x + TVeg_rc_sen@yintercept
 plots(2) = gsn_csm_xy(wks,x,TVeg_arry,res)
 
 res@gsnLeftString  = "Transpiration diff (mm/d)"
-res@trYMinF        = -0.5
-res@trYMaxF        = 0.5
+res@trYMinF        = -1.
+res@trYMaxF        = 1.
 plots(3) = gsn_csm_xy(wks,x,TVeg(1,:) - TVeg(0,:),res)
 
 ; plot Fwsoil
@@ -394,8 +394,8 @@ Fwsoil_arry(3,:) = Fwsoil_rc_sen*x + Fwsoil_rc_sen@yintercept
 plots(4) = gsn_csm_xy(wks,x,Fwsoil_arry,res)
 
 res@gsnLeftString  = "Fwsoil diff (-)"
-res@trYMinF        = -0.2
-res@trYMaxF        = 0.2
+res@trYMinF        = -0.5
+res@trYMaxF        = 0.5
 plots(5) = gsn_csm_xy(wks,x,Fwsoil(1,:) - Fwsoil(0,:),res)
 gsn_panel(wks,(/plots/),(/3,2/),pres)
 delete(res@trYMinF)
@@ -404,7 +404,7 @@ delete(plots)
 
 ; _________________________________ EVAPFBL ____________________________________
 res@trYMinF = 0.
-res@trYMaxF = 1.2
+res@trYMaxF = 2.
 
 plots = new(4,graphic)
 print("plot EVAP64cm")
@@ -443,8 +443,8 @@ plots(2) = gsn_csm_xy(wks,x,EVAP5th_arry,res)
 
 print("plot EVAPFBL_diff")
 res@gsnLeftString  = "EVAPFBL_diff (SEN-CTL) (mm/d)"
-res@trYMinF        = -0.5
-res@trYMaxF        = 0.5
+res@trYMinF        = -0.6
+res@trYMaxF        = 0.6
 EVAPFBL_diff       = new((/3,time_tot/), float)
 delete(res@xyLineThicknesses)
 delete(res@xyDashPatterns)

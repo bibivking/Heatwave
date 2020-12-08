@@ -14,14 +14,15 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-case_name = (/"CTL","FREE_DRAIN", "PUMPx10","PUMPx100"/)
+case_name = (/"CTL","CTL-30+30yr", "CTL-30x2+30yr"/)
+;case_name = (/"CTL","FREE_DRAIN", "PUMPx10","PUMPx100"/)
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 case_sum  = dimsizes(case_name)
 path      = new(case_sum,"string")
-pic_message = "no-spinup"
+pic_message = "spinup_200yr-30yr-30x2yr"
 
 do case_num = 0, case_sum -1
-   path(case_num) = path_mum+case_name(case_num)+"/outputs-without-spinup"
+   path(case_num) = path_mum+case_name(case_num)+"/outputs"
 end do
 
 path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/yearly";

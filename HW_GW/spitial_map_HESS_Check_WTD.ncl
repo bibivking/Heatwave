@@ -15,13 +15,13 @@ end setvalues
 
 ; ================================== Options ===================================
 year        = 2009
-filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL/outputs/cable_out_"+year+"_SE_Aus.nc"
+filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr/outputs/cable_out_"+year+"_SE_Aus.nc"
 f           = addfile (filename_hw,"r")
-var  = f->froot(3,:,:)
+var         = dim_avg_n_Wrap(f->WatTable(:,:,:),0)
 delete(f)
-filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-200+30yr-DeepRoot/outputs/cable_out_"+year+"_SE_Aus.nc"
+filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x2+30yr/outputs/cable_out_"+year+"_SE_Aus.nc"
 f           = addfile (filename_hw,"r")
-var2 = f->froot(3,:,:)
+var2        = dim_avg_n_Wrap(f->WatTable(:,:,:),0)
 delete(f)
 ; ================================= Plotting ===================================
 res                    = True
@@ -64,15 +64,16 @@ res@gsnMaximize         = True
 res@gsnLeftString       = ""
 res@gsnRightString      = ""
 
-pic1 = "./plots/Check_froot_"+year
+pic1 = "./plots/Check_WTD_3_"+year
 wks1 = gsn_open_wks("pdf",pic1)
 gsn_define_colormap(wks1,"GMT_haxby");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
-res@txString = "froot";"Water Table Depth" ;var@long_name
-; levels = fspan(0,20,21)
-; res@cnLevels = levels
-plots = gsn_csm_contour(wks1,var-var2,res)
-; plots = gsn_csm_contour(wks1,var2,res)
+levels = fspan(0,20,21)
+res@cnLevels = levels
+res@txString = "Water Table Depth (CTL-30+30yr)" ;var@long_name
+plots = gsn_csm_contour(wks1,var,res)
+res@txString = "Water Table Depth (CTL-30x2+30yr)" ;var@long_name
+plots = gsn_csm_contour(wks1,var2,res)
 ; delete(levels)
 ; delete(res@cnLevels)
 ; levels = fspan(-10,10,21)

@@ -18,11 +18,11 @@ pic_name  = "Fwsoil_P-ET"
 case_name = (/"CTL","FREE_DRAIN"/) ;,"PUMPx10","PUMPx100"/);,"PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
 
 PFT       = "all" ; "tree" ;"all"
-plot_type = "all" ; "spitial" ; "time_series"
+plot_type = "spitial" ;"all" ; "spitial" ; "time_series"
 scale     = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 case_sum  = dimsizes(case_name)
 
-year_s   = 2000
+year_s   = 2017
 year_e   = 2019
 year_sum = year_e-year_s+1
 total    = year_sum*12
@@ -287,10 +287,10 @@ if (plot_type .eq. "time_series") .or. (plot_type .eq. "all") then
     res2@vpYF                 = 0.98
     res2@pmLegendWidthF       = 0.2                     ; res2ize legend width
     res2@pmLegendHeightF      = 0.2                     ; and height
-    res2@tiXAxisFontHeightF   = 0.02
-    res2@tiYAxisFontHeightF   = 0.02
-    res2@tmXBLabelFontHeightF = 0.02
-    res2@tmYLLabelFontHeightF = 0.02
+    res2@tiXAxisFontHeightF   = 0.015
+    res2@tiYAxisFontHeightF   = 0.015
+    res2@tmXBLabelFontHeightF = 0.015
+    res2@tmYLLabelFontHeightF = 0.015
     res2@gsnPaperOrientation  = "portrait";"portrait";"landscape" ;"auto"
 
     res2@tmXBMode             = "Explicit"

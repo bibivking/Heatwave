@@ -14,9 +14,9 @@ end setvalues
 ;_____________________________________
 
 ; ================================== Options ===================================
-year_s    = 2000
+year_s    = 2017
 year_e    = 2019
-case_name = (/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
+case_name = (/"CTL","CTL-200+30yr-DeepRoot","CTL-70+30yr-DeepRoot","CTL-30yr-DeepRoot"/)
             ;,"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
 heatwave  = "hw-90th"
             ; 35 C HW metric : "hw", "hot-day"
@@ -44,12 +44,12 @@ do year = year_s,year_e
   end if
 end do
 
-pic_name  = "HW-"+heatwave+"_"+scale+"_spinup200yr_"+year_s+"-"+year_e
+pic_name  = "HW-"+heatwave+"_"+scale+"_deep-root_"+year_s+"-"+year_e
 
 ; =================================== Path =====================================
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
-  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)+"/outputs-spinup200yr"
+  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)+"/outputs"
 end do
 
 if obs .eq. True then
@@ -1052,4 +1052,73 @@ if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
     gsn_panel(wks2,(/plots/),(/plot_row,plot_col/),pres)
 end if
 exit
+end
+
+
+cedil   = "c~H-13F35~K~FH2~"
+atilde  = "a~H-13V2F35~D~FV-2H3~"
+ocirc   = "o~H-14V2F35~C~FV-2H3~"
+
+; O arquivo pr.djf.cx2.txt possui 4 colunas na ordem abaixo com valores de precipita莽茫o
+; (mm/dia) para o nordeste da Amaz么nia para os meses de DJF (1979 a 2005).
+; Col1   Col2      Col3      Col4
+; GPCP ACCESS1-0 BCC-CSM1.1 CANESM2
+
+atxt     = "pr.djf.cx2.txt"  ; Nome do arquivo no formato txt.
+nlinhas  = numAsciiRow(atxt) ; N煤mero de linhas do arquivo.
+ncolunas = numAsciiCol(atxt) ; N煤mero de colunas do arquivo.
+
+f = asciiread(atxt,(/nlinhas,ncolunas/),"float") ; Abertura do arquivo texto. Esse arquivo
+                                                 ; possui 78 linhas e 4 colunas.
+
+modelos = (/"GPCP","ACCESS1-0","BCC-CSM1.1","CANESM2"/) ; Nome dos r贸tulos.
+
+opt           = True ; Habilita personaliza莽茫o da estat铆stica.
+opt@PrintStat = True ; Mostra na tela o resultado da est谩tistica da fun莽茫o stat_dispersion.
+
+; A linha abaixo imprime na tela o resultado da estat铆stica para cada vari谩vel.
+
+y = new((/dimsizes(modelos),nlinhas,ncolunas+1/),float)
+
+x = ispan(1,ncolunas,1) ; Valores para o eixo x.
+
+do j = 0,dimsizes(modelos)-1
+   g = stat_dispersion(f(:,j),opt)
+   y(j,:,0) = g(2)  ; Tamanho da haste inferior.
+   y(j,:,1) = g(7)  ; Primeiro quartil.
+   y(j,:,2) = g(8)  ; Mediana.
+   y(j,:,3) = g(11) ; Terceiro quartil.
+   y(j,:,4) = g(14) ; Tamanho da haste superior.
+end do
+
+wks = gsn_open_wks("png","box")
+
+res                 = True         ; Personaliza莽茫o do boxplot.
+res@tmXBLabels      = modelos      ; R贸tulos do eixo x.
+res@tiMainString    = "Precipita"+cedil+atilde+"o sobre o nordeste da Amaz"+ocirc+"nia"
+res@trYMinF         = 0.0          ; M铆nimo valor do eixo y.
+res@trYMaxF         = 12.0         ; M谩ximo valor do eixo y.
+res@tmYLMode        = "Manual"	   ; Eixo y esquerdo (YL) de forma manual.
+res@tmYLTickStartF  = res@trYMinF  ; Onde come莽am os valores do eixo y.
+res@tmYLTickEndF    = res@trYMaxF  ; Onde terminam os valores do eixo y.
+res@tmYLTickSpacingF= 1            ; Espa莽amento entre os r贸tulos.
+res@tmYLMinorOn     = False        ; Desliga o minortick do eixo y esquerdo.
+res@tmYRBorderOn    = True         ; Habilita a borda do eixo y direito (YR).
+res@tmXTBorderOn    = True         ; Habilita a borda do eixo x superior (XB).
+res@tmXBLabelFontHeightF = 0.014   ; Tamanho da fonte do eixo x inferior (XB).
+res@tiYAxisString   = "Precipita"+cedil+atilde+"o (mm/dia)" ; T铆tulo do eixo y.
+
+
+llres                   = True     ; Personaliza莽茫o das linhas do boxplot.
+llres@gsLineThicknessF  = 2.5      ; Espessura da linha.
+
+opti           = True ; Habilita personaliza莽茫o da caixa.
+opti@boxWidth  = 0.35 ; Largura da caixa. Quanto maior o valor, mais larga ser谩 a caixa.
+opti@boxColors = (/"blue","red","green","orange"/) ; Cores de cada caixa.
+
+plot = boxplot(wks,x,y(:,dimsizes(modelos),:),opti,res,llres) ; Gera莽茫o do boxplot.
+
+draw(wks)
+frame(wks)
+
 end
