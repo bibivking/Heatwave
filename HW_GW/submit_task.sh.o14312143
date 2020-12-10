@@ -1,0 +1,511 @@
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	year = 2000
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2001
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2002
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2003
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2004
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2005
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2006
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2007
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2008
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2009
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2010
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2011
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2012
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2013
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2014
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2015
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2016
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2017
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2018
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	year = 2019
+(0)	case_num = 0
+(0)	case_num = 1
+(0)	mask PFT
+(0)	mask HW
+
+
+Variable: case_name (subsection)
+Type: string
+Total Size: 8 bytes
+            1 values
+Number of Dimensions: 1
+Dimensions and sizes:	[1]
+Coordinates: 
+(0)	CTL/outputs-spinup200yr
+
+
+Variable: case_name (subsection)
+Type: string
+Total Size: 8 bytes
+            1 values
+Number of Dimensions: 1
+Dimensions and sizes:	[1]
+Coordinates: 
+(0)	FREE_DRAIN/outputs-spinup200yr
+
+
+Variable: length
+Type: integer
+Total Size: 4 bytes
+            1 values
+Number of Dimensions: 1
+Dimensions and sizes:	[1]
+Coordinates: 
+(0)	7422200
+(0)	7422200
+(0)	counter = 0
+(0)	1901344
+(0)	counter = 1
+(0)	1704860
+(0)	counter = 2
+(0)	1326072
+(0)	counter = 3
+(0)	1716091
+(0)	counter = 4
+(0)	932095
+(0)	counter = 5
+(0)	1260935
+(0)	counter = 6
+(0)	639430
+(0)	counter = 7
+(0)	842154
+(0)	counter = 8
+(0)	493655
+(0)	counter = 9
+(0)	616658
+(0)	counter = 10
+(0)	451370
+(0)	counter = 11
+(0)	464895
+(0)	counter = 12
+(0)	429713
+(0)	counter = 13
+(0)	316860
+(0)	counter = 14
+(0)	329227
+(0)	counter = 15
+(0)	196075
+(0)	counter = 16
+(0)	244735
+(0)	counter = 17
+(0)	130430
+(0)	counter = 18
+(0)	674559
+(0)	counter = 19
+(0)	173242
+(0)	dimt = 1901344
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-116.5835
+(1)	134.4895
+(2)	174.3011
+(3)	197.0189
+(4)	297.4081
+(0)	dimt = 1704860
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-116.5515
+(1)	133.8364
+(2)	174.2908
+(3)	197.0688
+(4)	281.612
+(0)	dimt = 1326072
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-104.1536
+(1)	132.6092
+(2)	176.0614
+(3)	202.1016
+(4)	300.5407
+(0)	dimt = 1716091
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-103.2985
+(1)	128.2285
+(2)	174.485
+(3)	201.4375
+(4)	300.6024
+(0)	dimt = 932095
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-97.09736
+(1)	130.9424
+(2)	176.2953
+(3)	204.968
+(4)	300.5908
+(0)	dimt = 1260935
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-92.85442
+(1)	123.9842
+(2)	174.9442
+(3)	205.7494
+(4)	299.2779
+(0)	dimt = 639430
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-93.0938
+(1)	124.4627
+(2)	177.1039
+(3)	208.5491
+(4)	295.429
+(0)	dimt = 842154
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-87.3201
+(1)	120.768
+(2)	175.2501
+(3)	208.4374
+(4)	298.6455
+(0)	dimt = 493655
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-102.7967
+(1)	124.3427
+(2)	180.4239
+(3)	212.903
+(4)	298.9184
+(0)	dimt = 616658
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-102.98
+(1)	118.6878
+(2)	178.3624
+(3)	212.4344
+(4)	292.7429
+(0)	dimt = 451370
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-79.25916
+(1)	121.8036
+(2)	180.4154
+(3)	214.6841
+(4)	294.3983
+(0)	dimt = 464895
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-73.25646
+(1)	118.0713
+(2)	179.7362
+(3)	215.2915
+(4)	295.519
+(0)	dimt = 429713
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-76.77282
+(1)	114.3865
+(2)	178.7418
+(3)	215.1101
+(4)	296.3443
+(0)	dimt = 316860
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-72.8866
+(1)	116.0462
+(2)	182.1931
+(3)	218.5405
+(4)	293.3984
+(0)	dimt = 329227
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-75.92477
+(1)	107.9129
+(2)	177.9988
+(3)	218.7606
+(4)	294.4077
+(0)	dimt = 196075
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-73.65564
+(1)	113.5932
+(2)	184.0392
+(3)	225.2496
+(4)	294.5182
+(0)	dimt = 244735
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-73.71012
+(1)	110.7739
+(2)	182.0193
+(3)	224.608
+(4)	298.717
+(0)	dimt = 130430
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-73.68085
+(1)	115.0369
+(2)	186.9128
+(3)	231.7917
+(4)	292.8682
+(0)	dimt = 674559
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-68.20804
+(1)	98.72758
+(2)	175.5502
+(3)	223.4116
+(4)	299.0752
+(0)	dimt = 173242
+warning:dim_median: 1 rightmost sections of the input array contained all missing values
+
+
+Variable: Rnet_stat (subsection)
+Type: float
+Total Size: 20 bytes
+            5 values
+Number of Dimensions: 1
+Dimensions and sizes:	[5]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	-67.52939
+(1)	101.402
+(2)	171.2404
+(3)	222.7173
+(4)	290.5427
+
+======================================================================================
+                  Resource Usage on 2020-12-08 20:48:39:
+   Job Id:             14312143.gadi-pbs
+   Project:            w35
+   Exit Status:        0
+   Service Units:      10.74
+   NCPUs Requested:    1                      NCPUs Used: 1               
+                                           CPU Time Used: 00:13:42                                   
+   Memory Requested:   40.0GB                Memory Used: 40.0GB          
+   Walltime requested: 05:00:00            Walltime Used: 00:32:14        
+   JobFS requested:    100.0MB                JobFS used: 0B              
+======================================================================================

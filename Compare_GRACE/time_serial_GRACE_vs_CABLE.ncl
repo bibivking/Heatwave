@@ -48,10 +48,10 @@ end
 ; ================================= Start ======================================
 begin
 
-case_name = "CTL" ;(/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
-;"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
+case_name = (/"CTL-30x3+30yr/outputs"/);, "FREE_DRAIN/outputs-spinup30x3yr"/)
+
 path      = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-pic_message = "no-spinup"
+pic_message = "CTL_vs_FREE_DRAIN"
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
 
@@ -65,7 +65,7 @@ total    = year_sum*12
 case_sum = dimsizes(case_name)
 
 ; ================================ Set Regrid ==================================
-PFT           = "tree" ; "tree" ;"all"
+PFT           = "all" ; "tree" ;"all"
 use_month     = "May" ; "Jul"
 time_scale    = "monthly" ; "annual"; "monthly"
 grace_version = "Original-fill-nan"
@@ -115,7 +115,7 @@ if cable_version .eq. "LIS-CABLE" then
 else if cable_version .eq. "CABLE-HESS" then
     scale = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 
-    filename = path+case_name(0)+"/outputs-without-spinup/cable_out_"+year_s+"_SE_Aus.nc" ; MMY
+    filename = path+case_name(0)+"/cable_out_"+year_s+"_SE_Aus.nc" ; MMY
     f = addfile (filename,"r")
 
     lat_size  = dimsizes(f->y)
@@ -375,7 +375,7 @@ if cable_version .eq. "CABLE-HESS" then
        counter = 0
        do year = year_s,year_e
           print("year = " +year)
-          filename1 = path+case_name(case_num)+"/outputs-without-spinup/cable_out_"+year+"_SE_Aus.nc"
+          filename1 = path+case_name(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
           f1 = addfile (filename1,"r")
           if output .eq. "monthly" then
             do month = 0,11
@@ -699,7 +699,7 @@ res@vpWidthF 	     = 0.7
 res@txFontHeightF	 = 0.015            ; change title font heights
 
 res@trYMaxF = 200.
-res@trYMinF = -200.
+res@trYMinF = -100.
 
 LineColors       = (/"darkgreen","limegreen","red","pink","orange"/) ; colors chosen
 LineThicknesses	 = (/3.,1.5,1.5,1.5,1.5/)      ; line thicknesses
@@ -800,5 +800,4 @@ do case_num = 0,case_sum-1
   end if
   end if
 end do ; case_num
-
 end

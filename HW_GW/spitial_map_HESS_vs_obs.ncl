@@ -14,15 +14,15 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-case_name = (/"CTL","CTL-30+30yr", "CTL-30x2+30yr"/)
+case_name = (/"CTL-30x3+30yr/outputs", "FREE_DRAIN/outputs-spinup30x3yr","CTL-30x3+30yr-DeepRoot/outputs"/)
 ;case_name = (/"CTL","FREE_DRAIN", "PUMPx10","PUMPx100"/)
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 case_sum  = dimsizes(case_name)
 path      = new(case_sum,"string")
-pic_message = "spinup_200yr-30yr-30x2yr"
+pic_message = "CTL_vs_FREE_DRAIN"
 
 do case_num = 0, case_sum -1
-   path(case_num) = path_mum+case_name(case_num)+"/outputs"
+   path(case_num) = path_mum+case_name(case_num);+"/outputs"
 end do
 
 path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/yearly";
@@ -69,7 +69,6 @@ end if
 filename  = path(0)+"/cable_out_"+year_s+"_SE_Aus.nc"
 f         = addfile(filename,"r")
 
-time_sum  = dimsizes(f->Rainf(:,0,0))
 lat_sum   = dimsizes(f->Rainf(0,{A:B},0))
 lon_sum   = dimsizes(f->Rainf(0,0,{C:D}))
 lat_size  = dimsizes(f->y)
@@ -79,30 +78,30 @@ CABLE_lon = f->x
 default_val = -1.e+33
 delete(f)
 
-; Rain      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-; Tair      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-; Qair      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-; Psurf     = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-; SWdown    = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-; LWdown    = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-; Wind      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-; LAI       = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+; Rain      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+; Tair      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+; Qair      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+; Psurf     = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+; SWdown    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+; LWdown    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+; Wind      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+; LAI       = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 
-Evap      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-TVeg      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-ESoil     = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-ECanop    = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-Runoff    = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-Qrec      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-Rnet      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
+Evap      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+TVeg      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+ESoil     = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+ECanop    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+Runoff    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+Qrec      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+Rnet      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 
-GWwb      = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-Qle       = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-Qh        = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-Qg        = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-SMsurf    = new((/case_sum, time_sum, lat_sum, lon_sum/),float, default_val)
-SoilTemp  = new((/case_sum, time_sum, 6, lat_sum, lon_sum/),float, default_val)
-SoilMoist = new((/case_sum, time_sum, 6, lat_sum, lon_sum/),float, default_val)
+GWwb      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+Qle       = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+Qh        = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+Qg        = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+SMsurf    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+SoilTemp  = new((/case_sum, year_sum, 6, lat_sum, lon_sum/),float, default_val)
+SoilMoist = new((/case_sum, year_sum, 6, lat_sum, lon_sum/),float, default_val)
 
 ; Rain     = 0.
 ; Tair     = 0.

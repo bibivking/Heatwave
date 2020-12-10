@@ -1,0 +1,245 @@
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	daily
+
+Variable: SoilMoist
+Type: float
+Total Size: 818160 bytes
+            204540 values
+Number of Dimensions: 4
+Dimensions and sizes:	[2] x [2] x [7] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	case_num = 0
+(0)	year = 2000
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 124 in file time_series_HESS_SM_profile.ncl
+
+(0)	year = 2001
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 124 in file time_series_HESS_SM_profile.ncl
+
+(0)	year = 2002
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 124 in file time_series_HESS_SM_profile.ncl
+
+(0)	year = 2003
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 124 in file time_series_HESS_SM_profile.ncl
+
+(0)	year = 2004
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 124 in file time_series_HESS_SM_profile.ncl
+
+(0)	year = 2005
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 124 in file time_series_HESS_SM_profile.ncl
+
+(0)	year = 2006
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 124 in file time_series_HESS_SM_profile.ncl
+
+(0)	year = 2007
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 124 in file time_series_HESS_SM_profile.ncl
+
+(0)	year = 2008
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 124 in file time_series_HESS_SM_profile.ncl
+
+(0)	year = 2009
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 124 in file time_series_HESS_SM_profile.ncl
+
+(0)	year = 2010
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+warning:VarVarWrite: rhs has no dimension name or coordinate variable, deleting name of lhs dimension number (3) and destroying coordinate var,  use "(/../)" if this is not desired outcome
+warning:["Execute.c":8637]:Execute: Error occurred at or near line 120 in file time_series_HESS_SM_profile.ncl
+
+
