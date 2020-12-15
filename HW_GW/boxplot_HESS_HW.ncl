@@ -4,6 +4,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 load "./boxplot_mmy.ncl"
+load "./boxplot_stats_mmy.ncl"
 ;*******************************************
 
 begin
@@ -15,12 +16,14 @@ end setvalues
 ;_____________________________________
 
 ; ================================== Options ===================================
-year_s       = 2017
+year_s       = 2000
 year_e       = 2019
 
 scale        = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
 case_name    = (/"CTL-30x3+30yr/outputs", "FREE_DRAIN/outputs-spinup30x3yr"/);,"PUMPx10","PUMPx100"/)
+message      = "CTL_vs_FREE_DRAIN"
+pic_name     = "HW_boxplot_all_"+heatwave+"_"+scale+"_"+message+"_"+year_s+"-"+year_e
 
 iveg_s = 1
 iveg_e = 4
@@ -38,12 +41,11 @@ do year = year_s,year_e
   end if
 end do
 
-pic_name  = "HW_boxplot_"+heatwave+"_"+scale+"_CTL_vs_FREE_DRAIN_"+year_s+"-"+year_e
 
 ; =================================== Path =====================================
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
-  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num);+"/outputs"
+  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)
 end do
 
 ; ================================ Spitial Scale ===============================
@@ -74,7 +76,7 @@ lon_sum  = dimsizes(f->Rainf(0,0,{C:D}))
 def_value = f->Rainf@_FillValue
 
 ; PFT mask
-PFT_mask  = where((f->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
+PFT_mask       = where((f->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
 PFT_mask_multi = new((/day_sum,dimsizes(PFT_mask(:,0)),dimsizes(PFT_mask(0,:))/),float)
 do z = 0, day_sum-1
   PFT_mask_multi(z,:,:) = PFT_mask
@@ -82,70 +84,8 @@ end do
 delete(PFT_mask)
 delete(f)
 
-Rnet     = new((/case_sum,day_sum,lat_sum,lon_sum/),float,def_value)
-TVeg     = new((/case_sum,day_sum,lat_sum,lon_sum/),float,def_value)
-Fwsoil   = new((/case_sum,day_sum,lat_sum,lon_sum/),float,def_value)
-Tair     = new((/case_sum,day_sum,lat_sum,lon_sum/),float,def_value)
-deltaT   = new((/case_sum,day_sum,lat_sum,lon_sum/),float,def_value)
-SMsurf   = new((/case_sum,day_sum,lat_sum,lon_sum/),float,def_value)
-SM64cm   = new((/case_sum,day_sum,lat_sum,lon_sum/),float,def_value)
-; SoilMoist= new((/case_sum,day_sum,6,lat_sum,lon_sum/),float,def_value)
-WatTable = new((/case_sum,day_sum,lat_sum,lon_sum/),float,def_value)
 
-Rnet     = 0.
-TVeg     = 0.
-Fwsoil   = 0.
-Tair     = 0.
-deltaT   = 0.
-SMsurf   = 0.
-SM64cm   = 0.
-; SoilMoist= 0.
-WatTable = 0.
-
-; ___________ READ DATA ___________
-day_step_s = 0
-do year = year_s,year_e
-  print("year = " +year)
-
-    if ( mod(year,4) .eq. 0) then
-       dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
-    else
-       dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
-    end if
-
-    yr_tot_day = sum(dom)
-    day_step_e = day_step_s + yr_tot_day - 1
-    do case_num = 0,case_sum-1
-      print("case_num = " +case_num)
-      filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
-      f1 = addfile (filename1,"r")
-      TVeg(case_num,day_step_s:day_step_e,:,:)     = f1->TVeg(:,{A:B},{C:D})*3600.*24.
-      Fwsoil(case_num,day_step_s:day_step_e,:,:)   = f1->Fwsoil(:,{A:B},{C:D})
-      WatTable(case_num,day_step_s:day_step_e,:,:) = f1->WatTable(:,{A:B},{C:D})
-      Tair(case_num,day_step_s:day_step_e,:,:)     = f1->Tair(:,{A:B},{C:D})-273.15
-      deltaT(case_num,day_step_s:day_step_e,:,:)     = f1->VegT(:,{A:B},{C:D}) - f1->Tair(:,{A:B},{C:D})
-
-      SMsurf(case_num,day_step_s:day_step_e,:,:)   = ( f1->SoilMoist(:,0,{A:B},{C:D})*0.022 \
-                                                     + f1->SoilMoist(:,1,{A:B},{C:D})*0.058 \
-                                                     + f1->SoilMoist(:,2,{A:B},{C:D})*(0.1 - 0.022 - 0.058)) \
-                                                     / 0.1
-      SM64cm(case_num,day_step_s:day_step_e,:,:)   = ( f1->SoilMoist(:,0,{A:B},{C:D})*0.022  \
-                                                      + f1->SoilMoist(:,1,{A:B},{C:D})*0.058 \
-                                                      + f1->SoilMoist(:,2,{A:B},{C:D})*0.154 \
-                                                      + f1->SoilMoist(:,3,{A:B},{C:D})*0.409)\
-                                                      / 0.643
-      Rnet(case_num,day_step_s:day_step_e,:,:)     = f1->Rnet(:,{A:B},{C:D})
-      ; SoilMoist(case_num,day_step_s:day_step_e,:,:,:)= f1->SoilMoist(:,:,{A:B},{C:D})
-      delete(f1)
-    end do ; case_num
-    if heatwave .ne. "all-day" then
-       day_step_s = day_step_e + 1
-    end if
-end do ; year
-
-; ___________ MASK ___________
-; mask HW
-print("mask HW")
+; ______________________________ READ HW _________________________________
 if heatwave .eq. "hw-90th" then
   filename_hw = "/g/data/w35/mm3972/scripts/ehfheatwaves/HW_Event_Indicator_1970-2019.nc" ; summer HW only
   fhw         = addfile(filename_hw,"r")
@@ -162,428 +102,158 @@ if heatwave .eq. "hw-90th" then
   HW = fhw->event(day_start:day_start+day_sum-1,:,:)*1.
   delete(filename_hw)
   delete(fhw)
+end if
 
-  do case_num = 0,case_sum-1
-    print(case_name(case_num))
-    ; all PFT
-    TVeg(case_num,:,:,:)     = where(HW .eq. 1, TVeg(case_num,:,:,:), def_value)
+do case_num = 0,case_sum-1
+
+  print("case_num = " +case_num)
+
+  ; ______________________________ SET DATA _________________________________
+  Qle      = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+  Qh       = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+  deltaT   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+  Fwsoil   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+  SM64cm   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+  WatTable = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+
+  Qle      = 0.
+  Qh       = 0.
+  deltaT   = 0.
+  Fwsoil   = 0.
+  SM64cm   = 0.
+  WatTable = 0.
+
+  day_step_s = 0
+
+  ; ______________________________ READ DATA _________________________________
+  do year = year_s,year_e
+    print("year = " +year)
+
+    if ( mod(year,4) .eq. 0) then
+       dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
+    else
+       dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
+    end if
+
+    ; calc last day of year
+    yr_tot_day = sum(dom)
+    day_step_e = day_step_s + yr_tot_day - 1
+
+    filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
+    f1 = addfile (filename1,"r")
+
+    Qle(case_num,day_step_s:day_step_e,:,:)      = f1->Qle(:,{A:B},{C:D})
+    Qh(case_num,day_step_s:day_step_e,:,:)       = f1->Qh(:,{A:B},{C:D})
+    Fwsoil(case_num,day_step_s:day_step_e,:,:)   = f1->Fwsoil(:,{A:B},{C:D})
+    deltaT(case_num,day_step_s:day_step_e,:,:)   = f1->VegT(:,{A:B},{C:D}) - f1->Tair(:,{A:B},{C:D})
+    WatTable(case_num,day_step_s:day_step_e,:,:) = f1->WatTable(:,{A:B},{C:D})
+    SM64cm(case_num,day_step_s:day_step_e,:,:)   = ( f1->SoilMoist(:,0,{A:B},{C:D})*0.022  \
+                                                    + f1->SoilMoist(:,1,{A:B},{C:D})*0.058 \
+                                                    + f1->SoilMoist(:,2,{A:B},{C:D})*0.154 \
+                                                    + f1->SoilMoist(:,3,{A:B},{C:D})*0.409)\
+                                                    / 0.643
+    ; calc fist day of next year
+    day_step_s = day_step_e + 1
+
+    delete(filename1)
+    delete(f1)
+  end do ; year
+
+  ; _____________________________ MASK HW DAY ________________________________
+  if heatwave .eq. "hw-90th" then
+    Qle(case_num,:,:,:)      = where(HW .eq. 1, Qle(case_num,:,:,:), def_value)
+    Qh(case_num,:,:,:)       = where(HW .eq. 1, Qh(case_num,:,:,:), def_value)
     Fwsoil(case_num,:,:,:)   = where(HW .eq. 1, Fwsoil(case_num,:,:,:), def_value)
-    WatTable(case_num,:,:,:) = where(HW .eq. 1, WatTable(case_num,:,:,:), def_value)
-    Tair(case_num,:,:,:)     = where(HW .eq. 1, Tair(case_num,:,:,:), def_value)
     deltaT(case_num,:,:,:)   = where(HW .eq. 1, deltaT(case_num,:,:,:), def_value)
-    SMsurf(case_num,:,:,:)   = where(HW .eq. 1, SMsurf(case_num,:,:,:), def_value)
+    WatTable(case_num,:,:,:) = where(HW .eq. 1, WatTable(case_num,:,:,:), def_value)
     SM64cm(case_num,:,:,:)   = where(HW .eq. 1, SM64cm(case_num,:,:,:), def_value)
-    Rnet(case_num,:,:,:)     = where(HW .eq. 1, Rnet(case_num,:,:,:), def_value)
-  end do
+  end if
+end do ; case_num
+
+if heatwave .eq. "hw-90th" then
   delete(HW)
 end if
 
-; mask PFT
+; _______________________________ MASK PFT __________________________________
 print("mask PFT")
-TVeg_tree     = TVeg
-Fwsoil_tree   = Fwsoil
-WatTable_tree = WatTable
-Tair_tree     = Tair
-deltaT_tree   = deltaT
-SMsurf_tree   = SMsurf
-SM64cm_tree   = SM64cm
-Rnet_tree     = Rnet
+Qle_tree     = Qle
+Qh_tree      = Qh
+Fwsoil_tree  = Fwsoil
+deltaT_tree  = deltaT
+WatTable_tree= WatTable
+SM64cm_tree  = SM64cm
 
 do case_num = 0,case_sum-1
-  TVeg_tree(case_num,:,:,:)     = where(PFT_mask_multi .eq. 1, TVeg(case_num,:,:,:), def_value)
+  Qle_tree(case_num,:,:,:)      = where(PFT_mask_multi .eq. 1, Qle(case_num,:,:,:), def_value)
+  Qh_tree(case_num,:,:,:)       = where(PFT_mask_multi .eq. 1, Qh(case_num,:,:,:), def_value)
   Fwsoil_tree(case_num,:,:,:)   = where(PFT_mask_multi .eq. 1, Fwsoil(case_num,:,:,:), def_value)
-  WatTable_tree(case_num,:,:,:) = where(PFT_mask_multi .eq. 1, WatTable(case_num,:,:,:), def_value)
-  Tair_tree(case_num,:,:,:)     = where(PFT_mask_multi .eq. 1, Tair(case_num,:,:,:), def_value)
   deltaT_tree(case_num,:,:,:)   = where(PFT_mask_multi .eq. 1, deltaT(case_num,:,:,:), def_value)
-  SMsurf_tree(case_num,:,:,:)   = where(PFT_mask_multi .eq. 1, SMsurf(case_num,:,:,:), def_value)
+  WatTable_tree(case_num,:,:,:) = where(PFT_mask_multi .eq. 1, WatTable(case_num,:,:,:), def_value)
   SM64cm_tree(case_num,:,:,:)   = where(PFT_mask_multi .eq. 1, SM64cm(case_num,:,:,:), def_value)
-  Rnet_tree(case_num,:,:,:)     = where(PFT_mask_multi .eq. 1, Rnet(case_num,:,:,:), def_value)
 end do
 delete(PFT_mask_multi)
 
-; ___________ ND TO 1D ___________
-; to 1d and remove missing values
+; _____________________________ Calc Box Stats ________________________________
+total_box      = case_sum*2*4+3 ; case_sum x PFT all/tree x 4 time periods + space
+Qle_stats      = new((/total_box, 5/), float, def_value)
+Qh_stats       = new((/total_box, 5/), float, def_value)
+Fwsoil_stats   = new((/total_box, 5/), float, def_value)
+deltaT_stats   = new((/total_box, 5/), float, def_value)
+WatTable_stats = new((/total_box, 5/), float, def_value)
+SM64cm_stats   = new((/total_box, 5/), float, def_value)
 
-; all PFTs
-mask_no_mis      = ind( .not. ismissing(ndtooned(Fwsoil(0,:,:,:))))
-length           = dimsizes(mask_no_mis)
-print(length)
-TVeg_no_mis      = new((/case_sum,length/), float, def_value)
-Fwsoil_no_mis    = new((/case_sum,length/), float, def_value)
-WatTable_no_mis  = new((/case_sum,length/), float, def_value)
-Tair_no_mis      = new((/case_sum,length/), float, def_value)
-deltaT_no_mis    = new((/case_sum,length/), float, def_value)
-SMsurf_no_mis    = new((/case_sum,length/), float, def_value)
-SM64cm_no_mis    = new((/case_sum,length/), float, def_value)
-Rnet_no_mis      = new((/case_sum,length/), float, def_value)
+          ;  all years,  2001-2009,  2017-2019,   2010-2011
+          ;   2000-1-1,   2001-1-1,   2017-1-1,    2010-1-1
+ts_s    = (/         0,        366,       6210,       3653/)
+          ; 2009-12-31, 2009-12-31, 2019-12-31,  2011-12-31
+ts_e    = (/ day_sum-1,       3652,       7304,       4382/)
 
-; trees
-mask_tree_no_mis = ind( .not. ismissing(ndtooned(Fwsoil_tree(0,:,:,:))))
-length_tree      = dimsizes(mask_tree_no_mis)
-print(length_tree)
-print( sum(where (.not. ismissing(ndtooned(TVeg_tree(0,:,:,:))), 1, 0)))
-TVeg_tree_no_mis      = new((/case_sum,length_tree/), float, def_value)
-Fwsoil_tree_no_mis    = new((/case_sum,length_tree/), float, def_value)
-WatTable_tree_no_mis  = new((/case_sum,length_tree/), float, def_value)
-Tair_tree_no_mis      = new((/case_sum,length_tree/), float, def_value)
-deltaT_tree_no_mis    = new((/case_sum,length_tree/), float, def_value)
-SMsurf_tree_no_mis    = new((/case_sum,length_tree/), float, def_value)
-SM64cm_tree_no_mis    = new((/case_sum,length_tree/), float, def_value)
-Rnet_tree_no_mis      = new((/case_sum,length_tree/), float, def_value)
+do count = 0, 3
+  Qle_stats(count*5  , :) = boxplot_stats_mmy(Qle(0,ts_s(count):ts_e(count),:,:),def_value)
+  Qle_stats(count*5+1, :) = boxplot_stats_mmy(Qle(1,ts_s(count):ts_e(count),:,:),def_value)
+  Qle_stats(count*5+2, :) = boxplot_stats_mmy(Qle_tree(0,ts_s(count):ts_e(count),:,:),def_value)
+  Qle_stats(count*5+3, :) = boxplot_stats_mmy(Qle_tree(1,ts_s(count):ts_e(count),:,:),def_value)
 
-do case_num = 0,case_sum-1
-  tmp                         = ndtooned(TVeg(case_num,:,:,:))
-  TVeg_no_mis(case_num,:)     = tmp(mask_no_mis)
-  tmp                         = ndtooned(Fwsoil(case_num,:,:,:))
-  Fwsoil_no_mis(case_num,:)   = tmp(mask_no_mis)
-  tmp                         = ndtooned(WatTable(case_num,:,:,:))
-  WatTable_no_mis(case_num,:) = tmp(mask_no_mis)
-  tmp                         = ndtooned(Tair(case_num,:,:,:))
-  Tair_no_mis(case_num,:)     = tmp(mask_no_mis)
-  tmp                         = ndtooned(deltaT(case_num,:,:,:))
-  deltaT_no_mis(case_num,:)   = tmp(mask_no_mis)
-  tmp                         = ndtooned(SMsurf(case_num,:,:,:))
-  SMsurf_no_mis(case_num,:)   = tmp(mask_no_mis)
-  tmp                         = ndtooned(SM64cm(case_num,:,:,:))
-  SM64cm_no_mis(case_num,:)   = tmp(mask_no_mis)
-  tmp                         = ndtooned(Rnet(case_num,:,:,:))
-  Rnet_no_mis(case_num,:)     = tmp(mask_no_mis)
-  delete(tmp)
-  tmp                           = ndtooned(TVeg_tree(case_num,:,:,:))
-  TVeg_tree_no_mis(case_num,:)  = tmp(mask_tree_no_mis)
-  tmp                           = ndtooned(Fwsoil_tree(case_num,:,:,:))
-  Fwsoil_tree_no_mis(case_num,:)= tmp(mask_tree_no_mis)
-  tmp                           = ndtooned(WatTable_tree(case_num,:,:,:))
-  WatTable_tree_no_mis(case_num,:) = tmp(mask_tree_no_mis)
-  tmp                           = ndtooned(Tair_tree(case_num,:,:,:))
-  Tair_tree_no_mis(case_num,:)  = tmp(mask_tree_no_mis)
-  tmp                           = ndtooned(deltaT_tree(case_num,:,:,:))
-  deltaT_tree_no_mis(case_num,:)= tmp(mask_tree_no_mis)
-  tmp                           = ndtooned(SMsurf_tree(case_num,:,:,:))
-  SMsurf_tree_no_mis(case_num,:)= tmp(mask_tree_no_mis)
-  tmp                           = ndtooned(SM64cm_tree(case_num,:,:,:))
-  SM64cm_tree_no_mis(case_num,:)= tmp(mask_tree_no_mis)
-  tmp                           = ndtooned(Rnet_tree(case_num,:,:,:))
-  Rnet_tree_no_mis(case_num,:)  = tmp(mask_tree_no_mis)
-  delete(tmp)
-end do
-delete(TVeg)
+  Qh_stats(count*5  , :) = boxplot_stats_mmy(Qh(0,ts_s(count):ts_e(count),:,:),def_value)
+  Qh_stats(count*5+1, :) = boxplot_stats_mmy(Qh(1,ts_s(count):ts_e(count),:,:),def_value)
+  Qh_stats(count*5+2, :) = boxplot_stats_mmy(Qh_tree(0,ts_s(count):ts_e(count),:,:),def_value)
+  Qh_stats(count*5+3, :) = boxplot_stats_mmy(Qh_tree(1,ts_s(count):ts_e(count),:,:),def_value)
+
+  Fwsoil_stats(count*5  , :) = boxplot_stats_mmy(Fwsoil(0,ts_s(count):ts_e(count),:,:),def_value)
+  Fwsoil_stats(count*5+1, :) = boxplot_stats_mmy(Fwsoil(1,ts_s(count):ts_e(count),:,:),def_value)
+  Fwsoil_stats(count*5+2, :) = boxplot_stats_mmy(Fwsoil_tree(0,ts_s(count):ts_e(count),:,:),def_value)
+  Fwsoil_stats(count*5+3, :) = boxplot_stats_mmy(Fwsoil_tree(1,ts_s(count):ts_e(count),:,:),def_value)
+
+  deltaT_stats(count*5  , :) = boxplot_stats_mmy(deltaT(0,ts_s(count):ts_e(count),:,:),def_value)
+  deltaT_stats(count*5+1, :) = boxplot_stats_mmy(deltaT(1,ts_s(count):ts_e(count),:,:),def_value)
+  deltaT_stats(count*5+2, :) = boxplot_stats_mmy(deltaT_tree(0,ts_s(count):ts_e(count),:,:),def_value)
+  deltaT_stats(count*5+3, :) = boxplot_stats_mmy(deltaT_tree(1,ts_s(count):ts_e(count),:,:),def_value)
+
+  WatTable_stats(count*5  , :) = boxplot_stats_mmy(WatTable(0,ts_s(count):ts_e(count),:,:),def_value)
+  WatTable_stats(count*5+1, :) = boxplot_stats_mmy(WatTable(1,ts_s(count):ts_e(count),:,:),def_value)
+  WatTable_stats(count*5+2, :) = boxplot_stats_mmy(WatTable_tree(0,ts_s(count):ts_e(count),:,:),def_value)
+  WatTable_stats(count*5+3, :) = boxplot_stats_mmy(WatTable_tree(1,ts_s(count):ts_e(count),:,:),def_value)
+
+  SM64cm_stats(count*5  , :) = boxplot_stats_mmy(SM64cm(0,ts_s(count):ts_e(count),:,:),def_value)
+  SM64cm_stats(count*5+1, :) = boxplot_stats_mmy(SM64cm(1,ts_s(count):ts_e(count),:,:),def_value)
+  SM64cm_stats(count*5+2, :) = boxplot_stats_mmy(SM64cm_tree(0,ts_s(count):ts_e(count),:,:),def_value)
+  SM64cm_stats(count*5+3, :) = boxplot_stats_mmy(SM64cm_tree(1,ts_s(count):ts_e(count),:,:),def_value)
+
+end do ; count
+
+delete(Qle)
+delete(Qh)
 delete(Fwsoil)
-delete(WatTable)
-delete(Tair)
 delete(deltaT)
-delete(SMsurf)
+delete(WatTable)
 delete(SM64cm)
-delete(Rnet)
-delete(TVeg_tree)
+
+delete(Qle_tree)
+delete(Qh_tree)
 delete(Fwsoil_tree)
-delete(WatTable_tree)
-delete(Tair_tree)
 delete(deltaT_tree)
-delete(SMsurf_tree)
+delete(WatTable_tree)
 delete(SM64cm_tree)
-delete(Rnet_tree)
-
-; ___________ Fwsoil Class ___________
-; classify by Fwsoil levels
-TVeg_cls      = new((/case_sum*10, length/), float, def_value)
-Fwsoil_cls    = new((/case_sum*10, length/), float, def_value)
-WatTable_cls  = new((/case_sum*10, length/), float, def_value)
-Tair_cls      = new((/case_sum*10, length/), float, def_value)
-deltaT_cls    = new((/case_sum*10, length/), float, def_value)
-SMsurf_cls    = new((/case_sum*10, length/), float, def_value)
-SM64cm_cls    = new((/case_sum*10, length/), float, def_value)
-Rnet_cls      = new((/case_sum*10, length/), float, def_value)
-
-TVeg_tree_cls      = new((/case_sum*10, length_tree/), float, def_value)
-Fwsoil_tree_cls    = new((/case_sum*10, length_tree/), float, def_value)
-WatTable_tree_cls  = new((/case_sum*10, length_tree/), float, def_value)
-Tair_tree_cls      = new((/case_sum*10, length_tree/), float, def_value)
-deltaT_tree_cls    = new((/case_sum*10, length_tree/), float, def_value)
-SMsurf_tree_cls    = new((/case_sum*10, length_tree/), float, def_value)
-SM64cm_tree_cls    = new((/case_sum*10, length_tree/), float, def_value)
-Rnet_tree_cls      = new((/case_sum*10, length_tree/), float, def_value)
-
-counter       = 0
-class_var     = Rnet_no_mis
-class_tree_var= Rnet_tree_no_mis
-interval      = 20.
-
-do class = 40.,220.,interval  ;0., 0.91 ,0.1
-  do case_num = 0, case_sum -1
-      print("counter = "+ counter)
-      print(sum(where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
-            1, 0)))
-      TVeg_cls(counter,:) = \
-               where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
-               TVeg_no_mis(case_num,:), def_value)
-      Fwsoil_cls(counter,:) = \
-             where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
-             class_var(case_num,:), def_value)
-      WatTable_cls(counter,:) = \
-              where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
-              WatTable_no_mis(case_num,:), def_value)
-      Tair_cls(counter,:) = \
-               where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
-               Tair_cls(case_num,:), def_value)
-      deltaT_cls(counter,:) = \
-              where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
-              deltaT_no_mis(case_num,:), def_value)
-      SMsurf_cls(counter,:) = \
-               where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
-               SMsurf_no_mis(case_num,:), def_value)
-      SM64cm_cls(counter,:) = \
-              where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
-              SM64cm_no_mis(case_num,:), def_value)
-      Rnet_cls(counter,:) = \
-               where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
-               Rnet_no_mis(case_num,:), def_value)
-
-      TVeg_tree_cls(counter,:) = \
-              where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
-              TVeg_tree_no_mis(case_num,:), def_value)
-      Fwsoil_tree_cls(counter,:) = \
-            where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
-            class_tree_var(case_num,:), def_value)
-      WatTable_tree_cls(counter,:) = \
-             where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
-             WatTable_tree_no_mis(case_num,:), def_value)
-      Tair_tree_cls(counter,:) = \
-              where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
-              Tair_tree_cls(case_num,:), def_value)
-      deltaT_tree_cls(counter,:) = \
-             where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
-             deltaT_tree_no_mis(case_num,:), def_value)
-      SMsurf_tree_cls(counter,:) = \
-              where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
-              SMsurf_tree_no_mis(case_num,:), def_value)
-      SM64cm_tree_cls(counter,:) = \
-             where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
-             SM64cm_tree_no_mis(case_num,:), def_value)
-      Rnet_tree_cls(counter,:) = \
-              where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
-              Rnet_tree_no_mis(case_num,:), def_value)
-      counter = counter + 1
-  end do
-end do
-
-delete(TVeg_no_mis)
-delete(Fwsoil_no_mis)
-delete(WatTable_no_mis)
-delete(Tair_no_mis)
-delete(deltaT_no_mis)
-delete(SMsurf_no_mis)
-delete(SM64cm_no_mis)
-delete(Rnet_no_mis)
-
-delete(TVeg_tree_no_mis)
-delete(Fwsoil_tree_no_mis)
-delete(WatTable_tree_no_mis)
-delete(Tair_tree_no_mis)
-delete(deltaT_tree_no_mis)
-delete(SMsurf_tree_no_mis)
-delete(SM64cm_tree_no_mis)
-delete(Rnet_tree_no_mis)
-
-
-; ___________ Calc Stats ___________
-; calculate and plot the median, minimum value, maximum value, and the 25th and 75th percentiles
-TVeg_stat      = new((/case_sum*10, 5/), float, def_value)
-Fwsoil_stat    = new((/case_sum*10, 5/), float, def_value)
-WatTable_stat  = new((/case_sum*10, 5/), float, def_value)
-Tair_stat      = new((/case_sum*10, 5/), float, def_value)
-deltaT_stat    = new((/case_sum*10, 5/), float, def_value)
-SMsurf_stat    = new((/case_sum*10, 5/), float, def_value)
-SM64cm_stat    = new((/case_sum*10, 5/), float, def_value)
-Rnet_stat      = new((/case_sum*10, 5/), float, def_value)
-
-do counter = 0,case_sum*10-1
-
-  tmp            = TVeg_cls(counter,:)
-  tmp@_FillValue = def_value
-  mask_no_mis_1  = ind( .not. ismissing(tmp))
-  dimt           = dimsizes(mask_no_mis_1)
-  print("dimt = "+dimt)
-  x25            = round(.25*dimt,3)-1     ; -1 to account for NCL indexing starting
-  x75            = round(.75*dimt,3)-1     ; at 0
-  delete(tmp)
-
-  tmp = TVeg_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  TVeg_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = Fwsoil_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  Fwsoil_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = WatTable_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  WatTable_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = Tair_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  Tair_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = deltaT_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  deltaT_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = SMsurf_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  SMsurf_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = SM64cm_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  SM64cm_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = Rnet_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  Rnet_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-  delete(mask_no_mis_1)
-  print(Rnet_stat(counter,:))
-end do
-
-delete(TVeg_cls)
-delete(Fwsoil_cls)
-delete(WatTable_cls)
-delete(Tair_cls)
-delete(deltaT_cls)
-delete(SMsurf_cls)
-delete(SM64cm_cls)
-delete(Rnet_cls)
-
-; trees
-TVeg_tree_stat      = new((/case_sum*10, 5/), float, def_value)
-Fwsoil_tree_stat    = new((/case_sum*10, 5/), float, def_value)
-WatTable_tree_stat  = new((/case_sum*10, 5/), float, def_value)
-Tair_tree_stat      = new((/case_sum*10, 5/), float, def_value)
-deltaT_tree_stat    = new((/case_sum*10, 5/), float, def_value)
-SMsurf_tree_stat    = new((/case_sum*10, 5/), float, def_value)
-SM64cm_tree_stat    = new((/case_sum*10, 5/), float, def_value)
-Rnet_tree_stat      = new((/case_sum*10, 5/), float, def_value)
-
-do counter = 0,case_sum*10-1
-
-  tmp            = TVeg_tree_cls(counter,:)
-  tmp@_FillValue = def_value
-  mask_no_mis_1  = ind( .not. ismissing(tmp))
-  dimt           = dimsizes(mask_no_mis_1)
-  print("dimt = "+dimt)
-  x25            = round(.25*dimt,3)-1     ; -1 to account for NCL indexing starting
-  x75            = round(.75*dimt,3)-1     ; at 0
-  delete(tmp)
-
-  ; tmp = TVeg_tree_cls(counter,mask_no_mis_1)
-  ; qsort(tmp)
-  ; TVeg_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  ; delete(tmp)
-  ;
-  ; tmp = Fwsoil_tree_cls(counter,mask_no_mis_1)
-  ; qsort(tmp)
-  ; Fwsoil_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  ; delete(tmp)
-  ;
-  ; tmp = WatTable_tree_cls(counter,mask_no_mis_1)
-  ; qsort(tmp)
-  ; WatTable_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  ; delete(tmp)
-  ;
-  ; tmp = Tair_tree_cls(counter,mask_no_mis_1)
-  ; qsort(tmp)
-  ; Tair_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  ; delete(tmp)
-
-  tmp = deltaT_tree_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  deltaT_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-  ;
-  ; tmp = SMsurf_tree_cls(counter,mask_no_mis_1)
-  ; qsort(tmp)
-  ; SMsurf_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  ; delete(tmp)
-  ;
-  ; tmp = SM64cm_tree_cls(counter,mask_no_mis_1)
-  ; qsort(tmp)
-  ; SM64cm_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  ; delete(tmp)
-  ;
-  ; tmp = Rnet_tree_cls(counter,mask_no_mis_1)
-  ; qsort(tmp)
-  ; Rnet_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  ; delete(tmp)
-  delete(mask_no_mis_1)
-  ; print(Rnet_tree_stat(counter,:))
-end do
-
-delete(TVeg_tree_cls)
-delete(Fwsoil_tree_cls)
-delete(WatTable_tree_cls)
-delete(Tair_tree_cls)
-delete(deltaT_tree_cls)
-delete(SMsurf_tree_cls)
-delete(SM64cm_tree_cls)
-delete(Rnet_tree_cls)
-
-total_box       = case_sum*10*2+9
-TVeg_stats      = new((/total_box, 5/), float, def_value)
-Fwsoil_stats    = new((/total_box, 5/), float, def_value)
-WatTable_stats  = new((/total_box, 5/), float, def_value)
-Tair_stats      = new((/total_box, 5/), float, def_value)
-deltaT_stats    = new((/total_box, 5/), float, def_value)
-SMsurf_stats    = new((/total_box, 5/), float, def_value)
-SM64cm_stats    = new((/total_box, 5/), float, def_value)
-Rnet_stats      = new((/total_box, 5/), float, def_value)
-
-do counter = 0,9
-  ; TVeg_stats(counter*5  , :) = TVeg_stat(counter*2  , :)
-  ; TVeg_stats(counter*5+1, :) = TVeg_stat(counter*2+1, :)
-  ; TVeg_stats(counter*5+2, :) = TVeg_tree_stat(counter*2  , :)
-  ; TVeg_stats(counter*5+3, :) = TVeg_tree_stat(counter*2+1, :)
-  ;
-  ; Fwsoil_stats(counter*5  , :) = Fwsoil_stat(counter*2  , :)
-  ; Fwsoil_stats(counter*5+1, :) = Fwsoil_stat(counter*2+1, :)
-  ; Fwsoil_stats(counter*5+2, :) = Fwsoil_tree_stat(counter*2  , :)
-  ; Fwsoil_stats(counter*5+3, :) = Fwsoil_tree_stat(counter*2+1, :)
-  ;
-  ; WatTable_stats(counter*5  , :) = WatTable_stat(counter*2  , :)
-  ; WatTable_stats(counter*5+1, :) = WatTable_stat(counter*2+1, :)
-  ; WatTable_stats(counter*5+2, :) = WatTable_tree_stat(counter*2  , :)
-  ; WatTable_stats(counter*5+3, :) = WatTable_tree_stat(counter*2+1, :)
-  ;
-  ; Tair_stats(counter*5  , :) = Tair_stat(counter*2  , :)
-  ; Tair_stats(counter*5+1, :) = Tair_stat(counter*2+1, :)
-  ; Tair_stats(counter*5+2, :) = Tair_tree_stat(counter*2  , :)
-  ; Tair_stats(counter*5+3, :) = Tair_tree_stat(counter*2+1, :)
-
-  deltaT_stats(counter*5  , :) = deltaT_stat(counter*2  , :)
-  deltaT_stats(counter*5+1, :) = deltaT_stat(counter*2+1, :)
-  deltaT_stats(counter*5+2, :) = deltaT_tree_stat(counter*2  , :)
-  deltaT_stats(counter*5+3, :) = deltaT_tree_stat(counter*2+1, :)
-  ;
-  ; SMsurf_stats(counter*5  , :) = SMsurf_stat(counter*2  , :)
-  ; SMsurf_stats(counter*5+1, :) = SMsurf_stat(counter*2+1, :)
-  ; SMsurf_stats(counter*5+2, :) = SMsurf_tree_stat(counter*2  , :)
-  ; SMsurf_stats(counter*5+3, :) = SMsurf_tree_stat(counter*2+1, :)
-  ;
-  ; SM64cm_stats(counter*5  , :) = SM64cm_stat(counter*2  , :)
-  ; SM64cm_stats(counter*5+1, :) = SM64cm_stat(counter*2+1, :)
-  ; SM64cm_stats(counter*5+2, :) = SM64cm_tree_stat(counter*2  , :)
-  ; SM64cm_stats(counter*5+3, :) = SM64cm_tree_stat(counter*2+1, :)
-  ;
-  ; Rnet_stats(counter*5  , :) = Rnet_stat(counter*2  , :)
-  ; Rnet_stats(counter*5+1, :) = Rnet_stat(counter*2+1, :)
-  ; Rnet_stats(counter*5+2, :) = Rnet_tree_stat(counter*2  , :)
-  ; Rnet_stats(counter*5+3, :) = Rnet_tree_stat(counter*2+1, :)
-end do
 
 x = ispan(1,total_box,1)
 
@@ -593,18 +263,8 @@ x = ispan(1,total_box,1)
 wks = gsn_open_wks("pdf",pic_name)   ;"./plots/"+            ; send graphics to PNG file
 
 res            = True                         ; plot mods desired
-; res@tmXBLabels = (/"0-0.1","","","","", "0.1-0.2","","","","", "0.2-0.3","","","","",\
-;                    "0.3-0.4","","","","", "0.4-0.5","","","","", "0.5-0.6","","","","",\
-;                    "0.6-0.7","","","","", "0.7-0.8","","","","", "0.8-0.9","","","","",\
-;                    "0.9-1.","","",""/) ; labels for each box
-; res@tmXBLabels = (/"30","","","","", "31","","","","","32","","","","",\
-;                    "33","","","","", "34","","","","","35","","","","",\
-;                    "36","","","","", "37","","","","","38","","","","",\
-;                    "39","","",""/) ; labels for each box
-res@tmXBLabels = (/"40","","","","", "60","","","","","80","","","","",\
-                   "100","","","","", "120","","","","","140","","","","",\
-                   "160","","","","", "180","","","","","200","","","","",\
-                   "220","","",""/) ; labels for each box
+res@tmXBLabels = (/"All","","","","", "2001-09","","","","",\
+                   "2017-19","","","","","2010-11","","",""/) ; labels for each box
 ; resources for polylines that draws the boxes
 llres                   = True
 llres@gsLineThicknessF  = 3.                ; line thickness
@@ -613,9 +273,6 @@ llres@gsLineThicknessF  = 3.                ; line thickness
 opti           = True
 opti@boxWidth  = 0.9
 opti@boxColors = (/"blue","red","green","orange","black", "blue","red","green","orange","black",\
-                   "blue","red","green","orange","black", "blue","red","green","orange","black",\
-                   "blue","red","green","orange","black", "blue","red","green","orange","black",\
-                   "blue","red","green","orange","black", "blue","red","green","orange","black",\
                    "blue","red","green","orange","black", "blue","red","green","orange"/)
 
 plot = boxplot_mmy(wks,x,deltaT_stats,opti,res,llres)
