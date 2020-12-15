@@ -14,9 +14,9 @@ end setvalues
 ;_____________________________________
 
 ; ================================== Options ===================================
-year_s    = 2000
+year_s    = 2017
 year_e    = 2019
-case_name = (/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
+case_name = (/"CTL-30x3+30yr/outputs", "FREE_DRAIN/outputs-spinup30x3yr"/)
             ;,"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
 heatwave  = "hw-90th"
             ; 35 C HW metric : "hw", "hot-day"
@@ -44,12 +44,12 @@ do year = year_s,year_e
   end if
 end do
 
-pic_name  = "HW-"+heatwave+"_"+scale+"_spinup200yr_"+year_s+"-"+year_e
+pic_name  = "HW-"+heatwave+"_"+scale+"_CTL_vs_FREE_DRAIN_"+year_s+"-"+year_e
 
 ; =================================== Path =====================================
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
-  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)+"/outputs-spinup200yr"
+  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num);+"/outputs-spinup200yr"
 end do
 
 if obs .eq. True then
@@ -246,7 +246,8 @@ do year = year_s,year_e
         WatTable(case_num,:,:) = WatTable(case_num,:,:) + dim_avg_n_Wrap(f1->WatTable(:,{A:B},{C:D}),0)
 
         ; LAI(case_num,:,:)      = LAI(case_num,:,:)    + dim_avg_n_Wrap(f1->LAI(:,{A:B},{C:D}),0)
-        VegT(case_num,:,:)     = VegT(case_num,:,:)   + dim_avg_n_Wrap(f1->VegT(:,{A:B},{C:D}),0)
+        VegT(case_num,:,:)     = VegT(case_num,:,:)   + dim_avg_n_Wrap(f1->VegT(:,{A:B},{C:D}),0)\
+                                                      - dim_avg_n_Wrap(f1->Tair(:,{A:B},{C:D}),0)
         CanT(case_num,:,:)     = CanT(case_num,:,:)   + dim_avg_n_Wrap(f1->CanT(:,{A:B},{C:D}),0)
         SMsurf(case_num,:,:)   = SMsurf(case_num,:,:) + ( dim_avg_n_Wrap(f1->SoilMoist(:,0,{A:B},{C:D}),0)*0.022 \
                             + dim_avg_n_Wrap(f1->SoilMoist(:,1,{A:B},{C:D}),0)*0.058 \
@@ -282,7 +283,8 @@ do year = year_s,year_e
         WatTable(case_num,:,:) = WatTable(case_num,:,:) + dim_sum_n_Wrap(f1->WatTable(:,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)
 
         ; LAI(case_num,:,:)      = LAI(case_num,:,:)    + dim_sum_n_Wrap(f1->LAI(:,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)
-        VegT(case_num,:,:)     = VegT(case_num,:,:)   + dim_sum_n_Wrap(f1->VegT(:,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)
+        VegT(case_num,:,:)     = VegT(case_num,:,:)   + dim_sum_n_Wrap(f1->VegT(:,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0) \
+                                                      - dim_sum_n_Wrap(f1->Tair(:,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)
         CanT(case_num,:,:)     = CanT(case_num,:,:)   + dim_sum_n_Wrap(f1->CanT(:,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)
         SMsurf(case_num,:,:)   = SMsurf(case_num,:,:) + ( dim_sum_n_Wrap(f1->SoilMoist(:,0,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*0.022 \
                                + dim_sum_n_Wrap(f1->SoilMoist(:,1,{A:B},{C:D})*HW(day_step_s:day_step_e,:,:),0)*0.058 \
@@ -329,7 +331,7 @@ if heatwave .eq. "all-day" then
     Runoff   = Runoff/year_sum*3600.*24.
     Qrec     = Qrec/year_sum*3600.*24.
     WatTable = WatTable/year_sum
-    VegT     = VegT/year_sum -273.15
+    VegT     = VegT/year_sum ;-273.15
     CanT     = CanT/year_sum -273.15
     ; LAI      = LAI/year_sum
     SMsurf   = SMsurf/year_sum
@@ -355,7 +357,7 @@ else
       Runoff(case_num,:,:)   = where(HW_tot .ne. -9999., Runoff(case_num,:,:)/HW_tot*3600.*24., Runoff@_FillValue)
       Qrec(case_num,:,:)     = where(HW_tot .ne. -9999., Qrec(case_num,:,:)/HW_tot*3600.*24., Qrec@_FillValue)
       WatTable(case_num,:,:) = where(HW_tot .ne. -9999., WatTable(case_num,:,:)/HW_tot, WatTable@_FillValue)
-      VegT(case_num,:,:)     = where(HW_tot .ne. -9999., VegT(case_num,:,:)/HW_tot-273.15, VegT@_FillValue)
+      VegT(case_num,:,:)     = where(HW_tot .ne. -9999., VegT(case_num,:,:)/HW_tot, VegT@_FillValue) ; -273.15 MMY
       CanT(case_num,:,:)     = where(HW_tot .ne. -9999., CanT(case_num,:,:)/HW_tot-273.15, CanT@_FillValue)
       ; LAI(case_num,:,:)      = where(HW_tot .ne. -9999., LAI(case_num,:,:)/HW_tot, LAI@_FillValue)
       SMsurf(case_num,:,:)   = where(HW_tot .ne. -9999., SMsurf(case_num,:,:)/HW_tot, SMsurf@_FillValue)
@@ -564,8 +566,8 @@ levels_sm      = fspan(0,0.5,21)
 levels_sm_diff = fspan(-0.1,0.1,21)
 levels_fw      = fspan(0,1,21)
 levels_fw_diff = fspan(-0.5,0.5,51)
-levels_temp    = fspan(0,40,41)
-levels_temp_diff = fspan(-1,1,21)
+levels_temp    = fspan(0,10,21) ;fspan(0,40,41) ; MMY
+levels_temp_diff = fspan(-2,2,41) ; fspan(-1,1,21) ; MMY 
 levels_eng       = fspan(-50,200,26)
 levels_eng_diff  = fspan(-30,30,31)
   ; ============================= plot water balance ===========================
@@ -866,7 +868,7 @@ if (plot_type .eq. "water_bal") .or. (plot_type .eq. "all") then
     gsn_panel(wks1,(/plots/),(/plot_row,plot_col/),pres)
 
     ; VegT
-    pres@txString = "Veg temperature (C)"
+    pres@txString = "Tleaf - Tair (C)";"Veg temperature (C)"
     res@cnLevels  = levels_temp
     res@cnFillPalette = "WhiteBlueGreenYellowRed"
     res@tiMainString = case_name(0)
@@ -1052,4 +1054,5 @@ if (plot_type .eq. "energy_bal") .or. (plot_type .eq. "all") then
     gsn_panel(wks2,(/plots/),(/plot_row,plot_col/),pres)
 end if
 exit
+
 end

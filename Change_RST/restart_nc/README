@@ -1,6 +1,6 @@
 cp /g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL/restarts-spinup200yr/restart_2010.nc .
 
-cp /g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL/restarts-spinup200yr/restart_2018.nc .
+cp /g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr/restarts-daily/restart_2018.nc .
 
 cp /g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr/restarts/restart_1999.nc .
 

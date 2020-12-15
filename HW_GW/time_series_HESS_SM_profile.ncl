@@ -18,7 +18,7 @@ hydr_param = True
 time_scale = "daily" ;"monthly" ; "daily"
 scale      = "SE-AU"
 year_s     = 2000
-year_e     = 2000
+year_e     = 2019
 year_sum   = year_e-year_s+1
 
 ; ______________________________ Path _________________________________
@@ -244,7 +244,7 @@ res@cnLevels       = fspan(0.0,0.4,21)
 res@cnFillPalette  = "GMT_drywet" ;"WhiteBlueGreenYellowRed"
 res@tiYAxisString  = "Depth (cm)"
 ; res@lbTitleString  = "(m3/m3)"
-printVarSummary(SoilMoist_regrid(0,0,::-1,:)*1.)
+;printVarSummary(SoilMoist_regrid(0,0,::-1,:)*1.)
 plots(0)           = gsn_csm_contour(wks, SoilMoist_regrid(0,0,::-1,:)*1.,res)
 delete(res@tiYAxisString)
 plots(1)           = gsn_csm_contour(wks, SoilMoist_regrid(0,1,::-1,:)*1.,res)

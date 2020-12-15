@@ -13,7 +13,7 @@ end setvalues
 
 begin
 
-fname_out  = "./restart_nc/restart_1999.nc"
+fname_out  = "./restart_nc/restart_2018.nc"
 finout     = addfile (fname_out, "w")     ; open output file
 
 print(avg(finout->froot(0,:)))

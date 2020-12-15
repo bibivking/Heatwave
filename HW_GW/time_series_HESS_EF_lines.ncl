@@ -133,7 +133,7 @@ print("prepare to plot")
 
 EF_all  = new((/case_sum*2,time_tot/),float, default_val)
 EF_tree = new((/case_sum*2,time_tot/),float, default_val)
-Rnet_thd = 0.
+Rnet_thd = 1.
 EF_all(0,:)  = where( Rnet(0,0,:) .gt. Rnet_thd, Qle(0,0,:)/Rnet(0,0,:), default_val) ; CTL
 EF_all(1,:)  = where( Rnet(1,0,:) .gt. Rnet_thd, Qle(1,0,:)/Rnet(1,0,:), default_val) ; FREE_DRAIN
 EF_all(2,:)  = where( Rnet(0,0,:) .gt. Rnet_thd, Qh(0,0,:)/Rnet(0,0,:), default_val)
@@ -143,8 +143,8 @@ EF_tree(0,:)  = where( Rnet(0,1,:) .gt. Rnet_thd, Qle(0,1,:)/Rnet(0,1,:), defaul
 EF_tree(1,:)  = where( Rnet(1,1,:) .gt. Rnet_thd, Qle(1,1,:)/Rnet(1,1,:), default_val) ; FREE_DRAIN
 EF_tree(2,:)  = where( Rnet(0,1,:) .gt. Rnet_thd, Qh(0,1,:)/Rnet(0,1,:), default_val)
 EF_tree(3,:)  = where( Rnet(1,1,:) .gt. Rnet_thd, Qh(1,1,:)/Rnet(1,1,:), default_val)
-EF_all  = runave(EF_all,90,0)
-EF_tree = runave(EF_tree,90,0)
+EF_all  = runave(EF_all,60,0)
+EF_tree = runave(EF_tree,60,0)
 delete(Qle)
 delete(Qh)
 

@@ -184,6 +184,6 @@ do case_num = 0, case_sum-1
   counter = counter + 1
   end do
 end do
-gsn_panel(wks,(/plots/),(/case_sum,1/),pres)
+gsn_panel(wks,(/plots/),(/1,case_sum/),pres)
 
 end

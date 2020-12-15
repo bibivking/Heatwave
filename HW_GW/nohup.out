@@ -1,14 +1,0 @@
- Copyright (C) 1995-2019 - All Rights Reserved
- University Corporation for Atmospheric Research
- NCAR Command Language Version 6.6.2
- The use of this software is governed by a License Agreement.
- See http://www.ncl.ucar.edu/ for more details.
-(0)	year = 2017
-(0)	case_num = 0
-(0)	case_num = 1
-warning:_NclOpenFile: cannot open file </g/data/w35/mm3972/model/cable/runs/AWAP_pumping/FREE_DRAIN/outputs/cable_out_2017_SE_Aus.nc>; No such file or directory
-
-fatal:Either file (f1) isn't defined or variable (TVeg) is not a variable in the file
-fatal:["Execute.c":8637]:Execute: Error occurred at or near line 130 in file boxplot_HESS_HW.ncl
-
-input in flex scanner failed

@@ -15,4 +15,4 @@ module load ncl/6.6.2
 
 cd /g/data/w35/mm3972/scripts/Heatwave/HW_GW
 
-ncl boxplot_HESS_HW_2000-2019.ncl
+ncl boxplot_HESS_HW.ncl

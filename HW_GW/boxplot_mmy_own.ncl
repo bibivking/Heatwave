@@ -87,47 +87,51 @@ begin
         do ty = 0,dimsizes(fsatts)-1
            if (fsatts(ty).eq."tmXBLabels") then        ;Special section to test for XBLabels
               if (dimsizes(plotres@tmXBLabels).ne.numbox) then
-                 print("boxplot: Fatal:Number of XB Labels does not match number of boxes, exiting")
-                 exit
-              else
-                 labarr(1:numbox) = plotres@$fsatts(ty)$
-              end if
-              xblab = plotres@tmXBLabels
-              delete(plotres@tmXBLabels)      ;Delete so tmXBLabels is not used when all
+                     print("boxplot: Fatal:Number of XB Labels does not match number of boxes, exiting")
+                     exit
+                  else
+                     labarr(1:numbox) = plotres@$fsatts(ty)$
+                  end if
+                  xblab = plotres@tmXBLabels
+                  delete(plotres@tmXBLabels)      ;Delete so tmXBLabels is not used when all
            end if                       ;atts are assigned below...
         end do
         delete(fsatts)
-      end if
+     end if
 
-      plot = create "plot" logLinPlotClass wks
-        "trYMinF"              : -10. ;min(y) ;-2 ! MMY
-        "trYMaxF"              : 10. ;max(y) ;+2 ! MMY
-        "trXMinF"              : min(xAxis)
-        "trXMaxF"              : max(xAxis)
-        "pmTickMarkDisplayMode": "Always"
-        "tmXBMode"             : "Explicit"
-        "tmXBValues"           : xAxis
-        "tmXBLabels"           : labarr
-        "pmTitleDisplayMode"   : "Always"                   ; allow titles
-        ; "tiMainOn"             : True
-        "tiMainString"         : ""
-      end create
-      if (plotres) then
+     plot = create "plot" logLinPlotClass wks
+        "trYMinF" : min(y) ;-2 ! MMY
+        "trYMaxF" : max(y) ;+2 ! MMY
+        "trXMinF" : min(xAxis)
+        "trXMaxF" : max(xAxis)
+        "pmTickMarkDisplayMode" : "Always"
+        "tmXBMode"   : "Explicit"
+        "tmXBValues" : xAxis
+        "tmXBLabels" : labarr
+        ; "tmYROn"  : False
+        ; "tmXTOn"  : False
+        ; "tmYRBorderOn" : False
+        ; "tmXTBorderOn" : False
+        "pmTitleDisplayMode": "Always"                   ; allow titles
+        "tiMainOn"     : True
+        "tiMainString"   : ""
+     end create
+     if (plotres) then
         attsetvalues(plot,plotres)
-      end if
+     end if
 
-      polyres = True                          ;Set up defaults
-      polyres@gsLineColor       = "black"                     ; color of lines
-      polyres@gsLineThicknessF  = 1.5                          ; thickness of lines
-      polyres@gsLineDashPattern = 0
-      if (lineres) then
+     polyres = True                          ;Set up defaults
+     polyres@gsLineColor       = "black"                     ; color of lines
+     polyres@gsLineThicknessF  = 1.5                          ; thickness of lines
+     polyres@gsLineDashPattern = 0
+     if (lineres) then
         fsatts = getvaratts(lineres)
         do ty = 0,dimsizes(fsatts)-1
            polyres@$fsatts(ty)$ = lineres@$fsatts(ty)$
         end do
-      end if
+     end if
 
-      if (boxOpts) then
+     if (boxOpts) then
         if (isatt(boxOpts,"boxColors")) then
            boxcolor = boxOpts@boxColors
            if (dimsizes(boxcolor).eq.1.or.dimsizes(boxcolor).ne.numbox) then
@@ -142,107 +146,98 @@ begin
         else
            cflag =1
         end if
-      else
+     else
         cflag = 1
-      end if
+     end if
 
-      dum = new((/numbox,9/),graphic)
-      do gg = 0,numbox-1
+     dum = new((/numbox,9/),graphic)
+     do gg = 0,numbox-1
         ff = xAxis(gg+1)
         if (cflag.eq.2) then
             polyres@gsLineColor = boxcolor(gg)
         end if
         yy = (/y(gg,4),y(gg,4)/)
         xx = (/(ff-(boxWidths(gg)/8.)),(ff+(boxWidths(gg)/8.))/)
-        if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
-             dum(gg,0) = gsn_add_polyline(wks,plot,xx,yy,polyres)
-        end if
+    if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
+           dum(gg,0) = gsn_add_polyline(wks,plot,xx,yy,polyres)
+    end if
 
         yy = (/y(gg,3),y(gg,4)/)
         xx = (/ff,ff/)
         polyres@gsLineDashPattern = 1
-        if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
-             dum(gg,1) = gsn_add_polyline(wks,plot,xx,yy,polyres)
+    if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
+           dum(gg,1) = gsn_add_polyline(wks,plot,xx,yy,polyres)
         end if
-        polyres@gsLineDashPattern = 0
+    polyres@gsLineDashPattern = 0
 
         yy = (/y(gg,3),y(gg,3)/)
         xx = (/(ff-(boxWidths(gg)/2.)),(ff+(boxWidths(gg)/2.))/)
-         if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
-               dum(gg,2) = gsn_add_polyline(wks,plot,xx,yy,polyres)
-         end if
+    if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
+           dum(gg,2) = gsn_add_polyline(wks,plot,xx,yy,polyres)
+    end if
 
         yy = (/y(gg,1),y(gg,3)/)
         xx = (/(ff-(boxWidths(gg)/2.)),(ff-(boxWidths(gg)/2.))/)
-         if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
-               dum(gg,3) = gsn_add_polyline(wks,plot,xx,yy,polyres)
-         end if
+    if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
+           dum(gg,3) = gsn_add_polyline(wks,plot,xx,yy,polyres)
+    end if
 
         yy = (/y(gg,2),y(gg,2)/)
         xx = (/(ff-(boxWidths(gg)/2.)),(ff+(boxWidths(gg)/2.))/)
-        if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
-             dum(gg,4) = gsn_add_polyline(wks,plot,xx,yy,polyres)
-        end if
+    if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
+           dum(gg,4) = gsn_add_polyline(wks,plot,xx,yy,polyres)
+    end if
 
         yy = (/y(gg,1),y(gg,3)/)
         xx = (/(ff+(boxWidths(gg)/2.)),(ff+(boxWidths(gg)/2.))/)
-        if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
-             dum(gg,5) = gsn_add_polyline(wks,plot,xx,yy,polyres)
-        end if
+    if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
+           dum(gg,5) = gsn_add_polyline(wks,plot,xx,yy,polyres)
+    end if
 
         yy = (/y(gg,1),y(gg,1)/)
         xx = (/(ff-(boxWidths(gg)/2.)),(ff+(boxWidths(gg)/2.))/)
-        if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
-             dum(gg,6) = gsn_add_polyline(wks,plot,xx,yy,polyres)
-        end if
+    if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
+           dum(gg,6) = gsn_add_polyline(wks,plot,xx,yy,polyres)
+    end if
 
         yy = (/y(gg,0),y(gg,1)/)
         xx = (/ff,ff/)
         polyres@gsLineDashPattern = 1
-        if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
-             dum(gg,7) = gsn_add_polyline(wks,plot,xx,yy,polyres)
+    if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
+           dum(gg,7) = gsn_add_polyline(wks,plot,xx,yy,polyres)
         end if
-        polyres@gsLineDashPattern = 0
+    polyres@gsLineDashPattern = 0
 
         yy = (/y(gg,0),y(gg,0)/)
         xx = (/(ff-(boxWidths(gg)/8.)),(ff+(boxWidths(gg)/8.))/)
-        if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
-             dum(gg,8) = gsn_add_polyline(wks,plot,xx,yy,polyres)
+    if (.not.(any(ismissing(xx).or.ismissing(yy)))) then
+           dum(gg,8) = gsn_add_polyline(wks,plot,xx,yy,polyres)
         end if
-      end do
-      dumname = unique_string("dum")
-      plot@$dumname$ = dum
-      if (isvar("xblab").eq."True") then
+ end do
+     dumname = unique_string("dum")
+     plot@$dumname$ = dum
+     if (isvar("xblab").eq."True") then
         plotres@tmXBLabels = xblab      ;reassign XBLabels for possible future plots
-      end if
-      if (maximize) then
-        mres = True
-        mres@gsnDraw  = False
-        mres@gsnFrame = False
-        mres@vpHeightF= 0.50
-        mres@vpWidthF = 0.90
-        mres@vpXF     = 0.08
-        mres@vpYF     = 0.98
-        mres@tiYAxisFontThicknessF = 3.
-        mres@tmXBMajorThicknessF   = 3.
-        mres@tmXBMinorThicknessF   = 3.
-        mres@tmYLMajorThicknessF   = 3.
-        mres@tmYLMinorThicknessF   = 3.
-        mres@tmYLLabelFontThicknessF= 3.
-        mres@tmBorderThicknessF     = 3.
-        mres@txFont                 = 25
-        mres@txFontHeightF        = 0.015
-        mres@gsnMaximize          = True                   ; maximize plot in frame
-        mres@pmLegendWidthF       = 0.2                     ; mresize legend width
-        mres@pmLegendHeightF      = 0.2                     ; and height
-        mres@tiXAxisFontHeightF   = 0.05
-        mres@tiYAxisFontHeightF   = 0.05
-        mres@tmXBLabelFontHeightF = 0.05
-        mres@tmYLLabelFontHeightF = 0.05
-        ;
-        ; mres@gsnPaperOrientation = "landscape";"portrait";"landscape" ;"auto"
-        ; _________________________
-        maximize_output(wks,mres)
-      end if
+     end if
+ if (maximize) then
+    mres = True
+    mres@gsnDraw  = False
+    mres@gsnFrame = False
+    ; __________ MMY ____________
+    mres@gsnMaximize          = True                   ; maximize plot in frame
+    mres@vpHeightF            = 0.90
+    mres@vpWidthF             = 0.90
+    mres@vpXF                 = 0.08
+    mres@vpYF                 = 0.98
+    mres@pmLegendWidthF       = 0.2                     ; mresize legend width
+    mres@pmLegendHeightF      = 0.2                     ; and height
+    mres@tiXAxisFontHeightF   = 0.05
+    mres@tiYAxisFontHeightF   = 0.05
+    mres@tmXBLabelFontHeightF = 0.05
+    mres@tmYLLabelFontHeightF = 0.05
+    mres@gsnPaperOrientation = "landscape";"portrait";"landscape" ;"auto"
+    ; _________________________
+    maximize_output(wks,mres)
+ end if
      return(plot)
 end

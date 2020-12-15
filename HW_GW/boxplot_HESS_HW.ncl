@@ -16,7 +16,7 @@ end setvalues
 
 ; ================================== Options ===================================
 year_s       = 2017
-year_e       = 2017
+year_e       = 2019
 
 scale        = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
@@ -305,59 +305,63 @@ SM64cm_tree_cls    = new((/case_sum*10, length_tree/), float, def_value)
 Rnet_tree_cls      = new((/case_sum*10, length_tree/), float, def_value)
 
 counter       = 0
-do class = 0., 0.91 ,0.1
+class_var     = Rnet_no_mis
+class_tree_var= Rnet_tree_no_mis
+interval      = 20.
+
+do class = 40.,220.,interval  ;0., 0.91 ,0.1
   do case_num = 0, case_sum -1
       print("counter = "+ counter)
-      print(sum(where(Fwsoil_no_mis(case_num,:) .ge. class .and. Fwsoil_no_mis(case_num,:) .lt. class+0.1, \
-      1, 0)))
+      print(sum(where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
+            1, 0)))
       TVeg_cls(counter,:) = \
-               where(Fwsoil_no_mis(case_num,:) .ge. class .and. Fwsoil_no_mis(case_num,:) .lt. class+0.1, \
+               where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
                TVeg_no_mis(case_num,:), def_value)
       Fwsoil_cls(counter,:) = \
-             where(Fwsoil_no_mis(case_num,:) .ge. class .and. Fwsoil_no_mis(case_num,:) .lt. class+0.1, \
-             Fwsoil_no_mis(case_num,:), def_value)
+             where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
+             class_var(case_num,:), def_value)
       WatTable_cls(counter,:) = \
-              where(Fwsoil_no_mis(case_num,:) .ge. class .and. Fwsoil_no_mis(case_num,:) .lt. class+0.1, \
+              where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
               WatTable_no_mis(case_num,:), def_value)
       Tair_cls(counter,:) = \
-               where(Fwsoil_no_mis(case_num,:) .ge. class .and. Fwsoil_no_mis(case_num,:) .lt. class+0.1, \
+               where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
                Tair_cls(case_num,:), def_value)
       deltaT_cls(counter,:) = \
-              where(Fwsoil_no_mis(case_num,:) .ge. class .and. Fwsoil_no_mis(case_num,:) .lt. class+0.1, \
+              where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
               deltaT_no_mis(case_num,:), def_value)
       SMsurf_cls(counter,:) = \
-               where(Fwsoil_no_mis(case_num,:) .ge. class .and. Fwsoil_no_mis(case_num,:) .lt. class+0.1, \
+               where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
                SMsurf_no_mis(case_num,:), def_value)
       SM64cm_cls(counter,:) = \
-              where(Fwsoil_no_mis(case_num,:) .ge. class .and. Fwsoil_no_mis(case_num,:) .lt. class+0.1, \
+              where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
               SM64cm_no_mis(case_num,:), def_value)
       Rnet_cls(counter,:) = \
-               where(Fwsoil_no_mis(case_num,:) .ge. class .and. Fwsoil_no_mis(case_num,:) .lt. class+0.1, \
+               where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
                Rnet_no_mis(case_num,:), def_value)
 
       TVeg_tree_cls(counter,:) = \
-              where(Fwsoil_tree_no_mis(case_num,:) .ge. class .and. Fwsoil_tree_no_mis(case_num,:) .lt. class+0.1, \
+              where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
               TVeg_tree_no_mis(case_num,:), def_value)
       Fwsoil_tree_cls(counter,:) = \
-            where(Fwsoil_tree_no_mis(case_num,:) .ge. class .and. Fwsoil_tree_no_mis(case_num,:) .lt. class+0.1, \
-            Fwsoil_tree_no_mis(case_num,:), def_value)
+            where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
+            class_tree_var(case_num,:), def_value)
       WatTable_tree_cls(counter,:) = \
-             where(Fwsoil_tree_no_mis(case_num,:) .ge. class .and. Fwsoil_tree_no_mis(case_num,:) .lt. class+0.1, \
+             where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
              WatTable_tree_no_mis(case_num,:), def_value)
       Tair_tree_cls(counter,:) = \
-              where(Fwsoil_tree_no_mis(case_num,:) .ge. class .and. Fwsoil_tree_no_mis(case_num,:) .lt. class+0.1, \
+              where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
               Tair_tree_cls(case_num,:), def_value)
       deltaT_tree_cls(counter,:) = \
-             where(Fwsoil_tree_no_mis(case_num,:) .ge. class .and. Fwsoil_tree_no_mis(case_num,:) .lt. class+0.1, \
+             where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
              deltaT_tree_no_mis(case_num,:), def_value)
       SMsurf_tree_cls(counter,:) = \
-              where(Fwsoil_tree_no_mis(case_num,:) .ge. class .and. Fwsoil_tree_no_mis(case_num,:) .lt. class+0.1, \
+              where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
               SMsurf_tree_no_mis(case_num,:), def_value)
       SM64cm_tree_cls(counter,:) = \
-             where(Fwsoil_tree_no_mis(case_num,:) .ge. class .and. Fwsoil_tree_no_mis(case_num,:) .lt. class+0.1, \
+             where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
              SM64cm_tree_no_mis(case_num,:), def_value)
       Rnet_tree_cls(counter,:) = \
-              where(Fwsoil_tree_no_mis(case_num,:) .ge. class .and. Fwsoil_tree_no_mis(case_num,:) .lt. class+0.1, \
+              where(class_tree_var(case_num,:) .ge. class .and. class_tree_var(case_num,:) .lt. class+interval, \
               Rnet_tree_no_mis(case_num,:), def_value)
       counter = counter + 1
   end do
@@ -477,47 +481,47 @@ do counter = 0,case_sum*10-1
   x75            = round(.75*dimt,3)-1     ; at 0
   delete(tmp)
 
-  tmp = TVeg_tree_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  TVeg_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = Fwsoil_tree_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  Fwsoil_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = WatTable_tree_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  WatTable_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = Tair_tree_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  Tair_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
+  ; tmp = TVeg_tree_cls(counter,mask_no_mis_1)
+  ; qsort(tmp)
+  ; TVeg_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
+  ; delete(tmp)
+  ;
+  ; tmp = Fwsoil_tree_cls(counter,mask_no_mis_1)
+  ; qsort(tmp)
+  ; Fwsoil_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
+  ; delete(tmp)
+  ;
+  ; tmp = WatTable_tree_cls(counter,mask_no_mis_1)
+  ; qsort(tmp)
+  ; WatTable_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
+  ; delete(tmp)
+  ;
+  ; tmp = Tair_tree_cls(counter,mask_no_mis_1)
+  ; qsort(tmp)
+  ; Tair_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
+  ; delete(tmp)
 
   tmp = deltaT_tree_cls(counter,mask_no_mis_1)
   qsort(tmp)
   deltaT_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
   delete(tmp)
-
-  tmp = SMsurf_tree_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  SMsurf_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = SM64cm_tree_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  SM64cm_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
-
-  tmp = Rnet_tree_cls(counter,mask_no_mis_1)
-  qsort(tmp)
-  Rnet_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
-  delete(tmp)
+  ;
+  ; tmp = SMsurf_tree_cls(counter,mask_no_mis_1)
+  ; qsort(tmp)
+  ; SMsurf_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
+  ; delete(tmp)
+  ;
+  ; tmp = SM64cm_tree_cls(counter,mask_no_mis_1)
+  ; qsort(tmp)
+  ; SM64cm_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
+  ; delete(tmp)
+  ;
+  ; tmp = Rnet_tree_cls(counter,mask_no_mis_1)
+  ; qsort(tmp)
+  ; Rnet_tree_stat(counter,:) = (/min(tmp),tmp(x25),dim_median(tmp),tmp(x75),max(tmp)/)
+  ; delete(tmp)
   delete(mask_no_mis_1)
-  print(Rnet_tree_stat(counter,:))
+  ; print(Rnet_tree_stat(counter,:))
 end do
 
 delete(TVeg_tree_cls)
@@ -540,45 +544,45 @@ SM64cm_stats    = new((/total_box, 5/), float, def_value)
 Rnet_stats      = new((/total_box, 5/), float, def_value)
 
 do counter = 0,9
-  TVeg_stats(counter*5  , :) = TVeg_stat(counter*2  , :)
-  TVeg_stats(counter*5+1, :) = TVeg_stat(counter*2+1, :)
-  TVeg_stats(counter*5+2, :) = TVeg_tree_stat(counter*2  , :)
-  TVeg_stats(counter*5+3, :) = TVeg_tree_stat(counter*2+1, :)
-
-  Fwsoil_stats(counter*5  , :) = Fwsoil_stat(counter*2  , :)
-  Fwsoil_stats(counter*5+1, :) = Fwsoil_stat(counter*2+1, :)
-  Fwsoil_stats(counter*5+2, :) = Fwsoil_tree_stat(counter*2  , :)
-  Fwsoil_stats(counter*5+3, :) = Fwsoil_tree_stat(counter*2+1, :)
-
-  WatTable_stats(counter*5  , :) = WatTable_stat(counter*2  , :)
-  WatTable_stats(counter*5+1, :) = WatTable_stat(counter*2+1, :)
-  WatTable_stats(counter*5+2, :) = WatTable_tree_stat(counter*2  , :)
-  WatTable_stats(counter*5+3, :) = WatTable_tree_stat(counter*2+1, :)
-
-  Tair_stats(counter*5  , :) = Tair_stat(counter*2  , :)
-  Tair_stats(counter*5+1, :) = Tair_stat(counter*2+1, :)
-  Tair_stats(counter*5+2, :) = Tair_tree_stat(counter*2  , :)
-  Tair_stats(counter*5+3, :) = Tair_tree_stat(counter*2+1, :)
+  ; TVeg_stats(counter*5  , :) = TVeg_stat(counter*2  , :)
+  ; TVeg_stats(counter*5+1, :) = TVeg_stat(counter*2+1, :)
+  ; TVeg_stats(counter*5+2, :) = TVeg_tree_stat(counter*2  , :)
+  ; TVeg_stats(counter*5+3, :) = TVeg_tree_stat(counter*2+1, :)
+  ;
+  ; Fwsoil_stats(counter*5  , :) = Fwsoil_stat(counter*2  , :)
+  ; Fwsoil_stats(counter*5+1, :) = Fwsoil_stat(counter*2+1, :)
+  ; Fwsoil_stats(counter*5+2, :) = Fwsoil_tree_stat(counter*2  , :)
+  ; Fwsoil_stats(counter*5+3, :) = Fwsoil_tree_stat(counter*2+1, :)
+  ;
+  ; WatTable_stats(counter*5  , :) = WatTable_stat(counter*2  , :)
+  ; WatTable_stats(counter*5+1, :) = WatTable_stat(counter*2+1, :)
+  ; WatTable_stats(counter*5+2, :) = WatTable_tree_stat(counter*2  , :)
+  ; WatTable_stats(counter*5+3, :) = WatTable_tree_stat(counter*2+1, :)
+  ;
+  ; Tair_stats(counter*5  , :) = Tair_stat(counter*2  , :)
+  ; Tair_stats(counter*5+1, :) = Tair_stat(counter*2+1, :)
+  ; Tair_stats(counter*5+2, :) = Tair_tree_stat(counter*2  , :)
+  ; Tair_stats(counter*5+3, :) = Tair_tree_stat(counter*2+1, :)
 
   deltaT_stats(counter*5  , :) = deltaT_stat(counter*2  , :)
   deltaT_stats(counter*5+1, :) = deltaT_stat(counter*2+1, :)
   deltaT_stats(counter*5+2, :) = deltaT_tree_stat(counter*2  , :)
   deltaT_stats(counter*5+3, :) = deltaT_tree_stat(counter*2+1, :)
-
-  SMsurf_stats(counter*5  , :) = SMsurf_stat(counter*2  , :)
-  SMsurf_stats(counter*5+1, :) = SMsurf_stat(counter*2+1, :)
-  SMsurf_stats(counter*5+2, :) = SMsurf_tree_stat(counter*2  , :)
-  SMsurf_stats(counter*5+3, :) = SMsurf_tree_stat(counter*2+1, :)
-
-  SM64cm_stats(counter*5  , :) = SM64cm_stat(counter*2  , :)
-  SM64cm_stats(counter*5+1, :) = SM64cm_stat(counter*2+1, :)
-  SM64cm_stats(counter*5+2, :) = SM64cm_tree_stat(counter*2  , :)
-  SM64cm_stats(counter*5+3, :) = SM64cm_tree_stat(counter*2+1, :)
-
-  Rnet_stats(counter*5  , :) = Rnet_stat(counter*2  , :)
-  Rnet_stats(counter*5+1, :) = Rnet_stat(counter*2+1, :)
-  Rnet_stats(counter*5+2, :) = Rnet_tree_stat(counter*2  , :)
-  Rnet_stats(counter*5+3, :) = Rnet_tree_stat(counter*2+1, :)
+  ;
+  ; SMsurf_stats(counter*5  , :) = SMsurf_stat(counter*2  , :)
+  ; SMsurf_stats(counter*5+1, :) = SMsurf_stat(counter*2+1, :)
+  ; SMsurf_stats(counter*5+2, :) = SMsurf_tree_stat(counter*2  , :)
+  ; SMsurf_stats(counter*5+3, :) = SMsurf_tree_stat(counter*2+1, :)
+  ;
+  ; SM64cm_stats(counter*5  , :) = SM64cm_stat(counter*2  , :)
+  ; SM64cm_stats(counter*5+1, :) = SM64cm_stat(counter*2+1, :)
+  ; SM64cm_stats(counter*5+2, :) = SM64cm_tree_stat(counter*2  , :)
+  ; SM64cm_stats(counter*5+3, :) = SM64cm_tree_stat(counter*2+1, :)
+  ;
+  ; Rnet_stats(counter*5  , :) = Rnet_stat(counter*2  , :)
+  ; Rnet_stats(counter*5+1, :) = Rnet_stat(counter*2+1, :)
+  ; Rnet_stats(counter*5+2, :) = Rnet_tree_stat(counter*2  , :)
+  ; Rnet_stats(counter*5+3, :) = Rnet_tree_stat(counter*2+1, :)
 end do
 
 x = ispan(1,total_box,1)
@@ -586,33 +590,49 @@ x = ispan(1,total_box,1)
 ;**********************************************
 ; create plot
 ;**********************************************
-wks = gsn_open_wks("png",pic_name)   ;"./plots/"+            ; send graphics to PNG file
+wks = gsn_open_wks("pdf",pic_name)   ;"./plots/"+            ; send graphics to PNG file
 
 res            = True                         ; plot mods desired
-; res@gsnDraw    = True  ; Don't draw plots
-; res@gsnFrame   = True  ; ����
-; res@tmXBLabels = (/"0-0.1","0.1-0.2","0.2-0.3","0.3-0.4","0.4-0.5",\
-;                    "0.5-0.6","0.6-0.7","0.7-0.8","0.8-0.9","0.9-1."/) ; labels for each box
-res@tmXBLabels = (/"0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", \
-                  "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1."/) ; labels for each box
-
-res@tmXBValues   = ispan(1,total_box,5)
-res@tiMainString = "Default Box Plot"
-
+; res@tmXBLabels = (/"0-0.1","","","","", "0.1-0.2","","","","", "0.2-0.3","","","","",\
+;                    "0.3-0.4","","","","", "0.4-0.5","","","","", "0.5-0.6","","","","",\
+;                    "0.6-0.7","","","","", "0.7-0.8","","","","", "0.8-0.9","","","","",\
+;                    "0.9-1.","","",""/) ; labels for each box
+; res@tmXBLabels = (/"30","","","","", "31","","","","","32","","","","",\
+;                    "33","","","","", "34","","","","","35","","","","",\
+;                    "36","","","","", "37","","","","","38","","","","",\
+;                    "39","","",""/) ; labels for each box
+res@tmXBLabels = (/"40","","","","", "60","","","","","80","","","","",\
+                   "100","","","","", "120","","","","","140","","","","",\
+                   "160","","","","", "180","","","","","200","","","","",\
+                   "220","","",""/) ; labels for each box
 ; resources for polylines that draws the boxes
 llres                   = True
-llres@gsLineThicknessF  = 2.5                ; line thickness
+llres@gsLineThicknessF  = 3.                ; line thickness
 
 ; resources that control color and width of boxes
 opti           = True
-opti@boxWidth  = 1.
-opti@boxColors = (/"blue","red","green","orange", "blue","red","green","orange",\
-                   "blue","red","green","orange", "blue","red","green","orange",\
-                   "blue","red","green","orange", "blue","red","green","orange",\
-                   "blue","red","green","orange", "blue","red","green","orange",\
-                   "blue","red","green","orange", "blue","red","green","orange"/)
+opti@boxWidth  = 0.9
+opti@boxColors = (/"blue","red","green","orange","black", "blue","red","green","orange","black",\
+                   "blue","red","green","orange","black", "blue","red","green","orange","black",\
+                   "blue","red","green","orange","black", "blue","red","green","orange","black",\
+                   "blue","red","green","orange","black", "blue","red","green","orange","black",\
+                   "blue","red","green","orange","black", "blue","red","green","orange"/)
 
 plot = boxplot_mmy(wks,x,deltaT_stats,opti,res,llres)
+
+; txres                   = True
+; txres@txPerimOn         = False
+; txres@txFont            = 25
+; txres@txFontHeightF     = 0.03
+;
+; amres                   = True
+; amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
+; amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
+; amres@amJust            = "TopLeft"
+;
+; txid1   = gsn_create_text(wks, "(a)", txres)
+; annoid1 = gsn_add_annotation(plot, txid1, amres)
+
 draw(wks)                                    ; boxplot does not call these
 frame(wks)                                   ; for you
 
