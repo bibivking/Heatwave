@@ -3,8 +3,6 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-load "./boxplot_mmy.ncl"
-load "./boxplot_stats_mmy.ncl"
 ;*******************************************
 
 begin
@@ -15,15 +13,41 @@ setvalues NhlGetWorkspaceObjectId()
 end setvalues
 ;_____________________________________
 
+undef("pdf_1d_mmy")
+function pdf_1d_mmy(var[*][*][*]:numeric,bins:numeric,def_value:numeric)
+;
+;    var[*][*][*] : input data
+;    bins         : total bin numbers
+;    def_value    : default values
+;
+begin
+
+  var@_FillValue = def_value
+
+  ; ___________ nd to 1d ___________
+  tmp            = ndtooned(var)
+  maskout_def    = ind( .not. ismissing(tmp))
+  print(dimsizes(maskout_def))
+
+  var_masked     = tmp(maskout_def)
+  var_masked@_FillValue = def_value
+
+  ; ___________ pdf ___________
+  var_pdf = pdfx(var_masked, bins, False)
+
+  return(var_pdf)
+end
+
+
 ; ================================== Options ===================================
 year_s       = 2000
 year_e       = 2019
 
 scale        = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
-heatwave     = "all-day" ; "hw-90th" ; "all-day"
+heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
 case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/);,"PUMPx10","PUMPx100"/)
 message      = "CTL_vs_FREE_DRAIN"
-pic_name     = "HW_boxplot_all_"+heatwave+"_"+scale+"_"+message+"_"+year_s+"-"+year_e
+pic_name     = "HW_pdfplot_all_"+heatwave+"_"+scale+"_"+message+"_"+year_s+"-"+year_e
 
 iveg_s = 1
 iveg_e = 4
@@ -104,22 +128,30 @@ if heatwave .eq. "hw-90th" then
   delete(fhw)
 end if
 
+; _____________________________ Calc Bin Stats ________________________________
+bins     = 40
+nVar     = 16
+nBin     = bins
 
-; _____________________________ Calc Box Stats ________________________________
-total_box      = case_sum*2*4+3 ; case_sum x PFT all/tree x 4 time periods + space
-Qle_stats      = new((/total_box, 5/), float, def_value)
-Qh_stats       = new((/total_box, 5/), float, def_value)
-Fwsoil_stats   = new((/total_box, 5/), float, def_value)
-deltaT_stats   = new((/total_box, 5/), float, def_value)
-WatTable_stats = new((/total_box, 5/), float, def_value)
-SM64cm_stats   = new((/total_box, 5/), float, def_value)
+Qle_x      = new((/nVar, nBin/),float,def_value)
+Qh_x       = new((/nVar, nBin/),float,def_value)
+deltaT_x   = new((/nVar, nBin/),float,def_value)
+Fwsoil_x   = new((/nVar, nBin/),float,def_value)
+SM64cm_x   = new((/nVar, nBin/),float,def_value)
+WatTable_x = new((/nVar, nBin/),float,def_value)
+
+Qle_y      = new((/nVar, nBin/),float,def_value)
+Qh_y       = new((/nVar, nBin/),float,def_value)
+deltaT_y   = new((/nVar, nBin/),float,def_value)
+Fwsoil_y   = new((/nVar, nBin/),float,def_value)
+SM64cm_y   = new((/nVar, nBin/),float,def_value)
+WatTable_y = new((/nVar, nBin/),float,def_value)
 
           ;  all years,  2001-2009,  2017-2019,   2010-2011
           ;   2000-1-1,   2001-1-1,   2017-1-1,    2010-1-1
 ts_s    = (/         0,        366,       6210,       3653/)
           ; 2019-12-31, 2009-12-31, 2019-12-31,  2011-12-31
 ts_e    = (/ day_sum-1,       3652,       7304,       4382/)
-
 
 
 ; _____________________________ Start Main Loop ________________________________
@@ -205,24 +237,62 @@ do case_num = 0,case_sum-1
   end if
   end if
 
-  do count = 0, 3
-    Qle_stats(count*5+loc1, :)    = boxplot_stats_mmy(Qle(ts_s(count):ts_e(count),:,:),def_value)
-    Qle_stats(count*5+loc2, :)    = boxplot_stats_mmy(Qle_tree(ts_s(count):ts_e(count),:,:),def_value)
+  do count = 0, 3 ; four periods
 
-    Qh_stats(count*5+loc1, :)     = boxplot_stats_mmy(Qh(ts_s(count):ts_e(count),:,:),def_value)
-    Qh_stats(count*5+loc2, :)     = boxplot_stats_mmy(Qh_tree(ts_s(count):ts_e(count),:,:),def_value)
+    tmp = pdf_1d_mmy(Qle(ts_s(count):ts_e(count),:,:),bins, def_value)
+    Qle_x(count*4+loc1,:) = tmp@bin_center
+    Qle_y(count*4+loc1,:) = tmp
+    delete(tmp)
+    tmp = pdf_1d_mmy(Qle_tree(ts_s(count):ts_e(count),:,:),bins, def_value)
+    Qle_x(count*4+loc2,:) = tmp@bin_center
+    Qle_y(count*4+loc2,:) = tmp
+    delete(tmp)
 
-    Fwsoil_stats(count*5+loc1, :) = boxplot_stats_mmy(Fwsoil(ts_s(count):ts_e(count),:,:),def_value)
-    Fwsoil_stats(count*5+loc2, :) = boxplot_stats_mmy(Fwsoil_tree(ts_s(count):ts_e(count),:,:),def_value)
+    tmp = pdf_1d_mmy(Qh(ts_s(count):ts_e(count),:,:),bins, def_value)
+    Qh_x(count*4+loc1,:) = tmp@bin_center
+    Qh_y(count*4+loc1,:) = tmp
+    delete(tmp)
+    tmp = pdf_1d_mmy(Qh_tree(ts_s(count):ts_e(count),:,:),bins, def_value)
+    Qh_x(count*4+loc2,:) = tmp@bin_center
+    Qh_y(count*4+loc2,:) = tmp
+    delete(tmp)
 
-    deltaT_stats(count*5+loc1, :) = boxplot_stats_mmy(deltaT(ts_s(count):ts_e(count),:,:),def_value)
-    deltaT_stats(count*5+loc2, :) = boxplot_stats_mmy(deltaT_tree(ts_s(count):ts_e(count),:,:),def_value)
+    tmp = pdf_1d_mmy(Fwsoil(ts_s(count):ts_e(count),:,:),bins, def_value)
+    Fwsoil_x(count*4+loc1,:) = tmp@bin_center
+    Fwsoil_y(count*4+loc1,:) = tmp
+    delete(tmp)
+    tmp = pdf_1d_mmy(Fwsoil_tree(ts_s(count):ts_e(count),:,:),bins, def_value)
+    Fwsoil_x(count*4+loc2,:) = tmp@bin_center
+    Fwsoil_y(count*4+loc2,:) = tmp
+    delete(tmp)
 
-    WatTable_stats(count*5+loc1, :) = boxplot_stats_mmy(WatTable(ts_s(count):ts_e(count),:,:),def_value)
-    WatTable_stats(count*5+loc2, :) = boxplot_stats_mmy(WatTable_tree(ts_s(count):ts_e(count),:,:),def_value)
+    tmp = pdf_1d_mmy(deltaT(ts_s(count):ts_e(count),:,:),bins, def_value)
+    deltaT_x(count*4+loc1,:) = tmp@bin_center
+    deltaT_y(count*4+loc1,:) = tmp
+    delete(tmp)
+    tmp = pdf_1d_mmy(deltaT_tree(ts_s(count):ts_e(count),:,:),bins, def_value)
+    deltaT_x(count*4+loc2,:) = tmp@bin_center
+    deltaT_y(count*4+loc2,:) = tmp
+    delete(tmp)
 
-    SM64cm_stats(count*5+loc1, :) = boxplot_stats_mmy(SM64cm(ts_s(count):ts_e(count),:,:),def_value)
-    SM64cm_stats(count*5+loc2, :) = boxplot_stats_mmy(SM64cm_tree(ts_s(count):ts_e(count),:,:),def_value)
+    tmp = pdf_1d_mmy(WatTable(ts_s(count):ts_e(count),:,:),bins, def_value)
+    WatTable_x(count*4+loc1,:) = tmp@bin_center
+    WatTable_y(count*4+loc1,:) = tmp
+    delete(tmp)
+    tmp = pdf_1d_mmy(WatTable_tree(ts_s(count):ts_e(count),:,:),bins, def_value)
+    WatTable_x(count*4+loc2,:) = tmp@bin_center
+    WatTable_y(count*4+loc2,:) = tmp
+    delete(tmp)
+
+    tmp = pdf_1d_mmy(SM64cm(ts_s(count):ts_e(count),:,:),bins, def_value)
+    SM64cm_x(count*4+loc1,:) = tmp@bin_center
+    SM64cm_y(count*4+loc1,:) = tmp
+    delete(tmp)
+    tmp = pdf_1d_mmy(SM64cm_tree(ts_s(count):ts_e(count),:,:),bins, def_value)
+    SM64cm_x(count*4+loc2,:) = tmp@bin_center
+    SM64cm_y(count*4+loc2,:) = tmp
+    delete(tmp)
+
   end do ; count
 
   delete(Qle)
@@ -246,58 +316,63 @@ end if
 delete(PFT_mask_multi)
 
 
-x = ispan(1,total_box,1)
+;_____________________________ PLOT ___________________________________
+wks = gsn_open_wks("pdf",pic_name)
+gsn_define_colormap(wks,"rainbow") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")
 
-;**********************************************
-; create plot
-;**********************************************
-wks = gsn_open_wks("pdf",pic_name)   ;"./plots/"+            ; send graphics to PNG file
+res                          = True
+res@gsnDraw                  = True  ; Don't draw plots
+res@gsnFrame                 = True  ; ����ҳ
+res@gsnXYBarChart            = True              ; Create bar plot
+res@gsnXYBarChartOutlineOnly = True
 
-res            = True                         ; plot mods desired
-res@tmXBLabels = (/"All","","","","", "2001-09","","","","",\
-                   "2017-19","","","","","2010-11","","",""/) ; labels for each box
-; resources for polylines that draws the boxes
-llres                   = True
-llres@gsLineThicknessF  = 3.                ; line thickness
+res@pmLegendDisplayMode    = "Always"            ; turn on legend
+res@pmLegendSide           = "Top"               ; Change location of
+res@pmLegendParallelPosF   = .25                 ; move units right
+res@pmLegendOrthogonalPosF = -0.4                ; move units down
+res@pmLegendWidthF         = 0.125               ; Change width and
+res@pmLegendHeightF        = 0.15                ; height of legend.
+res@lgPerimOn              = True                ; turn off/on box around
+res@lgLabelFontHeightF     = .015                ; label font height
+res@tiYAxisString          = "PDF (%)"
+res@tiMainString           = "PDF: Three Distributions: 40 Bins"
 
-; resources that control color and width of boxes
-opti           = True
-opti@boxWidth  = 0.9
-opti@boxColors = (/"blue","red","green","orange","black", "blue","red","green","orange","black",\
-                   "blue","red","green","orange","black", "blue","red","green","orange"/)
+res@xyLineThicknesses      = (/2.0,2.0,2.0,2.0,\
+                               2.0,2.0,2.0,2.0,\
+                               2.0,2.0,2.0,2.0,\
+                               2.0,2.0,2.0,2.0 /)
+res@xyLineColors           = (/"blue","red","green","orange",\
+                               "blue","red","green","orange",\
+                               "blue","red","green","orange",\
+                               "blue","red","green","orange" /)
+res@xyDashPatterns         = (/0,0,0,0,\
+                               1,1,1,1,\
+                               2,2,2,2,\
+                               3,3,3,3 /)
 
-plot = boxplot_mmy(wks,x,Qle_stats,opti,res,llres, 0, 150, "Qle")
-draw(wks)                                    ; boxplot does not call these
-frame(wks)                                   ; for you
-plot = boxplot_mmy(wks,x,Qh_stats,opti,res,llres, 0, 250, "Qh")
-draw(wks)                                    ; boxplot does not call these
-frame(wks)                                   ; for you
-plot = boxplot_mmy(wks,x,Fwsoil_stats,opti,res,llres, 0, 1, "Fwsoil")
-draw(wks)                                    ; boxplot does not call these
-frame(wks)                                   ; for you
-plot = boxplot_mmy(wks,x,deltaT_stats,opti,res,llres, 0, 6, "deltaT")
-draw(wks)                                    ; boxplot does not call these
-frame(wks)                                   ; for you
-plot = boxplot_mmy(wks,x,WatTable_stats,opti,res,llres, 0, 15, "WatTable")
-draw(wks)                                    ; boxplot does not call these
-frame(wks)                                   ; for you
-plot = boxplot_mmy(wks,x,SM64cm_stats,opti,res,llres, 0.1, 0.4, "SM64cm")
-draw(wks)                                    ; boxplot does not call these
-frame(wks)                                   ; for you
+res@xyExplicitLegendLabels = (/"CTL_ALL_All","FD_ALL_All","CTL_TREE_All","FD_TREE_All",\
+                              "CTL_ALL_01-09","FD_ALL_01-09","CTL_TREE_01-09","FD_TREE_01-09",\
+                              "CTL_ALL_17-19","FD_ALL_17-19","CTL_TREE_17-19","FD_TREE_17-19",\
+                              "CTL_ALL_10-11","FD_ALL_10-11","CTL_TREE_10-11","FD_TREE_10-11"/)  ; create explicit labels
 
-; txres                   = True
-; txres@txPerimOn         = False
-; txres@txFont            = 25
-; txres@txFontHeightF     = 0.03
-;
-; amres                   = True
-; amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
-; amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
-; amres@amJust            = "TopLeft"
-;
-; txid1   = gsn_create_text(wks, "(a)", txres)
-; annoid1 = gsn_add_annotation(plot, txid1, amres)
+plot = gsn_csm_xy (wks, Qle_x, Qle_y, res)
+plot = gsn_csm_xy (wks, Qh_x, Qh_y, res)
+plot = gsn_csm_xy (wks, deltaT_x, deltaT_y, res)
+plot = gsn_csm_xy (wks, Fwsoil_x, Fwsoil_y, res)
+plot = gsn_csm_xy (wks, SM64cm_x, SM64cm_y, res)
+plot = gsn_csm_xy (wks, WatTable_x, WatTable_y, res)
 
-
+ ; txres                   = True
+ ; txres@txPerimOn         = False
+ ; txres@txFont            = 25
+ ; txres@txFontHeightF     = 0.03
+ ;
+ ; amres                   = True
+ ; amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
+ ; amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
+ ; amres@amJust            = "TopLeft"
+ ;
+ ; txid1   = gsn_create_text(wks, "(a)", txres)
+ ; annoid1 = gsn_add_annotation(plot, txid1, amres)
 
 end

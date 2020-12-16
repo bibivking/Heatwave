@@ -5,7 +5,7 @@
 ; Adam Phillips
 ;
 undef("boxplot_mmy")
-function boxplot_mmy (wks:graphic,x[*]:numeric,y[*][*]:numeric,boxOpts:logical,plotres:logical,lineres:logical)
+function boxplot_mmy (wks:graphic,x[*]:numeric,y[*][*]:numeric,boxOpts:logical,plotres:logical,lineres:logical,min_value:numeric,max_value:numeric,title:string)
 ;
 ;    This function creates a blank linLog plot object, on which box plots are created by extensive
 ;    use of gsn_add_polyline. The user can draw as many or as few box plots as they wish.
@@ -100,8 +100,8 @@ begin
       end if
 
       plot = create "plot" logLinPlotClass wks
-        "trYMinF"              : -10. ;min(y) ;-2 ! MMY
-        "trYMaxF"              : 10. ;max(y) ;+2 ! MMY
+        "trYMinF"              : min_value ;-2 ! MMY
+        "trYMaxF"              : max_value ;+2 ! MMY
         "trXMinF"              : min(xAxis)
         "trXMaxF"              : max(xAxis)
         "pmTickMarkDisplayMode": "Always"
@@ -110,7 +110,7 @@ begin
         "tmXBLabels"           : labarr
         "pmTitleDisplayMode"   : "Always"                   ; allow titles
         ; "tiMainOn"             : True
-        "tiMainString"         : ""
+        "tiMainString"         : title
       end create
       if (plotres) then
         attsetvalues(plot,plotres)

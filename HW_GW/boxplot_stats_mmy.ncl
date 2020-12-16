@@ -20,7 +20,6 @@ begin
 
   var_masked     = tmp(maskout_def)
   var_masked@_FillValue = def_value
-  delete(var)
 
   ; ___________ Calc Stats ___________
   ; calculate and plot the median, minimum value, maximum value, and the 25th and 75th percentiles

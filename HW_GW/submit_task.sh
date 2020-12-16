@@ -4,8 +4,8 @@
 #PBS -M mengyuan.mu@unsw.edu.au
 #PBS -P w35
 #PBS -q normal
-#PBS -l walltime=05:00:00
-#PBS -l mem=40GB
+#PBS -l walltime=01:00:00
+#PBS -l mem=80GB
 #PBS -l ncpus=1
 #PBS -j oe
 #PBS -l wd
