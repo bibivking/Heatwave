@@ -189,7 +189,6 @@ if operation .eq. "calc" then
 
     ; _____________________________ MASK HW DAY ________________________________
     if heatwave .eq. "hw-90th" then
-      print("mask HW")
       Qle      = where(HW .eq. 1, Qle, def_value)
       Qh       = where(HW .eq. 1, Qh, def_value)
       Fwsoil   = where(HW .eq. 1, Fwsoil, def_value)
@@ -199,7 +198,6 @@ if operation .eq. "calc" then
     end if
 
     ; _______________________________ MASK PFT __________________________________
-    print("mask PFT")
     ; trees
     Qle_tree      = where(PFT_mask_multi .eq. 1, Qle, def_value)
     Qh_tree       = where(PFT_mask_multi .eq. 1, Qh, def_value)
@@ -266,7 +264,6 @@ if operation .eq. "calc" then
   delete(PFT_mask_multi)
 
   ; _____________________________ Write box stats ________________________________
-  print("write out")
   option        = True
   option@row    = False
   ; option@tspace = 0
@@ -307,23 +304,23 @@ if operation .eq. "calc" then
 
 else if operation .eq. "plot" then
 
-  ; txt_name  = "Qle_box_stats.txt"
-  ; Qle_stats = asciiread(txt_name,(/total_box,5/),"float")
-  ;
-  ; txt_name  = "Qh_box_stats.txt"
-  ; Qh_stats = asciiread(txt_name,(/total_box,5/),"float")
+  txt_name  = "Qle_box_stats.txt"
+  Qle_stats = asciiread(txt_name,(/total_box,5/),"float")
+
+  txt_name  = "Qh_box_stats.txt"
+  Qh_stats = asciiread(txt_name,(/total_box,5/),"float")
 
   txt_name  = "Fwsoil_box_stats.txt"
   Fwsoil_stats = asciiread(txt_name,(/total_box,5/),"float")
 
-  ; txt_name  = "deltaT_box_stats.txt"
-  ; deltaT_stats = asciiread(txt_name,(/total_box,5/),"float")
-  ;
-  ; ; txt_name  = "WatTable_box_stats.txt"
-  ; ; WatTable_stats = asciiread(txt_name,(/total_box,5/),"float")
-  ;
-  ; txt_name  = "SM64cm_box_stats.txt"
-  ; SM64cm_stats = asciiread(txt_name,(/total_box,5/),"float")
+  txt_name  = "deltaT_box_stats.txt"
+  deltaT_stats = asciiread(txt_name,(/total_box,5/),"float")
+
+  ; txt_name  = "WatTable_box_stats.txt"
+  ; WatTable_stats = asciiread(txt_name,(/total_box,5/),"float")
+
+  txt_name  = "SM64cm_box_stats.txt"
+  SM64cm_stats = asciiread(txt_name,(/total_box,5/),"float")
 
   ; ================================ Plotting ==================================
   x = ispan(1,total_box,1)
@@ -343,24 +340,24 @@ else if operation .eq. "plot" then
   opti@boxColors = (/"blue","red","green","orange","black", "blue","red","green","orange","black",\
                      "blue","red","green","orange","black", "blue","red","green","orange"/)
 
-  ; plot = boxplot_mmy(wks,x,Qle_stats,opti,res,llres, 0, 150, "Qle")
-  ; draw(wks)                                    ; boxplot does not call these
-  ; frame(wks)                                   ; for you
-  ; plot = boxplot_mmy(wks,x,Qh_stats,opti,res,llres, 0, 250, "Qh")
-  ; draw(wks)                                    ; boxplot does not call these
-  ; frame(wks)                                   ; for you
+  plot = boxplot_mmy(wks,x,Qle_stats,opti,res,llres, 0, 150, "Qle")
+  draw(wks)                                    ; boxplot does not call these
+  frame(wks)                                   ; for you
+  plot = boxplot_mmy(wks,x,Qh_stats,opti,res,llres, 0, 250, "Qh")
+  draw(wks)                                    ; boxplot does not call these
+  frame(wks)                                   ; for you
   plot = boxplot_mmy(wks,x,Fwsoil_stats,opti,res,llres, 0, 1.1, "Fwsoil")
   draw(wks)                                    ; boxplot does not call these
   frame(wks)                                   ; for you
-  ; plot = boxplot_mmy(wks,x,deltaT_stats,opti,res,llres, 0, 6, "deltaT")
+  plot = boxplot_mmy(wks,x,deltaT_stats,opti,res,llres, 0, 6, "deltaT")
+  draw(wks)                                    ; boxplot does not call these
+  frame(wks)                                   ; for you
+  ; plot = boxplot_mmy(wks,x,WatTable_stats,opti,res,llres, 0, 15, "WatTable")
   ; draw(wks)                                    ; boxplot does not call these
   ; frame(wks)                                   ; for you
-  ; ; plot = boxplot_mmy(wks,x,WatTable_stats,opti,res,llres, 0, 15, "WatTable")
-  ; ; draw(wks)                                    ; boxplot does not call these
-  ; ; frame(wks)                                   ; for you
-  ; plot = boxplot_mmy(wks,x,SM64cm_stats,opti,res,llres, 0.1, 0.4, "SM64cm")
-  ; draw(wks)                                    ; boxplot does not call these
-  ; frame(wks)                                   ; for you
+  plot = boxplot_mmy(wks,x,SM64cm_stats,opti,res,llres, 0.1, 0.4, "SM64cm")
+  draw(wks)                                    ; boxplot does not call these
+  frame(wks)                                   ; for you
 
   ; txres                   = True
   ; txres@txPerimOn         = False

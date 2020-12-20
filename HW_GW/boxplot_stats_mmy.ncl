@@ -28,8 +28,11 @@ begin
   print("dimt = "+dimt)
   x25            = round(.25*dimt,3)-1     ; -1 to account for NCL indexing starting
   x75            = round(.75*dimt,3)-1     ; at 0
+  deltaQ         = var_masked(x75) - var_masked(x25)
+  Minimum        = var_masked(x25) - 1.5*deltaQ ; the lowest data point excluding any outliers.
+  Maximum        = var_masked(x75) + 1.5*deltaQ ; the largest data point excluding any outliers.
   qsort(var_masked)
-  var_stat = (/min(var_masked),var_masked(x25),dim_median(var_masked),var_masked(x75),max(var_masked)/)
+  var_stat = (/Minimum,var_masked(x25),dim_median(var_masked),var_masked(x75),Maximum/)
 
   return(var_stat)
 end

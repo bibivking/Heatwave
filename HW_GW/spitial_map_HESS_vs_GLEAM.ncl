@@ -360,10 +360,11 @@ gsn_define_colormap(wks,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYell
 
 ; Evap
 res@cnLevels  = fspan(0,1000,21)
-res@cnFillPalette = "WhiteBlueGreenYellowRed";"vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+res@cnFillPalette = "vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
 counter = 0
 
 ; ___ 2001-2009 ___
+res@lbLabelBarOn = False
 ; GLEAM
 plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap_GLEAM(1:9,:,:),0),res)
 txid1   = gsn_create_text(wks, order_name(counter), txres)
@@ -407,9 +408,10 @@ delete(tmp)
 
 
 ; ___ 2017-2019 ___
+res@lbLabelBarOn = True
 ; GLEAM
 res@cnLevels  = fspan(0,1000,21)
-res@cnFillPalette = "WhiteBlueGreenYellowRed";"vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+res@cnFillPalette = "vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
 plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap_GLEAM(16:18,:,:),0),res)
 txid1   = gsn_create_text(wks, order_name(counter), txres)
 annoid1 = gsn_add_annotation(plots(counter), txid1, amres)

@@ -20,7 +20,7 @@ year_e       = 2019
 
 scale        = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
-case_name    = (/"CTL-30x3+30yr/outputs", "FREE_DRAIN/outputs-spinup30x3yr"/);,"PUMPx10","PUMPx100"/)
+case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/);,"PUMPx10","PUMPx100"/)
 
 iveg_s = 1
 iveg_e = 4
@@ -37,8 +37,9 @@ do year = year_s,year_e
      day_sum = day_sum + 365
   end if
 end do
-
-pic_name  = "HW_boxplot_"+heatwave+"_"+scale+"_CTL_vs_FREE_DRAIN_"+year_s+"-"+year_e
+message   = "CTL_vs_FREE_DRAIN"
+var_name  = "Fwsoil"
+pic_name  = "HW_boxplot_"+var_name+"_"+heatwave+"_"+scale+"_"+message+"_"+year_s+"-"+year_e
 
 ; =================================== Path =====================================
 path = new(case_sum,"string")
@@ -190,6 +191,7 @@ SM64cm_tree   = SM64cm
 Rnet_tree     = Rnet
 
 do case_num = 0,case_sum-1
+  ; trees
   TVeg_tree(case_num,:,:,:)     = where(PFT_mask_multi .eq. 1, TVeg(case_num,:,:,:), def_value)
   Fwsoil_tree(case_num,:,:,:)   = where(PFT_mask_multi .eq. 1, Fwsoil(case_num,:,:,:), def_value)
   WatTable_tree(case_num,:,:,:) = where(PFT_mask_multi .eq. 1, WatTable(case_num,:,:,:), def_value)
@@ -198,6 +200,16 @@ do case_num = 0,case_sum-1
   SMsurf_tree(case_num,:,:,:)   = where(PFT_mask_multi .eq. 1, SMsurf(case_num,:,:,:), def_value)
   SM64cm_tree(case_num,:,:,:)   = where(PFT_mask_multi .eq. 1, SM64cm(case_num,:,:,:), def_value)
   Rnet_tree(case_num,:,:,:)     = where(PFT_mask_multi .eq. 1, Rnet(case_num,:,:,:), def_value)
+
+  ; non-trees
+  TVeg(case_num,:,:,:)     = where(PFT_mask_multi .ne. 1, TVeg(case_num,:,:,:), def_value)
+  Fwsoil(case_num,:,:,:)   = where(PFT_mask_multi .ne. 1, Fwsoil(case_num,:,:,:), def_value)
+  WatTable(case_num,:,:,:) = where(PFT_mask_multi .ne. 1, WatTable(case_num,:,:,:), def_value)
+  Tair(case_num,:,:,:)     = where(PFT_mask_multi .ne. 1, Tair(case_num,:,:,:), def_value)
+  deltaT(case_num,:,:,:)   = where(PFT_mask_multi .ne. 1, deltaT(case_num,:,:,:), def_value)
+  SMsurf(case_num,:,:,:)   = where(PFT_mask_multi .ne. 1, SMsurf(case_num,:,:,:), def_value)
+  SM64cm(case_num,:,:,:)   = where(PFT_mask_multi .ne. 1, SM64cm(case_num,:,:,:), def_value)
+  Rnet(case_num,:,:,:)     = where(PFT_mask_multi .ne. 1, Rnet(case_num,:,:,:), def_value)
 end do
 delete(PFT_mask_multi)
 
@@ -249,6 +261,7 @@ do case_num = 0,case_sum-1
   tmp                         = ndtooned(Rnet(case_num,:,:,:))
   Rnet_no_mis(case_num,:)     = tmp(mask_no_mis)
   delete(tmp)
+
   tmp                           = ndtooned(TVeg_tree(case_num,:,:,:))
   TVeg_tree_no_mis(case_num,:)  = tmp(mask_tree_no_mis)
   tmp                           = ndtooned(Fwsoil_tree(case_num,:,:,:))
@@ -305,11 +318,11 @@ SM64cm_tree_cls    = new((/case_sum*10, length_tree/), float, def_value)
 Rnet_tree_cls      = new((/case_sum*10, length_tree/), float, def_value)
 
 counter       = 0
-class_var     = Rnet_no_mis
-class_tree_var= Rnet_tree_no_mis
-interval      = 20.
+class_var     = Fwsoil_no_mis
+class_tree_var= Fwsoil_tree_no_mis
+interval      = 0.1 ;20.
 
-do class = 40.,220.,interval  ;0., 0.91 ,0.1
+do class = 0.,0.91,interval ;40.,220.,interval  ;0., 0.91 ,0.1
   do case_num = 0, case_sum -1
       print("counter = "+ counter)
       print(sum(where(class_var(case_num,:) .ge. class .and. class_var(case_num,:) .lt. class+interval, \
@@ -593,18 +606,18 @@ x = ispan(1,total_box,1)
 wks = gsn_open_wks("pdf",pic_name)   ;"./plots/"+            ; send graphics to PNG file
 
 res            = True                         ; plot mods desired
-; res@tmXBLabels = (/"0-0.1","","","","", "0.1-0.2","","","","", "0.2-0.3","","","","",\
-;                    "0.3-0.4","","","","", "0.4-0.5","","","","", "0.5-0.6","","","","",\
-;                    "0.6-0.7","","","","", "0.7-0.8","","","","", "0.8-0.9","","","","",\
-;                    "0.9-1.","","",""/) ; labels for each box
+res@tmXBLabels = (/"0-0.1","","","","", "0.1-0.2","","","","", "0.2-0.3","","","","",\
+                   "0.3-0.4","","","","", "0.4-0.5","","","","", "0.5-0.6","","","","",\
+                   "0.6-0.7","","","","", "0.7-0.8","","","","", "0.8-0.9","","","","",\
+                   "0.9-1.","","",""/) ; labels for each box
 ; res@tmXBLabels = (/"30","","","","", "31","","","","","32","","","","",\
 ;                    "33","","","","", "34","","","","","35","","","","",\
 ;                    "36","","","","", "37","","","","","38","","","","",\
 ;                    "39","","",""/) ; labels for each box
-res@tmXBLabels = (/"40","","","","", "60","","","","","80","","","","",\
-                   "100","","","","", "120","","","","","140","","","","",\
-                   "160","","","","", "180","","","","","200","","","","",\
-                   "220","","",""/) ; labels for each box
+; res@tmXBLabels = (/"40","","","","", "60","","","","","80","","","","",\
+;                    "100","","","","", "120","","","","","140","","","","",\
+;                    "160","","","","", "180","","","","","200","","","","",\
+;                    "220","","",""/) ; labels for each box
 ; resources for polylines that draws the boxes
 llres                   = True
 llres@gsLineThicknessF  = 3.                ; line thickness
@@ -618,7 +631,7 @@ opti@boxColors = (/"blue","red","green","orange","black", "blue","red","green","
                    "blue","red","green","orange","black", "blue","red","green","orange","black",\
                    "blue","red","green","orange","black", "blue","red","green","orange"/)
 
-plot = boxplot_mmy(wks,x,deltaT_stats,opti,res,llres)
+plot = boxplot_mmy(wks,x,deltaT_stats,opti,res,llres, -10.,10.,"deltaT vs "+var_name)
 
 ; txres                   = True
 ; txres@txPerimOn         = False

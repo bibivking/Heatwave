@@ -16,14 +16,14 @@ end setvalues
 ; ================================= Predefine ==================================
 year_s   = 2000
 year_e   = 2019
-row_sum  = 3
+row_sum  = 2
 col_sum  = 4
 heatwave = "hw-90th" ; "hw-90th" ; "all-day"
 scale    = "SE-AU"   ; "45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 case_name= (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/)
 path_mum = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 message  = "CTL_vs_FREE_DRAIN"
-pic      = "./plots/HESS_EF_delta_"+heatwave+"_"+message
+pic      = "./plots/HESS_EF_delta_diff_"+heatwave+"_"+message
 
 year_sum = year_e-year_s+1
 day_sum  = 0
@@ -307,41 +307,102 @@ amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
 amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
-; =========================== plot deltaT & Qh ===========================
-plots = new(12,graphic)
+; =========================== plot deltaT & Qh diff ===========================
+plots = new(8,graphic)
 
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
-; EF
-res@cnLevels  = fspan(0,1.,21)
-res@cnFillPalette = "WhiteBlueGreenYellowRed"
-plots(0) = gsn_csm_contour_map(wks, EF_avg(0,0,:,:), res)
-plots(1) = gsn_csm_contour_map(wks, EF_avg(1,0,:,:), res)
+; EF_CTL
+res@cnLevels      = fspan(0.,1.,21)
+res@cnFillPalette = "vegetation_ClarkU"
+res@lbLabelBarOn  = False
+plots(0) = gsn_csm_contour_map(wks, EF_avg(0,1,:,:), res) ; 2001-2009
+res@lbLabelBarOn  = True
+plots(4) = gsn_csm_contour_map(wks, EF_avg(0,2,:,:), res) ; 2017-2019
 
-plots(4) = gsn_csm_contour_map(wks, EF_avg(0,1,:,:), res)
-plots(5) = gsn_csm_contour_map(wks, EF_avg(1,1,:,:), res)
+; EF_diff
+res@cnLevels      = fspan(-0.5,0.,21)
+res@cnFillPalette = "MPL_hot"
+res@lbLabelBarOn  = False
+tmp = EF_avg(1,1,:,:)
+tmp = tmp - EF_avg(0,1,:,:)
+plots(1) = gsn_csm_contour_map(wks, tmp, res) ; 2001-2009
+delete(tmp)
 
-plots(8) = gsn_csm_contour_map(wks, EF_avg(0,2,:,:), res)
-plots(9) = gsn_csm_contour_map(wks, EF_avg(1,2,:,:), res)
-delete(res@cnLevels)
+res@lbLabelBarOn  = True
+tmp = EF_avg(1,2,:,:)
+tmp = tmp - EF_avg(0,2,:,:)
+plots(5) = gsn_csm_contour_map(wks, tmp, res) ; 2017-2019
+delete(tmp)
 
-; deltaT
-res@cnLevels  = fspan(0,5.,21)
+; deltaT_CTL
+; cmap = read_colormap_file("MPL_hot")
+; res@cnFillColors = cmap(::-1,:)
 res@cnFillPalette = "MPL_YlOrRd"
-plots(2)  = gsn_csm_contour_map(wks, deltaT_avg(0,0,:,:), res)
-plots(3)  = gsn_csm_contour_map(wks, deltaT_avg(1,0,:,:), res)
+res@cnLevels      = fspan(0,5.,21)
 
-plots(6)  = gsn_csm_contour_map(wks, deltaT_avg(0,1,:,:), res)
-plots(7)  = gsn_csm_contour_map(wks, deltaT_avg(1,1,:,:), res)
+res@lbLabelBarOn  = False
+plots(2)  = gsn_csm_contour_map(wks, deltaT_avg(0,1,:,:), res) ; 2001-2009
+res@lbLabelBarOn  = True
+plots(6)  = gsn_csm_contour_map(wks, deltaT_avg(0,2,:,:), res) ; 2017-2019
 
-plots(10) = gsn_csm_contour_map(wks, deltaT_avg(0,2,:,:), res)
-plots(11) = gsn_csm_contour_map(wks, deltaT_avg(1,2,:,:), res)
+; deltaT_diff
+res@cnLevels      = fspan(0,2.,21)
+res@lbLabelBarOn  = False
+tmp = deltaT_avg(1,1,:,:)
+tmp = tmp - deltaT_avg(0,1,:,:)
+plots(3)  = gsn_csm_contour_map(wks, tmp, res) ; 2001-2009
+delete(tmp)
 
-do count = 0,11
+res@lbLabelBarOn  = True
+tmp = deltaT_avg(1,2,:,:)
+tmp = tmp - deltaT_avg(0,2,:,:)
+plots(7)  = gsn_csm_contour_map(wks, tmp, res) ; 2017-2019
+delete(tmp)
+
+do count = 0,7
   txid1          = gsn_create_text(wks, order_name(count), txres)
   annoid1        = gsn_add_annotation(plots(count), txid1, amres)
 end do
 gsn_panel(wks,(/plots/),(/row_sum,col_sum/),pres)
 
+
+; ; =========================== plot deltaT & Qh ===========================
+; plots = new(12,graphic)
+;
+; wks = gsn_open_wks("pdf",pic)
+; gsn_define_colormap(wks,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
+;
+; ; EF
+; res@cnLevels  = fspan(0,1.,21)
+; res@cnFillPalette = "WhiteBlueGreenYellowRed"
+; plots(0) = gsn_csm_contour_map(wks, EF_avg(0,0,:,:), res)
+; plots(1) = gsn_csm_contour_map(wks, EF_avg(1,0,:,:), res)
+;
+; plots(4) = gsn_csm_contour_map(wks, EF_avg(0,1,:,:), res)
+; plots(5) = gsn_csm_contour_map(wks, EF_avg(1,1,:,:), res)
+;
+; plots(8) = gsn_csm_contour_map(wks, EF_avg(0,2,:,:), res)
+; plots(9) = gsn_csm_contour_map(wks, EF_avg(1,2,:,:), res)
+; delete(res@cnLevels)
+;
+; ; deltaT
+; res@cnLevels  = fspan(0,5.,21)
+; res@cnFillPalette = "MPL_YlOrRd"
+; plots(2)  = gsn_csm_contour_map(wks, deltaT_avg(0,0,:,:), res)
+; plots(3)  = gsn_csm_contour_map(wks, deltaT_avg(1,0,:,:), res)
+;
+; plots(6)  = gsn_csm_contour_map(wks, deltaT_avg(0,1,:,:), res)
+; plots(7)  = gsn_csm_contour_map(wks, deltaT_avg(1,1,:,:), res)
+;
+; plots(10) = gsn_csm_contour_map(wks, deltaT_avg(0,2,:,:), res)
+; plots(11) = gsn_csm_contour_map(wks, deltaT_avg(1,2,:,:), res)
+;
+; do count = 0,11
+;   txid1          = gsn_create_text(wks, order_name(count), txres)
+;   annoid1        = gsn_add_annotation(plots(count), txid1, amres)
+; end do
+; gsn_panel(wks,(/plots/),(/row_sum,col_sum/),pres)
+exit
 end

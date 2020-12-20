@@ -90,11 +90,11 @@ res@pmLegendHeightF        = 0.1       ; Decrease height
 res@lgBoxMinorExtentF      = 0.2       ; Shorten the legend lines
 res@lgItemOrder            = (/ 5,4,3,2,1,0 /)   ; Reorder the legends
 
-LineColors       = (/"navy", "darkgreen","cornflowerblue","peru","darkolivegreen1","orchid"/) ; colors chosen
+LineColors       = (/ "black","darkgreen","cornflowerblue","peru","darkolivegreen1","orchid"/) ; "navy",colors chosen
 LineThicknesses	 = (/2.5,2.5,1.5,1.5,1.5,1.5/)      ; line thicknesses
 DashPatterns	   = (/0.,0.,0.,0.,0.,0./)      ; make all lines solid
 Opacities        = (/0.9,0.9,0.9,0.9,0.9,0.9/)
-Labels           = (/"GRACE","TWSA", "AM","SM", "CInt", "SWE" /)
+Labels           = (/"GRACE","CABLE", "Aquifer","SM", "CInt", "SWE" /)
 
 res@xyLineColors           = LineColors
 res@xyLineThicknesses      = LineThicknesses
@@ -132,7 +132,7 @@ do case_num = 0,case_sum-1
   tmp@_FillValue = default_value
   r        = escorc(tmp(1,:), tmp(0,:))   ; Pearson’s correlation coefficient (r)
   MBE      = avg(tmp(1,:) - tmp(0,:))     ; Mean Bias Error (MBE)
-  plots(case_num) = gsn_csm_xy (wks,x,tmp,res)  ; Create another filled XY plot.
+  plots(case_num) = gsn_csm_xy (wks,x,tmp(0:2,:),res)  ; Create another filled XY plot.
 
   ; add order
   if case_num .eq. 0 then

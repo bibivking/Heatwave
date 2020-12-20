@@ -133,12 +133,12 @@ bins     = 40
 nVar     = 16
 nBin     = bins
 
-Qle_x      = new((/nVar, nBin/),float,def_value)
-Qh_x       = new((/nVar, nBin/),float,def_value)
-deltaT_x   = new((/nVar, nBin/),float,def_value)
-Fwsoil_x   = new((/nVar, nBin/),float,def_value)
-SM64cm_x   = new((/nVar, nBin/),float,def_value)
-WatTable_x = new((/nVar, nBin/),float,def_value)
+Qle_x      = new((/nVar, nBin/),integer)
+Qh_x       = new((/nVar, nBin/),integer)
+deltaT_x   = new((/nVar, nBin/),integer)
+Fwsoil_x   = new((/nVar, nBin/),integer)
+SM64cm_x   = new((/nVar, nBin/),integer)
+WatTable_x = new((/nVar, nBin/),integer)
 
 Qle_y      = new((/nVar, nBin/),float,def_value)
 Qh_y       = new((/nVar, nBin/),float,def_value)
@@ -240,6 +240,7 @@ do case_num = 0,case_sum-1
   do count = 0, 3 ; four periods
 
     tmp = pdf_1d_mmy(Qle(ts_s(count):ts_e(count),:,:),bins, def_value)
+    print(tmp@bin_center)
     Qle_x(count*4+loc1,:) = tmp@bin_center
     Qle_y(count*4+loc1,:) = tmp
     delete(tmp)
@@ -374,5 +375,5 @@ plot = gsn_csm_xy (wks, WatTable_x, WatTable_y, res)
  ;
  ; txid1   = gsn_create_text(wks, "(a)", txres)
  ; annoid1 = gsn_add_annotation(plot, txid1, amres)
-
+exit
 end

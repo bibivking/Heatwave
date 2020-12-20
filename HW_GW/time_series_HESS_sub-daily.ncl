@@ -18,10 +18,12 @@ PFT        = "tree" ; "tree"
 scale      = "SE-AU"
 year_s     = 2019
 year_e     = 2019
+HW_day_s   = 11
+HW_day_e   = 26
 year_sum   = year_e-year_s+1
 time_tot   = year_sum*365*8
-plot_ts_s  = (11-1)*8
-plot_ts_e  = (25-1)*8+7
+plot_ts_s  = (HW_day_s-1)*8-1 ; the first day's 0h
+plot_ts_e  = (HW_day_e-1)*8+7 ; the last day's 24h
 plot_ts    = plot_ts_e - plot_ts_s + 1
 
 message    = "subday"
@@ -33,6 +35,13 @@ case_name = (/"CTL-30x3+30yr","FREE_DRAIN", "CTL-30x3+30yr_2019-WetSoil",\
               "CTL-30x3+30yr_2019-DeepRoot"/)
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
+
+
+order_name  = (/"(a)","(b)","(c)","(d)","(e)","(f)",\
+                "(g)","(h)","(i)","(j)","(k)","(l)"/)
+
+; 0, 1, 2, 3 , 4 , 5,  6,  7
+; 3, 6, 9, 12, 15, 18, 21, 24
 
 if PFT .eq. "all" then
   iveg_s = 0
@@ -65,7 +74,6 @@ do case_num = 0, case_sum -1
 end do
 
 ; ___________________________ TREE Mask ______________________________
-
 filename1 = path(0)+"/cable_out_2019_SE_Aus.nc"
 f1 = addfile (filename1,"r")
 PFT_mask = where((f1->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f1->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
@@ -79,12 +87,16 @@ end do
 delete(filename1)
 delete(f1)
 
+Rain     = new((/case_sum,plot_ts/),float,default_val)
+Tair     = new((/case_sum,plot_ts/),float,default_val)
 Qle      = new((/case_sum,plot_ts/),float,default_val)
 Qh       = new((/case_sum,plot_ts/),float,default_val)
 TVeg     = new((/case_sum,plot_ts/),float,default_val)
-deltaT   = new((/case_sum,plot_ts/),float,default_val) ; *3
+deltaT   = new((/case_sum,plot_ts/),float,default_val)
 Fwsoil   = new((/case_sum,plot_ts/),float,default_val)
 
+Rain     = 0.
+Tair     = 0.
 Qle      = 0.
 Qh       = 0.
 TVeg     = 0.
@@ -96,12 +108,16 @@ do case_num = 0, case_sum -1
   do year = year_s,year_e
     filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc" ; outputs/
     f1 = addfile (filename1,"r")
+    print(f1->time(plot_ts_s))
+    print(f1->time(plot_ts_e))
     ; tmp = f1->Qle(plot_ts_s:plot_ts_e,{A:B},{C:D})/(f1->Qle(plot_ts_s:plot_ts_e,{A:B},{C:D})+f1->Qh(plot_ts_s:plot_ts_e,{A:B},{C:D}))
     ; Qle(case_num,:)      = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1 .and. tmp .gt. 0, tmp, default_val) ,(/1,2/))
-    Qle(case_num,:)      = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->Qle(plot_ts_s:plot_ts_e,{A:B},{C:D}),    default_val) ,(/1,2/))
-    Qh(case_num,:)       = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->Qh(plot_ts_s:plot_ts_e,{A:B},{C:D}),    default_val) ,(/1,2/))
-    TVeg(case_num,:)     = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->TVeg(plot_ts_s:plot_ts_e,{A:B},{C:D}),  default_val) ,(/1,2/))*3600*24
-    deltaT(case_num,:)   = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->VegT(plot_ts_s:plot_ts_e,{A:B},{C:D}) - f1->Tair(plot_ts_s:plot_ts_e,{A:B},{C:D}),  default_val) ,(/1,2/))
+    Rain(case_num,:)     = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->Rainf(plot_ts_s:plot_ts_e,{A:B},{C:D}), default_val) ,(/1,2/))*3600*3
+    Tair(case_num,:)     = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->Tair(plot_ts_s:plot_ts_e,{A:B},{C:D}),  default_val) ,(/1,2/))-273.15
+    Qle(case_num,:)      = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->Qle(plot_ts_s:plot_ts_e,{A:B},{C:D}),   default_val) ,(/1,2/))
+    Qh(case_num,:)       = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->Rnet(plot_ts_s:plot_ts_e,{A:B},{C:D}),    default_val) ,(/1,2/))
+    TVeg(case_num,:)     = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->TVeg(plot_ts_s:plot_ts_e,{A:B},{C:D}),  default_val) ,(/1,2/))*3600*3
+    deltaT(case_num,:)   = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->VegT(plot_ts_s:plot_ts_e,{A:B},{C:D}) - f1->Tair(plot_ts_s:plot_ts_e,{A:B},{C:D}), default_val) ,(/1,2/))
     ; deltaT(case_num*3,:)   = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->VegT(plot_ts_s:plot_ts_e,{A:B},{C:D}),  default_val) ,(/1,2/)) - 273.15
     ; deltaT(case_num*3+1,:) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->Tair(plot_ts_s:plot_ts_e,{A:B},{C:D}),  default_val) ,(/1,2/)) - 273.15
     ; deltaT(case_num*3+2,:) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->VegT(plot_ts_s:plot_ts_e,{A:B},{C:D})-f1->Tair(plot_ts_s:plot_ts_e,{A:B},{C:D}),  default_val) ,(/1,2/))
@@ -113,12 +129,38 @@ end do ; case_num
 print("prepare to plot")
 delete(PFT_mask_multi)
 
+
+
+; 0, 1, 2, 3 , 4 , 5,  6,  7,  8
+; 0, 3, 6, 9, 12, 15, 18, 21, 24
+count = 0
+do day = HW_day_s,HW_day_e
+  ; Rain(:,count*8:count*8+1) = default_val
+  Tair(:,count*8:count*8+2) = default_val
+  Qle(:,count*8:count*8+2)    = default_val
+  Qh(:,count*8:count*8+2)     = default_val
+  TVeg(:,count*8:count*8+2)   = default_val
+  deltaT(:,count*8:count*8+2) = default_val
+  Fwsoil(:,count*8:count*8+2) = default_val
+
+  ; Rain(:,count*8+6:count*8+7)  = default_val
+  ; Tair(:,count*8+6:count*8+7)  = default_val
+  ; Qle(:,count*8+7)   = default_val
+  ; Qh(:,count*8+7)    = default_val
+  ; TVeg(:,count*8+7)  = default_val
+  ; deltaT(:,count*8+7)= default_val
+  ; Fwsoil(:,count*8+7)= default_val
+  count = count + 1
+end do
+
 ;_____________________________ PLOT ___________________________________
 pic = "./plots/"+pic_name
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"rainbow")
 ;"BlueWhiteOrangeRed") ;"BlueYellowRed")             ;����ɫ��
 res                    = True
+res@gsnDraw            = True
+res@gsnFrame           = True
 res@gsnMaximize        = True
 res@vpHeightF          = 0.5
 res@vpWidthF           = 0.90
@@ -139,8 +181,6 @@ res@xyExplicitLegendLabels = case_name
 ;res@trYMinF = 0
 
 pres                    = True
-res@gsnDraw             = False
-res@gsnFrame            = False
 pres@gsnMaximize        = True
 pres@gsnPanelLabelBar   = False                    ; ���� panel labelbar.
 pres@cnLevelSelectionMode = "ExplicitLevels" ;"ManualLevels"
@@ -152,43 +192,100 @@ pres@lbTitleFontHeightF = 0.01
 pres@lbLabelFontHeightF = 0.01
 
 
+; Qle_diff    = new((/case_sum-1,plot_ts/),float,default_val)
+; Qh_diff     = new((/case_sum-1,plot_ts/),float,default_val)
+; TVeg_diff   = new((/case_sum-1,plot_ts/),float,default_val)
+; deltaT_diff = new((/case_sum-1,plot_ts/),float,default_val)
+; Fwsoil_diff = new((/case_sum-1,plot_ts/),float,default_val)
+;
+; Qle_diff(0,:) =  Qle(1,:) - Qle(0,:)
+; Qle_diff(1,:) =  Qle(2,:) - Qle(0,:)
+; Qle_diff(2,:) =  Qle(3,:) - Qle(0,:)
+;
+; Qh_diff(0,:) =  Qh(1,:) - Qh(0,:)
+; Qh_diff(1,:) =  Qh(2,:) - Qh(0,:)
+; Qh_diff(2,:) =  Qh(3,:) - Qh(0,:)
+;
+; TVeg_diff(0,:) =  TVeg(1,:) - TVeg(0,:)
+; TVeg_diff(1,:) =  TVeg(2,:) - TVeg(0,:)
+; TVeg_diff(2,:) =  TVeg(3,:) - TVeg(0,:)
+;
+; deltaT_diff(0,:) =  deltaT(1,:) - deltaT(0,:)
+; deltaT_diff(1,:) =  deltaT(2,:) - deltaT(0,:)
+; deltaT_diff(2,:) =  deltaT(3,:) - deltaT(0,:)
+;
+; Fwsoil_diff(0,:) =  Fwsoil(1,:) - Fwsoil(0,:)
+; Fwsoil_diff(1,:) =  Fwsoil(2,:) - Fwsoil(0,:)
+; Fwsoil_diff(2,:) =  Fwsoil(3,:) - Fwsoil(0,:)
+
 res@tmXBMode  = "Explicit"
 x             = ispan(1,plot_ts,1)
 res@tmXBValues= ispan(1,plot_ts,8)
-res@tmXBLabels= tostring(ispan(11,25,1))
+res@tmXBLabels= tostring(ispan(HW_day_s,HW_day_e+1,1))
 res@tiXAxisString  = "day"
-plots = new(5,graphic)
-; res@trYMaxF = 0.5
-; res@trYMinF = 0.
-res@pmLegendDisplayMode = "Never"
-res@tiYAxisString  = "Qle (W/m2)"
-plots(0) = gsn_csm_xy(wks,x,Qle,res)
+plots = new(6,graphic)
 
-res@tiYAxisString  = "Qh (W/m2)"
-plots(1) = gsn_csm_xy(wks,x,Qh,res)
+res@pmLegendDisplayMode = "Never"
+
+res1 = res
+res1@tiYAxisString  = "Rain (mm/3hr)"
+res1@gsnXYBarChart  = True
+; res1@tmYUseLeft     = False
+; res1@tmYLOn         = False
+; res1@tmYROn         = True
+; res1@tmYRLabelsOn   = True
+res1@trYMinF        = 0.
+res1@trYMaxF        = 2.
+res1@xyLineColor    = "gray"
+plots(0) = gsn_csm_xy(wks,x,Rain(0,:),res1)
+
+res@tiYAxisString  = "Tair (C)"
+res@trYMinF        = 15.
+res@trYMaxF        = 45.
+plots(1)           = gsn_csm_xy(wks,x,Tair(0,:),res)
+
+; overlay(plots(0),plot)
+
+res@tiYAxisString  = "Qle (W/m2)"
+res@trYMinF        =   0.
+res@trYMaxF        = 200.
+plots(2) = gsn_csm_xy(wks,x,Qle,res)
+
+res@tiYAxisString  = "Rnet (W/m2)"
+res@trYMinF        = 0.
+res@trYMaxF        = 400.
+plots(3) = gsn_csm_xy(wks,x,Qh,res)
 
 res@tiYAxisString  = "deltaT (C)"
-plots(2) = gsn_csm_xy(wks,x,deltaT,res)
-
-res@tiYAxisString  = "TVeg (mm/d)"
-plots(3) = gsn_csm_xy(wks,x,TVeg,res)
+res@trYMinF        =   0.
+res@trYMaxF        =  10.2
+plots(4) = gsn_csm_xy(wks,x,deltaT,res)
 
 res@pmLegendDisplayMode = "Always"
-res@tiYAxisString  = "Fwsoil (-)"
-plots(4) = gsn_csm_xy(wks,x,Fwsoil,res)
+res@tiYAxisString  = "TVeg (mm/3hr)"
+res@trYMinF        =   0.
+res@trYMaxF        =   1.
+plots(5) = gsn_csm_xy(wks,x,TVeg,res)
 
+; res@tiYAxisString  = "Fwsoil (-)"
+; res@trYMinF        =   0.
+; res@trYMaxF        =   1.
+; plots(5) = gsn_csm_xy(wks,x,Fwsoil,res)
+
+txres                   = True
+txres@txPerimOn         = False
+txres@txFont            = 25
+txres@txFontHeightF     = 0.03
+
+amres                   = True
+amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
+amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
+amres@amJust            = "TopLeft"
+
+do count = 0,5
+  txid1   = gsn_create_text(wks, order_name(count), txres)
+  annoid1 = gsn_add_annotation(plots(count), txid1, amres)
+end do
 
 gsn_panel(wks,(/plots/),(/3,2/),pres)
-; txres                   = True
-; txres@txPerimOn         = False
-; txres@txFont            = 25
-; txres@txFontHeightF     = 0.03
-;
-; amres                   = True
-; amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
-; amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
-; amres@amJust            = "TopLeft"
-;
-; txid1   = gsn_create_text(wks, "(a)", txres)
-; annoid1 = gsn_add_annotation(plot, txid1, amres)
 end

@@ -25,7 +25,7 @@ pic_name   = "CABLE-HESS_Deep_root_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s
 
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 
-case_name = (/"CTL","CTL-200+30yr-DeepRoot"/)
+case_name = (/"CTL-30x3+30yr","CTL-30x3+30yr-DeepRoot"/)
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 
 
@@ -71,7 +71,7 @@ end do
 
 ; ___________________________ TREE Mask ______________________________
 
-filename1 = path(0)+"/outputs/cable_out_1990_SE_Aus.nc" ; /outputs
+filename1 = path(0)+"/outputs-daily/cable_out_1990_SE_Aus.nc" ; /outputs
 f1 = addfile (filename1,"r")
 PFT_mask = where((f1->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f1->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
 default_val = f1->Qle@_FillValue
@@ -139,7 +139,7 @@ do case_num = 0, case_sum -1
        dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
     end if
 
-    filename1 = path(case_num)+"/outputs/cable_out_"+year+"_SE_Aus.nc" ; outputs/
+    filename1 = path(case_num)+"/outputs-daily/cable_out_"+year+"_SE_Aus.nc" ; outputs/
     f1 = addfile (filename1,"r")
 
     if time_scale .eq. "monthly" then
