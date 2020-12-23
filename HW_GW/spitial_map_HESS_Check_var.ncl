@@ -16,10 +16,15 @@ end setvalues
 ; ================================== Options ===================================
 year        = 2013
 time_tot    = 365 ; *8
+
 filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr/outputs-daily/cable_out_"+year+"_SE_Aus.nc"
 f           = addfile (filename_hw,"r")
-var  = f->Qle(:,:,:) ;*24*2600
-var2 = f->Qh(:,:,:) ;*24*2600
+var  = f->froot(:,:,:) ;*24*2600
+delete(f)
+
+filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr-DeepRoot/outputs-daily/cable_out_"+year+"_SE_Aus.nc"
+f           = addfile (filename_hw,"r")
+var2 = f->froot(:,:,:)
 delete(f)
 
 ; var2 = new((/12,12,14/),float)
@@ -86,18 +91,19 @@ res@tmXBMode  = "Explicit"
 res@gsnLeftString       = ""
 res@gsnRightString      = ""
 
-pic1 = "./plots/Check_Qle_Qh_"+year
+pic1 = "./plots/Check_froot_"+year
 wks1 = gsn_open_wks("pdf",pic1)
-gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed");"GMT_haxby");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
+gsn_define_colormap(wks1,"srip_reanalysis");"WhiteBlueGreenYellowRed");"GMT_haxby");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
 
-res@txString = "Qle_Qh";"Water Table Depth" ;var@long_name
-levels = fspan(-50,250,21)
+res@txString = "froot" ;"Water Table Depth" ;var@long_name
+levels = fspan(-1.,1.,21)
 res@cnLevels = levels
-do day_num = 0, 365- 1
-  plots = gsn_csm_contour(wks1,var(day_num, :,:),res)
-  plots = gsn_csm_contour(wks1,var2(day_num, :,:),res)
+do soil = 0, 5
+  plots = gsn_csm_contour(wks1,var(soil,:,:)-var2(soil,:,:),res)
 end do
+  ; plots = gsn_csm_contour(wks1,var2(day_num, :,:),res)
+; end do
 ; counter = 0
 ; do year = 1990, 2019
 ;   if mod(year,4) .eq. 0 then

@@ -14,17 +14,19 @@ end setvalues
 begin
 
 ; ____________________________ OPTIONS _______________________________
-PFT        = "tree" ; "tree"
+PFT        = "all" ; "tree"
 scale      = "SE-AU"
 year_s     = 2019
 year_e     = 2019
-HW_day_s   = 11
-HW_day_e   = 26
-year_sum   = year_e-year_s+1
-time_tot   = year_sum*365*8
-plot_ts_s  = (HW_day_s-1)*8-1 ; the first day's 0h
-plot_ts_e  = (HW_day_e-1)*8+7 ; the last day's 24h
-plot_ts    = plot_ts_e - plot_ts_s + 1
+
+HW_day_s   = (/ 15, 22/)
+HW_day_e   = (/ 19, 27/)
+event_sum  = dimsizes(HW_day_s)
+
+day_tot    = 0
+do event_num = 0, event_sum-1
+  day_tot = day_tot + (HW_day_e(event_num)-HW_day_s(event_num)+1)
+end do
 
 message    = "subday_map"
 pic_name   = "CABLE-HESS_"+message+"_PFT-"+PFT+"_"+scale+"_"+year_s+"-"+year_e
@@ -34,17 +36,14 @@ path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 case_name = (/"CTL-30x3+30yr","FREE_DRAIN", "CTL-30x3+30yr_2019-WetSoil",\
               "CTL-30x3+30yr_2019-DeepRoot"/)
 
-Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
-
-
 order_name  = (/"(a)","(b)","(c)","(d)",\
                 "(e)","(f)","(g)","(h)",\
                 "(i)","(j)","(k)","(l)",\
                 "(m)","(n)","(o)","(p)",\
                 "(q)","(r)","(s)","(t)"/)
 
-; 0, 1, 2, 3 , 4 , 5,  6,  7,  8
-; 0, 3, 6, 9, 12, 15, 18, 21, 24
+; 0, 1, 2, 3 , 4 , 5,  6,  7
+; 3, 6, 9, 12, 15, 18, 21, 24
 
 if PFT .eq. "all" then
   iveg_s = 0
@@ -86,23 +85,18 @@ lon = f1->x({C:D})
 PFT_mask = where((f1->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f1->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
 default_val = f1->Qle@_FillValue
 
-PFT_mask_multi = new((/plot_ts,dimsizes(PFT_mask(:,0)),dimsizes(PFT_mask(0,:))/),float)
-do z = 0, plot_ts-1
-  PFT_mask_multi(z,:,:) = PFT_mask
-end do
-
 delete(filename1)
 delete(f1)
 
 Qle      = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val)
 Qh       = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val)
-TVeg     = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val)
+; TVeg     = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val)
 deltaT   = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val) ; *3
 Fwsoil   = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val)
 
 Qle      = 0.
 Qh       = 0.
-TVeg     = 0.
+; TVeg     = 0.
 deltaT   = 0.
 Fwsoil   = 0.
 
@@ -112,35 +106,29 @@ do case_num = 0, case_sum -1
     filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc" ; outputs/
     f1 = addfile (filename1,"r")
 
-    Qle_tmp      = f1->Qle(plot_ts_s:plot_ts_e,{A:B},{C:D})
-    Qh_tmp       = f1->Qh(plot_ts_s:plot_ts_e,{A:B},{C:D})
-    TVeg_tmp     = f1->TVeg(plot_ts_s:plot_ts_e,{A:B},{C:D})
-    TVeg_tmp     = TVeg_tmp*3600*3
-    deltaT_tmp   = f1->VegT(plot_ts_s:plot_ts_e,{A:B},{C:D})
-    deltaT_tmp   = deltaT_tmp - f1->Tair(plot_ts_s:plot_ts_e,{A:B},{C:D})
-    Fwsoil_tmp   = f1->Fwsoil(plot_ts_s:plot_ts_e,{A:B},{C:D})
+    Qle_tmp      = f1->Qle(0:60*8,{A:B},{C:D})
+    Qh_tmp       = f1->Qh(0:60*8,{A:B},{C:D})
+    deltaT_tmp   = f1->VegT(0:60*8,{A:B},{C:D})
+    deltaT_tmp   = deltaT_tmp - f1->Tair(0:60*8,{A:B},{C:D})
+    Fwsoil_tmp   = f1->Fwsoil(0:60*8,{A:B},{C:D})
     printVarSummary(Qle_tmp)
-    count = 0
-    do day = HW_day_s,HW_day_e
-      Qle(case_num,:,:)     = Qle(case_num,:,:)    + Qle_tmp(count*8+5,:,:)/(HW_day_e-HW_day_s+1)
-      Qh(case_num,:,:)      = Qh(case_num,:,:)     + Qh_tmp(count*8+5,:,:)/(HW_day_e-HW_day_s+1)
-      TVeg(case_num,:,:)    = TVeg(case_num,:,:)   + TVeg_tmp(count*8+5,:,:)/(HW_day_e-HW_day_s+1)
-      deltaT(case_num,:,:)  = deltaT(case_num,:,:) + deltaT_tmp(count*8+5,:,:)/(HW_day_e-HW_day_s+1)
-      Fwsoil(case_num,:,:)  = Fwsoil(case_num,:,:) + Fwsoil_tmp(count*8+5,:,:)/(HW_day_e-HW_day_s+1)
-      ; Qle(case_num,:,:)     = Qle(case_num,:,:)    + dim_avg_n_Wrap(Qle_tmp(count*8+3:count*8+7,:,:),0)/(HW_day_e-HW_day_s+1)
-      ; Qh(case_num,:,:)      = Qh(case_num,:,:)     + dim_avg_n_Wrap(Qh_tmp(count*8+3:count*8+7,:,:),0)/(HW_day_e-HW_day_s+1)
-      ; TVeg(case_num,:,:)    = TVeg(case_num,:,:)   + dim_avg_n_Wrap(TVeg_tmp(count*8+3:count*8+7,:,:),0)/(HW_day_e-HW_day_s+1)
-      ; deltaT(case_num,:,:)  = deltaT(case_num,:,:) + dim_avg_n_Wrap(deltaT_tmp(count*8+3:count*8+7,:,:),0)/(HW_day_e-HW_day_s+1)
-      ; Fwsoil(case_num,:,:)  = Fwsoil(case_num,:,:) + dim_avg_n_Wrap(Fwsoil_tmp(count*8+3:count*8+7,:,:),0)/(HW_day_e-HW_day_s+1)
-      count = count + 1
+    delete(f1)
+    delete(filename1)
+
+    do event_num = 0,event_sum-1
+      do day = HW_day_s(event_num),HW_day_e(event_num)
+        ts = (HW_day_s(event_num)-1)*8+4
+        Qle(case_num,:,:)    = Qle(case_num,:,:) + where(PFT_mask .eq. 1, Qle_tmp(ts,:,:), default_val)/day_tot
+        Qh(case_num,:,:)     = Qh(case_num,:,:)  + where(PFT_mask .eq. 1,Qh_tmp(ts,:,:), default_val)/day_tot
+        deltaT(case_num,:,:) = deltaT(case_num,:,:) + where(PFT_mask .eq. 1,deltaT_tmp(ts,:,:), default_val)/day_tot
+        Fwsoil(case_num,:,:) = Fwsoil(case_num,:,:) + where(PFT_mask .eq. 1,Fwsoil_tmp(ts,:,:), default_val)/day_tot
+      end do
     end do
   end do ; year
-  delete(filename1)
-  delete(f1)
 end do ; case_num
-print("prepare to plot")
-delete(PFT_mask_multi)
+delete(PFT_mask)
 
+print("prepare to plot")
 Qle!0      = "time"
 Qle!1      = "lat"
 Qle!2      = "lon"
@@ -153,11 +141,11 @@ Qh!2      = "lon"
 Qh&lat    = lat
 Qh&lon    = lon
 
-TVeg!0      = "time"
-TVeg!1      = "lat"
-TVeg!2      = "lon"
-TVeg&lat    = lat
-TVeg&lon    = lon
+; TVeg!0      = "time"
+; TVeg!1      = "lat"
+; TVeg!2      = "lon"
+; TVeg&lat    = lat
+; TVeg&lon    = lon
 
 deltaT!0      = "time"
 deltaT!1      = "lat"
@@ -179,7 +167,7 @@ gsn_define_colormap(wks,"rainbow")
 res                         = True
 res@gsnDraw                 = False  ; Don't draw plots
 res@gsnFrame                = False  ; ����ҳ
-res@gsnMaximize             = True
+res@gsnMaximize             = False
 
 res@vpHeightF 	            = 0.4               ; change aspect ratio of plot
 res@vpWidthF 	              = 0.8
@@ -203,6 +191,7 @@ res@cnLevelSelectionMode   = "ExplicitLevels"
 
 res@lbLabelBarOn           = True
 res@lbBoxLinesOn           = True                       ;�ر�lbar box ����
+; res@lbOrientation          = "vertical"
 res@lbTitleFont            = 25
 res@lbLabelFont            = 25
 res@lbTitleFontHeightF     = 0.013
@@ -247,10 +236,10 @@ else if scale .eq. "SE-AU" then
   res@mpMaxLonF       = 154.
   res@tmYLMode        = "Explicit"
   res@tmYLValues      = (/-40,-35,-30,-25/)
-  res@tmYLLabels      = (/"40~S~o~N~N","35~S~o~N~N","30~S~o~N~","25~S~o~N~S"/)
+  res@tmYLLabels      = (/"40~S~o~N~S","35~S~o~N~S","30~S~o~N~S","25~S~o~N~S"/)
   res@tmXBMode        = "Explicit"
   res@tmXBValues      = (/140,145,150/)
-  res@tmXBLabels      = (/"140~S~o~N~W","145~S~o~N~W","150~S~o~N~"/)
+  res@tmXBLabels      = (/"140~S~o~N~E","145~S~o~N~E","150~S~o~N~E"/)
 else if scale .eq. "AU" then
   res@gsnAddCyclic    = False
   res@trYMinF         = -44
@@ -263,10 +252,10 @@ else if scale .eq. "AU" then
   res@mpMaxLonF       = 154
   res@tmYLMode        = "Explicit"
   res@tmYLValues      = (/-40,-35,-30,-25,-20,-15,-10/)
-  res@tmYLLabels      = (/"40~S~o~N~N","35~S~o~N~N","30~S~o~N~","25~S~o~N~S","20~S~o~N~N","15~S~o~N~N","10~S~o~N~"/)
+  res@tmYLLabels      = (/"40~S~o~N~S","35~S~o~N~S","30~S~o~N~S","25~S~o~N~S","20~S~o~N~S","15~S~o~N~S","10~S~o~N~S"/)
   res@tmXBMode        = "Explicit"
   res@tmXBValues      = (/115,120,125,130,135,140,145,150/)
-  res@tmXBLabels      = (/"115~S~o~N~W","120~S~o~N~W","125~S~o~N~","130~S~o~N~W","135~S~o~N~W","140~S~o~N~","145~S~o~N~W","150~S~o~N~"/)
+  res@tmXBLabels      = (/"115~S~o~N~E","120~S~o~N~E","125~S~o~N~E","130~S~o~N~E","135~S~o~N~E","140~S~o~N~E","145~S~o~N~E","150~S~o~N~E"/)
 end if
 end if
 end if
@@ -295,167 +284,121 @@ amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
 amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
-plots = new(case_sum*5,graphic)
+Qle_CTL_lvl    = (/0, 10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400/)
+Fw_CTL_lvl     = fspan(0,1.,21)
+Qh_CTL_lvl     = Qle_CTL_lvl
+deltaT_CTL_lvl = fspan(0,15,16)
 
-; 1: Qle
-res@cnLevels      = fspan(0,400,21)
-res@cnFillPalette = "WhiteBlueGreenYellowRed";"MPL_RdBu";"vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-plots(0) = gsn_csm_contour_map(wks,Qle(0,:,:),res)
-delete(res@cnLevels)
+diff_color = "BlAqGrWh2YeOrReVi22"; "ViBlGrWhYeOrRe";
+Qle_diff_lvl    = (/-200, -150, -100, -50, -40, -30, -20, -10, 10, 20, 30, 40, 50, 100, 150, 200/)
+Fw_diff_lvl     = fspan(-0.6,0.6,25)
+Qh_diff_lvl     = Qle_diff_lvl
+deltaT_diff_lvl = (/-4., -3.5, -3., -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4. /)
 
-res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"ViBlGrWhYeOrRe"
-res@cnLevels      = fspan(-150,150,21)
-tmp  = Qle(1,:,:)
-tmp  = tmp - Qle(0,:,:)
-plots(1) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
+plots = new(case_sum*4,graphic)
+do case_num = 0,case_sum-1
+  if case_num .eq. 0 then
+    res@lbLabelBarOn  = True
 
-tmp  = Qle(2,:,:)
-tmp  = tmp - Qle(0,:,:)
-plots(2) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
+    ; Fwsoil
+    res@cnLevels      = Fw_CTL_lvl
+    res@cnFillPalette = "WhiteBlueGreenYellowRed";"MPL_RdBu";"vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+    plots(case_num*4) = gsn_csm_contour_map(wks,Fwsoil(0,:,:),res)
+    delete(res@cnLevels)
 
-tmp  = Qle(3,:,:)
-tmp  = tmp - Qle(0,:,:)
-plots(3) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
+    ; Qle
+    res@cnLevels      = Qle_CTL_lvl
+    res@cnFillPalette = "WhiteBlueGreenYellowRed";"MPL_RdBu";"vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+    plots(case_num*4+1) = gsn_csm_contour_map(wks,Qle(0,:,:),res)
+    delete(res@cnLevels)
 
-; do cnt = 0,3
-;   txid1   = gsn_create_text(wks, order_name(cnt), txres)
-;   annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
-; end do
+    ; deltaT
+    res@cnLevels      = deltaT_CTL_lvl
+    res@cnFillPalette = "WhiteBlueGreenYellowRed";"NCV_blue_red";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+    plots(case_num*4+2) = gsn_csm_contour_map(wks,deltaT(0,:,:),res)
+    delete(res@cnLevels)
 
-; gsn_panel(wks,(/plots/),(/1,4/),pres)
-delete(res@cnLevels)
+    ; Qh
+    res@cnLevels      = Qh_CTL_lvl
+    res@cnFillPalette = "WhiteBlueGreenYellowRed";"NCV_blue_red";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+    plots(case_num*4+3) = gsn_csm_contour_map(wks,Qh(0,:,:),res)
+    delete(res@cnLevels)
 
-count = 4
-; 2: Qh
-res@cnLevels      = fspan(0,400,21)
-res@cnFillPalette = "WhiteBlueGreenYellowRed";"NCV_blue_red";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-plots(0+count) = gsn_csm_contour_map(wks,Qh(0,:,:),res)
-delete(res@cnLevels)
+  else
+    if case_num .lt.case_sum-1 then
+      res@lbLabelBarOn  = False
+    else
+      res@lbLabelBarOn  = True
+    end if
 
-res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"ViBlGrWhYeOrRe"
-res@cnLevels      = fspan(-150,150,31)
-tmp  = Qh(1,:,:)
-tmp  = tmp - Qh(0,:,:)
-plots(1+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
+    res@cnLevels      = Fw_diff_lvl
+    res@cnFillPalette = diff_color
+    tmp  = Fwsoil(case_num,:,:)
+    tmp  = tmp - Fwsoil(0,:,:)
+    plots(case_num*4) = gsn_csm_contour_map(wks,tmp,res)
+    delete(tmp)
+    delete(res@cnLevels)
 
-tmp  = Qh(2,:,:)
-tmp  = tmp - Qh(0,:,:)
-plots(2+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
+    res@cnLevels      = Qle_diff_lvl
+    res@cnFillPalette = diff_color
+    tmp  = Qle(case_num,:,:)
+    tmp  = tmp - Qle(0,:,:)
+    plots(case_num*4+1) = gsn_csm_contour_map(wks,tmp,res)
+    delete(tmp)
+    delete(res@cnLevels)
 
-tmp  = Qh(3,:,:)
-tmp  = tmp - Qh(0,:,:)
-plots(3+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
+    res@cnLevels      = deltaT_diff_lvl
+    res@cnFillPalette = diff_color
+    tmp  = deltaT(case_num,:,:)
+    tmp  = tmp - deltaT(0,:,:)
+    plots(case_num*4+2) = gsn_csm_contour_map(wks,tmp,res)
+    delete(tmp)
+    delete(res@cnLevels)
 
-; do cnt = 0,3
-;   txid1   = gsn_create_text(wks, order_name(cnt), txres)
-;   annoid1 = gsn_add_annotation(plots(cnt+count), txid1, amres)
-; end do
-
-; gsn_panel(wks,(/plots/),(/1,4/),pres)
-delete(res@cnLevels)
-
-
-count = 8
-; 3: TVeg
-res@cnLevels      = fspan(0,2,21)
-res@cnFillPalette = "WhiteBlueGreenYellowRed";"MPL_RdBu";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-plots(0+count) = gsn_csm_contour_map(wks,TVeg(0,:,:),res)
-delete(res@cnLevels)
-
-res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"ViBlGrWhYeOrRe"
-res@cnLevels      = fspan(-1.,1.,21)
-tmp  = TVeg(1,:,:)
-tmp  = tmp - TVeg(0,:,:)
-plots(1+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-
-tmp  = TVeg(2,:,:)
-tmp  = tmp - TVeg(0,:,:)
-plots(2+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-
-tmp  = TVeg(3,:,:)
-tmp  = tmp - TVeg(0,:,:)
-plots(3+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-
-; do cnt = 0,3
-;   txid1   = gsn_create_text(wks, order_name(cnt), txres)
-;   annoid1 = gsn_add_annotation(plots(cnt+count), txid1, amres)
-; end do
-
-; gsn_panel(wks,(/plots/),(/1,4/),pres)
-delete(res@cnLevels)
-
-count = 12
-; 4: deltaT
-res@cnLevels      = fspan(0,15,16)
-res@cnFillPalette = "WhiteBlueGreenYellowRed";"NCV_blue_red";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-plots(0+count) = gsn_csm_contour_map(wks,deltaT(0,:,:),res)
-delete(res@cnLevels)
+    res@cnLevels      = Qh_diff_lvl
+    res@cnFillPalette = diff_color
+    tmp  = Qh(case_num,:,:)
+    tmp  = tmp - Qh(0,:,:)
+    plots(case_num*4+3) = gsn_csm_contour_map(wks,tmp,res)
+    delete(tmp)
+    delete(res@cnLevels)
 
 
-res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"ViBlGrWhYeOrRe"
-res@cnLevels      = fspan(-5.,5.,21)
-tmp  = deltaT(1,:,:)
-tmp  = tmp - deltaT(0,:,:)
-plots(1+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
+  end if
+end do
 
-tmp  = deltaT(2,:,:)
-tmp  = tmp - deltaT(0,:,:)
-plots(2+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-
-tmp  = deltaT(3,:,:)
-tmp  = tmp - deltaT(0,:,:)
-plots(3+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-
-; do cnt = 0,3
-;   txid1   = gsn_create_text(wks, order_name(cnt), txres)
-;   annoid1 = gsn_add_annotation(plots(cnt+count), txid1, amres)
-; end do
-
-; gsn_panel(wks,(/plots/),(/1,4/),pres)
-delete(res@cnLevels)
-
-count = 16
-; 5: Fwsoil
-res@cnLevels      = fspan(0,1.,21)
-res@cnFillPalette = "WhiteBlueGreenYellowRed";"MPL_RdBu";"vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-plots(0+count) = gsn_csm_contour_map(wks,Fwsoil(0,:,:),res)
-delete(res@cnLevels)
-
-
-res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"ViBlGrWhYeOrRe"
-res@cnLevels      = fspan(-0.5,0.5,21)
-tmp  = Fwsoil(1,:,:)
-tmp  = tmp - Fwsoil(0,:,:)
-plots(1+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-
-tmp  = Fwsoil(2,:,:)
-tmp  = tmp - Fwsoil(0,:,:)
-plots(2+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-
-tmp  = Fwsoil(3,:,:)
-tmp  = tmp - Fwsoil(0,:,:)
-plots(3+count) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-
-do cnt = 0,19
+do cnt = 0, 15
   txid1   = gsn_create_text(wks, order_name(cnt), txres)
   annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
 end do
 
-gsn_panel(wks,(/plots/),(/5,4/),pres)
+gsn_panel(wks,(/plots/),(/4,4/),pres)
 
 end
+
+
+; ; 3: TVeg
+; res@cnLevels      = fspan(0,2,21)
+; res@cnFillPalette = "WhiteBlueGreenYellowRed";"MPL_RdBu";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+; plots(0+count) = gsn_csm_contour_map(wks,TVeg(0,:,:),res)
+; delete(res@cnLevels)
+;
+; res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"ViBlGrWhYeOrRe"
+; res@cnLevels      = fspan(-1.,1.,21)
+; tmp  = TVeg(1,:,:)
+; tmp  = tmp - TVeg(0,:,:)
+; plots(1+count) = gsn_csm_contour_map(wks,tmp,res)
+; delete(tmp)
+;
+; tmp  = TVeg(2,:,:)
+; tmp  = tmp - TVeg(0,:,:)
+; plots(2+count) = gsn_csm_contour_map(wks,tmp,res)
+; delete(tmp)
+;
+; tmp  = TVeg(3,:,:)
+; tmp  = tmp - TVeg(0,:,:)
+; plots(3+count) = gsn_csm_contour_map(wks,tmp,res)
+; delete(tmp)
+; delete(res@cnLevels)
+;
+; count = 12

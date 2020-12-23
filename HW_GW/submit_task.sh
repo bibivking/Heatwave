@@ -5,7 +5,7 @@
 #PBS -P w35
 #PBS -q normal
 #PBS -l walltime=04:00:00
-#PBS -l mem=80GB
+#PBS -l mem=180GB
 #PBS -l ncpus=1
 #PBS -j oe
 #PBS -l wd

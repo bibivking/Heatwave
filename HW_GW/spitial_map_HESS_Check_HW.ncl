@@ -14,10 +14,8 @@ end setvalues
 ;_____________________________________
 
 ; ================================== Options ===================================
-year_s    = 2017
+year_s    = 2019
 year_e    = 2019
-time_s    = (year_s-1970)*365
-time_e    = (year_e-1970+1)*365-1
 
 filename_hw = "/g/data/w35/mm3972/scripts/ehfheatwaves/HW_Event_Indicator_1970-2019.nc"
 ;"/g/data/w35/mm3972/scripts/ehfheatwaves/EHF_heatwaves____daily.nc"
@@ -32,12 +30,15 @@ f    = addfile (filename_hw,"r")
 ;                   + dim_sum_n_Wrap(doubletofloat(f->event(time_e - 30 :time_e,:,:)),0)
 ; end do
 
-tmp  = f->event(0,:,:)*0
+; tmp   = f->event(0,:,:)
 do year = year_s, year_e
-  time_s    = (year-1970)*365
-  time_e    = (year-1970+1)*365-1
-  tmp       = tmp + dim_sum_n_Wrap(f->event(time_s:time_s+58,:,:),0) \
-                  + dim_sum_n_Wrap(f->event(time_e - 30 :time_e,:,:),0)
+
+  time_s    = (year-1970)*365 + 12
+  time_e    = (year-1970+1)*365-1 + 12
+  tmp   = f->event(time_s:time_e,:,:)
+  ; tmp       = tmp + dim_sum_n_Wrap(f->event(time_s:time_s+58,:,:),0) \
+  ;                 + dim_sum_n_Wrap(f->event(time_e - 30 :time_e,:,:),0)
+
 end do
 
 ; ================================= Plotting ===================================
@@ -86,8 +87,11 @@ wks1 = gsn_open_wks("pdf",pic1)
 gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
 res@txString = "total Heatwave days"
-levels = fspan(0,200,21)
+levels = fspan(0,1,21)
 res@cnLevels = levels
-plots = gsn_csm_contour(wks1,tmp,res)
+do time = 0, 60
+  plots = gsn_csm_contour(wks1,tmp(time,:,:),res)
+end do
+
 
 end
