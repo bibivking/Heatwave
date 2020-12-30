@@ -51,7 +51,7 @@ heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
 case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr", \
                  "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
 message      = "CTL_vs_FD_vs_DR"
-pic_name     = "HW_pdfplot_Qle_Qh_"+heatwave+"_"+scale+"_"+message+"_"+year_s+"-"+year_e
+pic_name     = "HW_pdfplot_SM_WTD_"+heatwave+"_"+scale+"_"+message+"_"+year_s+"-"+year_e
 
 iveg_tree_s = 1
 iveg_tree_e = 4
@@ -138,16 +138,16 @@ end if
 bins     = 100
 nVar     = 32
 
-Qle_x      = new(bins,double)
-Qh_x       = new(bins,double)
-; deltaT_x   = new(bins,double)
-; Fwsoil_x   = new(bins,double)
+; Qle_x      = new(bins,double)
+; Qh_x       = new(bins,double)
+deltaT_x   = new(bins,double)
+Fwsoil_x   = new(bins,double)
 ; SM64cm_x   = new(bins,double)
 
-Qle_y      = new((/nVar, bins/),double,def_value)
-Qh_y       = new((/nVar, bins/),double,def_value)
-; deltaT_y   = new((/nVar, bins/),double,def_value)
-; Fwsoil_y   = new((/nVar, bins/),double,def_value)
+; Qle_y      = new((/nVar, bins/),double,def_value)
+; Qh_y       = new((/nVar, bins/),double,def_value)
+deltaT_y   = new((/nVar, bins/),double,def_value)
+Fwsoil_y   = new((/nVar, bins/),double,def_value)
 ; SM64cm_y   = new((/nVar, bins/),double,def_value)
 
           ;  all years,  2001-2009,  2017-2019,   2010-2011
@@ -162,16 +162,16 @@ do case_num = 0,case_sum-1
   print("case_num = " +case_num)
 
   ; ______________________________ SET DATA _________________________________
-  Qle      = new((/day_sum,lat_sum,lon_sum/),float,def_value)
-  Qh       = new((/day_sum,lat_sum,lon_sum/),float,def_value)
-  ; deltaT   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
-  ; Fwsoil   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+  ; Qle      = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+  ; Qh       = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+  deltaT   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+  Fwsoil   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
   ; SM64cm   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
 
-  Qle      = 0.
-  Qh       = 0.
-  ; deltaT   = 0.
-  ; Fwsoil   = 0.
+  ; Qle      = 0.
+  ; Qh       = 0.
+  deltaT   = 0.
+  Fwsoil   = 0.
   ; SM64cm   = 0.
 
   day_step_s = 0
@@ -193,10 +193,10 @@ do case_num = 0,case_sum-1
     filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
     f1 = addfile (filename1,"r")
 
-    Qle(day_step_s:day_step_e,:,:)      = f1->Qle(:,{A:B},{C:D})
-    Qh(day_step_s:day_step_e,:,:)       = f1->Qh(:,{A:B},{C:D})
-    ; Fwsoil(day_step_s:day_step_e,:,:)   = f1->Fwsoil(:,{A:B},{C:D})
-    ; deltaT(day_step_s:day_step_e,:,:)   = f1->VegT(:,{A:B},{C:D}) - f1->Tair(:,{A:B},{C:D})
+    ; Qle(day_step_s:day_step_e,:,:)      = f1->Qle(:,{A:B},{C:D})
+    ; Qh(day_step_s:day_step_e,:,:)       = f1->Qh(:,{A:B},{C:D})
+    Fwsoil(day_step_s:day_step_e,:,:)   = f1->Fwsoil(:,{A:B},{C:D})
+    deltaT(day_step_s:day_step_e,:,:)   = f1->VegT(:,{A:B},{C:D}) - f1->Tair(:,{A:B},{C:D})
     ; SM64cm(day_step_s:day_step_e,:,:)   = ( f1->SoilMoist(:,0,{A:B},{C:D})*0.022  \
     ;                                         + f1->SoilMoist(:,1,{A:B},{C:D})*0.058 \
     ;                                         + f1->SoilMoist(:,2,{A:B},{C:D})*0.154 \
@@ -212,26 +212,26 @@ do case_num = 0,case_sum-1
   ; _____________________________ MASK HW DAY ________________________________
   if heatwave .eq. "hw-90th" then
     print("mask hw-90th")
-    Qle      = where(HW .eq. 1, Qle, def_value)
-    Qh       = where(HW .eq. 1, Qh, def_value)
-    ; Fwsoil   = where(HW .eq. 1, Fwsoil, def_value)
-    ; deltaT   = where(HW .eq. 1, deltaT, def_value)
+    ; Qle      = where(HW .eq. 1, Qle, def_value)
+    ; Qh       = where(HW .eq. 1, Qh, def_value)
+    Fwsoil   = where(HW .eq. 1, Fwsoil, def_value)
+    deltaT   = where(HW .eq. 1, deltaT, def_value)
     ; SM64cm   = where(HW .eq. 1, SM64cm, def_value)
   end if
 
   ; _______________________________ MASK PFT __________________________________
   print("mask PFT")
-  Qle_tree      = where(PFT_mask_multi .eq. 1, Qle, def_value)
-  Qh_tree       = where(PFT_mask_multi .eq. 1, Qh, def_value)
-  ; Fwsoil_tree   = where(PFT_mask_multi .eq. 1, Fwsoil, def_value)
-  ; deltaT_tree   = where(PFT_mask_multi .eq. 1, deltaT, def_value)
+  ; Qle_tree      = where(PFT_mask_multi .eq. 1, Qle, def_value)
+  ; Qh_tree       = where(PFT_mask_multi .eq. 1, Qh, def_value)
+  Fwsoil_tree   = where(PFT_mask_multi .eq. 1, Fwsoil, def_value)
+  deltaT_tree   = where(PFT_mask_multi .eq. 1, deltaT, def_value)
   ; SM64cm_tree   = where(PFT_mask_multi .eq. 1, SM64cm, def_value)
 
   ; non-trees
-  Qle      = where(PFT_mask_multi .eq. 2, Qle, def_value)
-  Qh       = where(PFT_mask_multi .eq. 2, Qh, def_value)
-  ; Fwsoil   = where(PFT_mask_multi .eq. 2, Fwsoil, def_value)
-  ; deltaT   = where(PFT_mask_multi .eq. 2, deltaT, def_value)
+  ; Qle      = where(PFT_mask_multi .eq. 2, Qle, def_value)
+  ; Qh       = where(PFT_mask_multi .eq. 2, Qh, def_value)
+  Fwsoil   = where(PFT_mask_multi .eq. 2, Fwsoil, def_value)
+  deltaT   = where(PFT_mask_multi .eq. 2, deltaT, def_value)
   ; SM64cm   = where(PFT_mask_multi .eq. 2, SM64cm, def_value)
 
   loc1 = case_num
@@ -240,54 +240,54 @@ do case_num = 0,case_sum-1
   groups = case_sum*2
   do count = 0, 3 ; four periods
 
-    bin_min  = -50.
-    bin_max  = 400.
-
-    tmp = pdf_1d_mmy(Qle(ts_s(count):ts_e(count),:,:),bins,def_value,bin_min,bin_max)
-    print(typeof(tmp@bin_center))
-    if count .eq. 0 .and. case_num .eq. 0 then
-      Qle_x                 = tmp@bin_center
-    end if
-    Qle_y(count*groups+loc1,:) = tmp
-    delete(tmp)
-    tmp = pdf_1d_mmy(Qle_tree(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
-    Qle_y(count*groups+loc2,:) = tmp
-    delete(tmp)
-
-    tmp = pdf_1d_mmy(Qh(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
-    if count .eq. 0 .and. case_num .eq. 0 then
-      Qh_x                 = tmp@bin_center
-    end if
-    Qh_y(count*groups+loc1,:) = tmp
-    delete(tmp)
-    tmp = pdf_1d_mmy(Qh_tree(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
-    Qh_y(count*groups+loc2,:) = tmp
-    delete(tmp)
+    ; bin_min  = -50.
+    ; bin_max  = 400.
     ;
-    ; bin_min  = 0.
-    ; bin_max  = 1.
-    ;
-    ; tmp = pdf_1d_mmy(Fwsoil(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
+    ; tmp = pdf_1d_mmy(Qle(ts_s(count):ts_e(count),:,:),bins,def_value,bin_min,bin_max)
+    ; print(typeof(tmp@bin_center))
     ; if count .eq. 0 .and. case_num .eq. 0 then
-    ;   Fwsoil_x               = tmp@bin_center
+    ;   Qle_x                 = tmp@bin_center
     ; end if
-    ; Fwsoil_y(count*groups+loc1,:) = tmp
+    ; Qle_y(count*groups+loc1,:) = tmp
     ; delete(tmp)
-    ; tmp = pdf_1d_mmy(Fwsoil_tree(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
-    ; Fwsoil_y(count*groups+loc2,:) = tmp
+    ; tmp = pdf_1d_mmy(Qle_tree(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
+    ; Qle_y(count*groups+loc2,:) = tmp
     ; delete(tmp)
     ;
-    ; bin_min  = -15.
-    ; bin_max  = 15.
-    ; tmp = pdf_1d_mmy(deltaT(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
+    ; tmp = pdf_1d_mmy(Qh(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
     ; if count .eq. 0 .and. case_num .eq. 0 then
-    ;   deltaT_x               = tmp@bin_center
+    ;   Qh_x                 = tmp@bin_center
     ; end if
-    ; deltaT_y(count*groups+loc1,:) = tmp
+    ; Qh_y(count*groups+loc1,:) = tmp
     ; delete(tmp)
-    ; tmp = pdf_1d_mmy(deltaT_tree(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
-    ; deltaT_y(count*groups+loc2,:) = tmp
+    ; tmp = pdf_1d_mmy(Qh_tree(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
+    ; Qh_y(count*groups+loc2,:) = tmp
     ; delete(tmp)
+    ;
+    bin_min  = 0.
+    bin_max  = 1.
+
+    tmp = pdf_1d_mmy(Fwsoil(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
+    if count .eq. 0 .and. case_num .eq. 0 then
+      Fwsoil_x               = tmp@bin_center
+    end if
+    Fwsoil_y(count*groups+loc1,:) = tmp
+    delete(tmp)
+    tmp = pdf_1d_mmy(Fwsoil_tree(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
+    Fwsoil_y(count*groups+loc2,:) = tmp
+    delete(tmp)
+
+    bin_min  = -15.
+    bin_max  = 15.
+    tmp = pdf_1d_mmy(deltaT(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
+    if count .eq. 0 .and. case_num .eq. 0 then
+      deltaT_x               = tmp@bin_center
+    end if
+    deltaT_y(count*groups+loc1,:) = tmp
+    delete(tmp)
+    tmp = pdf_1d_mmy(deltaT_tree(ts_s(count):ts_e(count),:,:),bins, def_value,bin_min,bin_max)
+    deltaT_y(count*groups+loc2,:) = tmp
+    delete(tmp)
 
     ; bin_min  = 0.
     ; bin_max  = 0.5
@@ -303,16 +303,16 @@ do case_num = 0,case_sum-1
 
   end do ; count
 
-  delete(Qle)
-  delete(Qh)
-  ; delete(deltaT)
-  ; delete(Fwsoil)
+  ; delete(Qle)
+  ; delete(Qh)
+  delete(deltaT)
+  delete(Fwsoil)
   ; delete(SM64cm)
 
-  delete(Qle_tree)
-  delete(Qh_tree)
-  ; delete(Fwsoil_tree)
-  ; delete(deltaT_tree)
+  ; delete(Qle_tree)
+  ; delete(Qh_tree)
+  delete(Fwsoil_tree)
+  delete(deltaT_tree)
   ; delete(SM64cm_tree)
 end do ; case_num
 
@@ -327,46 +327,46 @@ option        = True
 option@row    = False
 ; option@tspace = 0
 
-Qle_y   = where( ismissing(Qle_y), -99999., Qle_y)
-Qle_y@_FillValue = -99999.
-Qle_all         = new((/nVar+1,bins/),double,def_value)
-Qle_all(0,:)    = Qle_x
-Qle_all(1:,:) = Qle_y
-option@fout = "Qle_pdf.txt"
+; Qle_y   = where( ismissing(Qle_y), -99999., Qle_y)
+; Qle_y@_FillValue = -99999.
+; Qle_all         = new((/nVar+1,bins/),double,def_value)
+; Qle_all(0,:)    = Qle_x
+; Qle_all(1:,:) = Qle_y
+; option@fout = "Qle_pdf.txt"
+; format      = bins+"f20.4"
+; write_matrix (Qle_all, format, option)
+; delete(option@fout)
+;
+; Qh_y   = where( ismissing(Qh_y), -99999., Qh_y)
+; Qh_y@_FillValue = -99999.
+; Qh_all         = new((/nVar+1,bins/),double,def_value)
+; Qh_all(0,:)    = Qh_x
+; Qh_all(1:,:) = Qh_y
+; option@fout = "Qh_pdf.txt"
+; format      = bins+"f20.4"
+; write_matrix (Qh_all, format, option)
+; delete(option@fout)
+
+Fwsoil_y   = where( ismissing(Fwsoil_y), -99999., Fwsoil_y)
+Fwsoil_y@_FillValue = -99999.
+Fwsoil_all         = new((/nVar+1,bins/),double,def_value)
+Fwsoil_all(0,:)    = Fwsoil_x
+Fwsoil_all(1:,:) = Fwsoil_y
+option@fout = "Fwsoil_pdf.txt"
 format      = bins+"f20.4"
-write_matrix (Qle_all, format, option)
+write_matrix (Fwsoil_all, format, option)
 delete(option@fout)
 
-Qh_y   = where( ismissing(Qh_y), -99999., Qh_y)
-Qh_y@_FillValue = -99999.
-Qh_all         = new((/nVar+1,bins/),double,def_value)
-Qh_all(0,:)    = Qh_x
-Qh_all(1:,:) = Qh_y
-option@fout = "Qh_pdf.txt"
+deltaT_y   = where( ismissing(deltaT_y), -99999., deltaT_y)
+deltaT_y@_FillValue = -99999.
+deltaT_all         = new((/nVar+1,bins/),double,def_value)
+deltaT_all(0,:)    = deltaT_x
+deltaT_all(1:,:) = deltaT_y
+option@fout = "deltaT_pdf.txt"
 format      = bins+"f20.4"
-write_matrix (Qh_all, format, option)
+write_matrix (deltaT_all, format, option)
 delete(option@fout)
-;
-; Fwsoil_y   = where( ismissing(Fwsoil_y), -99999., Fwsoil_y)
-; Fwsoil_y@_FillValue = -99999.
-; Fwsoil_all         = new((/nVar+1,bins/),double,def_value)
-; Fwsoil_all(0,:)    = Fwsoil_x
-; Fwsoil_all(1:,:) = Fwsoil_y
-; option@fout = "Fwsoil_pdf.txt"
-; format      = bins+"f20.4"
-; write_matrix (Fwsoil_all, format, option)
-; delete(option@fout)
-;
-; deltaT_y   = where( ismissing(deltaT_y), -99999., deltaT_y)
-; deltaT_y@_FillValue = -99999.
-; deltaT_all         = new((/nVar+1,bins/),double,def_value)
-; deltaT_all(0,:)    = deltaT_x
-; deltaT_all(1:,:) = deltaT_y
-; option@fout = "deltaT_pdf.txt"
-; format      = bins+"f20.4"
-; write_matrix (deltaT_all, format, option)
-; delete(option@fout)
-;
+
 ; SM64cm_y   = where( ismissing(SM64cm_y), -99999., SM64cm_y)
 ; SM64cm_y@_FillValue = -99999.
 ; SM64cm_all         = new((/nVar+1,bins/),double,def_value)
@@ -414,29 +414,29 @@ res@xyDashPatterns         = (/0,0,0,0/)
 res@xyExplicitLegendLabels = (/"CTL_ALL","FD_ALL","CTL_TREE","FD_TREE"/)  ; create explicit labels
 
 res@tiMainString           = "2000-2019"
-plot = gsn_csm_xy (wks, Qle_x, Qle_y(0:7,:), res)
+plot = gsn_csm_xy (wks, Fwsoil_x, Fwsoil_y(0:7,:), res)
 
 res@tiMainString           = "2001-2009"
-plot = gsn_csm_xy (wks, Qle_x, Qle_y(8:15,:), res)
+plot = gsn_csm_xy (wks, Fwsoil_x, Fwsoil_y(8:15,:), res)
 
 res@tiMainString           = "2017-2019"
-plot = gsn_csm_xy (wks, Qle_x, Qle_y(16:23,:), res)
+plot = gsn_csm_xy (wks, Fwsoil_x, Fwsoil_y(16:23,:), res)
 
 res@tiMainString           = "2010-2011"
-plot = gsn_csm_xy (wks, Qle_x, Qle_y(24:31,:), res)
+plot = gsn_csm_xy (wks, Fwsoil_x, Fwsoil_y(24:31,:), res)
 
 
 res@tiMainString           = "2000-2019"
-plot = gsn_csm_xy (wks, Qh_x, Qh_y(0:7,:), res)
+plot = gsn_csm_xy (wks, deltaT_x, deltaT_y(0:7,:), res)
 
 res@tiMainString           = "2001-2009"
-plot = gsn_csm_xy (wks, Qh_x, Qh_y(8:15,:), res)
+plot = gsn_csm_xy (wks, deltaT_x, deltaT_y(8:15,:), res)
 
 res@tiMainString           = "2017-2019"
-plot = gsn_csm_xy (wks, Qh_x, Qh_y(16:23,:), res)
+plot = gsn_csm_xy (wks, deltaT_x, deltaT_y(16:23,:), res)
 
 res@tiMainString           = "2010-2011"
-plot = gsn_csm_xy (wks, Qh_x, Qh_y(24:31,:), res)
+plot = gsn_csm_xy (wks, deltaT_x, deltaT_y(24:31,:), res)
 
  ; txres                   = True
  ; txres@txPerimOn         = False

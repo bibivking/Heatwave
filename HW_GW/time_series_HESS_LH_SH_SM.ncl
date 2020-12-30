@@ -16,6 +16,7 @@ begin
 ; ____________________________ OPTIONS _______________________________
 hydr_param = True
 time_scale = "daily" ;"monthly" ; "daily"
+LH_SH_scale= "seasonal"
 scale      = "SE-AU"
 year_s     = 2000
 year_e     = 2019
@@ -25,7 +26,7 @@ year_sum   = year_e-year_s+1
 path_mum       = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 case_name      = (/"CTL-30x3+30yr/outputs-daily", "CTL-30x3+30yr-DeepRoot/outputs-daily"/) ;"FREE_DRAIN/outputs-spinup30x3yr"/) ;,"CTL-30x3+30yr-DeepRoot/outputs"/)
 pic_message    = "CTL_vs_Deep_Root"
-pic_name       = "HESS_SM_profile_"+pic_message+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
+pic_name       = "HESS_LH_SH_SM_"+pic_message+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 Depth          = (/1.1, 5.1, 15.7, 43.85, 118.55, 316.4, 2355.36/)
                  ; avg(GWdz) over SE Aus = 37.9072 m
@@ -85,19 +86,26 @@ delete(f1)
 
 ; ___________________________ READ DATA ______________________________
 SoilMoist = new((/case_sum,2,7,time_tot/),float,default_val)
-SoilMoist= 0.
+Qle       = new((/case_sum,2,year_sum*12/),float,default_val)
+Qh        = new((/case_sum,2,year_sum*12/),float,default_val)
+
+SoilMoist = 0.
+Qle       = 0.
+Qh        = 0.
+
 printVarSummary(SoilMoist)
 
 do case_num = 0, case_sum -1
   print("case_num = " +case_num)
   i = 0
+  j = 0
   do year = year_s,year_e
 
     print("year = " +year)
     if ( mod(year,4) .eq. 0) then
-       dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
+       dom = (/0,31,60,91,121,152,182,213,244,274,305,335,366/)
     else
-       dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
+       dom = (/0,31,59,90,120,151,181,212,243,273,304,334,365/)
     end if
 
     filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
@@ -106,23 +114,46 @@ do case_num = 0, case_sum -1
     if time_scale .eq. "monthly" then
       ts = 12
     else if time_scale .eq. "daily" then
-      ts = sum(dom)
+      ts = dom(12)
     end if
     end if
+
+    Qle_tmp = f1->Qle(:,{A:B},{C:D})
+    Qh_tmp  = f1->Qh(:,{A:B},{C:D})
+
+    do month_num = 0,11
+      Qle(case_num, 0, j)  = avg(Qle_tmp(dom(month_num):dom(month_num+1)-1,:,:))
+      Qh(case_num, 0, j)   = avg(Qh_tmp(dom(month_num):dom(month_num+1)-1,:,:))
+      Qle(case_num, 1, j)  = avg(where(PFT_mask .eq. 1, \
+                                       dim_avg_n_Wrap(Qle_tmp(dom(month_num):dom(month_num+1)-1,:,:), 0),\
+                                       default_val))
+      Qh(case_num, 1, j)   = avg(where(PFT_mask .eq. 1, \
+                                       dim_avg_n_Wrap(Qh_tmp(dom(month_num):dom(month_num+1)-1,:,:), 0),\
+                                       default_val))
+      j = j + 1
+    end do ; month_num
+    delete(Qle_tmp)
+    delete(Qh_tmp)
 
     PFT_mask_multi = new((/ts,dimsizes(PFT_mask(:,0)),dimsizes(PFT_mask(0,:))/),float)
     do z = 0, ts-1
       PFT_mask_multi(z,:,:) = PFT_mask
     end do
 
+
+    SoilMoist_tmp = f1->SoilMoist(:,:,{A:B},{C:D})
+
     do soil = 0,5
-       SoilMoist(case_num, 0, soil, i:i+ts-1)= dim_avg_n_Wrap(f1->SoilMoist(:,soil,{A:B},{C:D})*1., (/1,2/))
-       SoilMoist(case_num, 1, soil, i:i+ts-1)= dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->SoilMoist(:,soil,{A:B},{C:D}),default_val), (/1,2/))
+       SoilMoist(case_num, 0, soil, i:i+ts-1)= dim_avg_n_Wrap(SoilMoist_tmp(:,soil,:,:)*1., (/1,2/))
+       SoilMoist(case_num, 1, soil, i:i+ts-1)= dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, SoilMoist_tmp(:,soil,:,:),default_val), (/1,2/))
     end do
+    delete(SoilMoist_tmp)
+
     ; aquifer
     SoilMoist(case_num, 0, 6, i:i+ts-1)= dim_avg_n_Wrap(f1->GWMoist(:,{A:B},{C:D})*1., (/1,2/))
     SoilMoist(case_num, 1, 6, i:i+ts-1)= dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->GWMoist(:,{A:B},{C:D}),default_val), (/1,2/))
     i = i + ts
+
     delete(PFT_mask_multi)
   end do ; year
 end do ; case_num
@@ -149,6 +180,34 @@ SoilMoist_regrid&time  = ispan(1,time_tot,1)
 printVarSummary(SoilMoist_regrid)
 print(SoilMoist_regrid&depth)
 
+; _________________________ LH SH monthly to seasonaly _________________________
+if LH_SH_scale .eq. "seasonal" then
+  Qle!0 = "case"
+  Qle!1 = "PFT"
+  Qle!2 = "time"
+  Qh!0  = "case"
+  Qh!1  = "PFT"
+  Qh!2  = "time"
+  Qle_season  = new((/case_sum,2,year_sum*4/),float, default_val)
+  Qh_season   = new((/case_sum,2,year_sum*4/),float, default_val)
+  do case_num = 0, case_sum-1
+    do pft = 0, 1
+      print(dimsizes(month_to_seasonN(Qle(case_num,pft,:),(/"DJF","MAM","JJA","SON"/))))
+      tmp_Qle = month_to_seasonN(Qle(case_num,pft,:),(/"DJF","MAM","JJA","SON"/))
+      tmp_Qle!0 = "season"
+      tmp_Qle!1 = "year"
+      Qle_season(case_num,pft,:) = ndtooned(tmp_Qle(year|:,season|:))
+      delete(tmp_Qle)
+      tmp_Qh = month_to_seasonN(Qh(case_num,pft,:),(/"DJF","MAM","JJA","SON"/))
+      tmp_Qh!0 = "season"
+      tmp_Qh!1 = "year"
+      Qh_season(case_num,pft,:)  = ndtooned(tmp_Qh(year|:,season|:))
+      delete(tmp_Qh)
+    end do
+  end do
+  printVarSummary(Qle_season)
+end if
+
 ;_____________________________ PLOT ___________________________________
 pic = "./plots/"+pic_name
 wks = gsn_open_wks("pdf",pic)
@@ -157,7 +216,7 @@ gsn_define_colormap(wks,"rainbow") ;"BlueWhiteOrangeRed") ;"BlueYellowRed")
 res                         = True
 res@gsnDraw                 = False  ; Don't draw plots
 res@gsnFrame                = False  ; ����ҳ
-res@gsnMaximize             = True
+res@gsnMaximize             = False
 
 res@vpHeightF               = 0.4
 res@vpWidthF                = 0.8
@@ -174,6 +233,22 @@ res@txFont                  = 25
 res@txFontHeightF           = 0.015            ; change title font heights
 res@gsnPaperOrientation     = "landscape";"portrait";"landscape" ;"auto"
 
+
+res@tmXBLabelFont           = 25 ;Sets the font index for the bottom X-Axis labels.
+res@tmYLLabelFont           = 25
+res@tmXBLabelFontThicknessF = 0.015
+res@tmYLLabelFontThicknessF = 0.015
+res@tmXBLabelFontHeightF    = 0.015
+res@tmYLLabelFontHeightF    = 0.015
+
+res@tmYLMode                = "Explicit"
+res@tmXBMode                = "Explicit"
+res@txString                = ""
+res@gsnLeftString           = ""
+res@gsnRightString          = ""
+
+res1                        = res
+
 res@cnFillOn                = True                            ;��ɫ
 res@cnLinesOn               = False
 res@cnLineLabelsOn          = False
@@ -187,18 +262,16 @@ res@lbLabelFont             = 25
 res@lbTitleFontHeightF      = 0.015
 res@lbLabelFontHeightF      = 0.015
 res@lbTitlePosition         = "Right"
-res@tmXBLabelFont           = 25 ;Sets the font index for the bottom X-Axis labels.
-res@tmYLLabelFont           = 25
-res@tmXBLabelFontThicknessF = 0.015
-res@tmYLLabelFontThicknessF = 0.015
-res@tmXBLabelFontHeightF    = 0.015
-res@tmYLLabelFontHeightF    = 0.015
 
-res@tmYLMode                = "Explicit"
-res@tmXBMode                = "Explicit"
-res@txString                = ""
-res@gsnLeftString           = ""
-res@gsnRightString          = ""
+
+res1@lgPerimOn              = False      ; No legend perimeter.
+res1@lgJustification        = "TopRight"
+res1@pmLegendParallelPosF   = 0.5       ; Move to right
+res1@pmLegendOrthogonalPosF = 0.5     ; Move into plot
+res1@pmLegendWidthF         = 0.3       ; Decrease width
+res1@pmLegendHeightF        = 0.1       ; Decrease height
+res1@lgBoxMinorExtentF      = 0.2       ; Shorten the legend lines
+res1@lgItemOrder            = (/ 3,2,1,0 /)   ; Reorder the legends
 
 
 if time_scale .eq. "monthly" then
@@ -236,32 +309,95 @@ amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
 amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
-
-; _______________________________ plot soil profile _____________________________
 plots              = new(6,graphic)
 
+; ________________________________ Plot Qh Qle _________________________________
+res1@gsnYRefLine    = 0.              ; reference line
+res1@gsnXYBarChart  = True            ; create bar chart
+res1@trYMinF        = -15.
+res1@trYMaxF        = 15.
+; res1@gsnAboveYRefLineColor = "red"           ; above ref line fill red
+; res1@gsnBelowYRefLineColor = "blue"          ; below ref line fill blue
+res1@pmLegendDisplayMode   = "Never"
+
+if LH_SH_scale .eq. "seasonal" then
+  time_tot         = year_sum*4
+  res1@tmXBValues  = ispan(1,time_tot,4*2)
+  x                = ispan(1,time_tot,1)
+  res1@tmXBLabels  = ispan(year_s,year_e,2)
+  res1@tiYAxisString = "Heat flux (W/m2)"
+  ; res1@tiXAxisString = "Year"
+  ; Qle_season1       = Qle_season
+  ; Qh_season1        = Qh_season
+
+  ; do year = year_s, year_e
+  ;   summer = (year-year_s)*4
+  ;   Qle_season(:,:,summer+1:summer+3) = default_val
+  ;   Qle_season1(:,:,summer)           = default_val
+  ;   Qh_season(:,:,summer+1:summer+3)  = default_val
+  ;   Qh_season1(:,:,summer)            = default_val
+  ; end do
+
+  ; all
+  ; gsnAboveYRefLineBarColors
+  res1@gsnXYBarChartColors = (/"blue","white","white","white"/) ; gsnBelowYRefLineBarColors
+  res1@xyLineColor        = "blue" ;(/"blue","black","black","black"/)
+  plot_Qle                 = gsn_csm_xy(wks, x, Qle_season(1,0,:)-Qle_season(0,0,:),res1)
+
+  delete(res1@tiYAxisString)
+  res1@gsnXYBarChartColors = (/"red","white","white","white"/)
+  res1@xyLineColor        = "red" ;(/"red","black","black","black"/)
+  plot_Qh                  = gsn_csm_xy(wks, x, Qh_season(1,0,:)-Qh_season(0,0,:),res1)
+  overlay(plot_Qh, plot_Qle)
+
+  plots(0) = plot_Qh ;plot_Qh
+
+  ; trees
+  res1@gsnXYBarChartColors = (/"blue","white","white","white"/) ; gsnBelowYRefLineBarColors
+  res1@xyLineColor         = "blue" ;(/"blue","black","black","black"/)
+  plot_Qle1                = gsn_csm_xy(wks, x, Qle_season(1,1,:)-Qle_season(0,1,:),res1)
+
+  res1@gsnXYBarChartColors = (/"red","white","white","white"/)
+  res1@xyLineColor         = "red" ;(/"red","black","black","black"/)
+  plot_Qh1                 = gsn_csm_xy(wks, x, Qh_season(1,1,:)-Qh_season(0,1,:),res1)
+  overlay(plot_Qh1, plot_Qle1)
+
+  plots(1) = plot_Qh1 ;plot_Qh1
+
+else if LH_SH_scale .eq. "monthly" then
+  time_tot        = year_sum*12
+  res1@tmXBValues  = ispan(1,time_tot,12*2)
+  x               = ispan(1,time_tot,1)
+  res1@tmXBLabels  = ispan(year_s,year_e,2)
+  res1@tiXAxisString = "Year"
+  plots(0)          = gsn_csm_xy(wks, x, Qle_season(1,0,:)-Qle_season(0,0,:),res1)
+  plot1             = gsn_csm_xy(wks, x, Qh_season(1,0,:)-Qh_season(0,0,:),res1)
+  overlay(plots(0), plot1)
+  plots(1)          = gsn_csm_xy(wks, x, Qle_season(1,1,:)-Qle_season(0,1,:),res1)
+  plot2             = gsn_csm_xy(wks, x, Qh_season(1,1,:)-Qh_season(0,1,:),res1)
+  overlay(plots(1), plot2)
+end if
+end if
+
+; ______________________________ Plot SM profile _______________________________
 res@cnLevels       = fspan(0.0,0.4,21)
 res@cnFillPalette  = "GMT_drywet" ;"WhiteBlueGreenYellowRed"
 res@tiYAxisString  = "Depth (cm)"
 ; res@lbTitleString  = "(m3/m3)"
-;printVarSummary(SoilMoist_regrid(0,0,::-1,:)*1.)
-plots(0)           = gsn_csm_contour(wks, SoilMoist_regrid(0,0,::-1,:)*1.,res)
+plots(2)           = gsn_csm_contour(wks, SoilMoist_regrid(0,0,::-1,:)*1.,res)
 delete(res@tiYAxisString)
-plots(1)           = gsn_csm_contour(wks, SoilMoist_regrid(0,1,::-1,:)*1.,res)
-plots(2)           = gsn_csm_contour(wks, SoilMoist_regrid(1,0,::-1,:)*1.,res)
-delete(res@tiYAxisString)
-plots(3)           = gsn_csm_contour(wks, SoilMoist_regrid(1,1,::-1,:)*1.,res)
+plots(3)           = gsn_csm_contour(wks, SoilMoist_regrid(0,1,::-1,:)*1.,res)
 delete(res@cnLevels)
+; plots(2)           = gsn_csm_contour(wks, SoilMoist_regrid(1,0,::-1,:)*1.,res)
+; plots(3)           = gsn_csm_contour(wks, SoilMoist_regrid(1,1,::-1,:)*1.,res)
+
+; plot SM diff
 res@cnLevels       = fspan(-0.1,0.1,21)
 res@cnFillPalette  = "MPL_BrBG" ;"ViBlGrWhYeOrRe"
 res@tiXAxisString  = "Year"
 
 tmp                =  SoilMoist_regrid(1,0,::-1,:) - SoilMoist_regrid(0,0,::-1,:)
-printVarSummary(tmp)
-; tmp!0              = "depth"
-; tmp!1              = "time"
-; tmp&depth          = fspan(460,0,93)
-; tmp&time           = ispan(1,time_tot,1)
+res@tiYAxisString  = "Depth (cm)"
 plots(4)           = gsn_csm_contour(wks, tmp*1., res)
 delete(res@tiYAxisString)
 tmp                = SoilMoist_regrid(1,1,::-1,:) - SoilMoist_regrid(0,1,::-1,:)
@@ -273,5 +409,5 @@ do counter = 0,5
 end do
 
 gsn_panel(wks,(/plots/),(/3,2/),pres)
-
+exit
 end

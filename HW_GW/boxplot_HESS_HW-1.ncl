@@ -121,17 +121,17 @@ if operation .eq. "calc" then
   end if
 
   ; _____________________________ Calc Box Stats ________________________________
-  Qle_stats      = new((/total_box, 5/), float, -9999.)
-  Qh_stats       = new((/total_box, 5/), float, -9999.)
+  ; Qle_stats      = new((/total_box, 5/), float, -9999.)
+  ; Qh_stats       = new((/total_box, 5/), float, -9999.)
   ; Fwsoil_stats   = new((/total_box, 5/), float, -9999.)
   ; deltaT_stats   = new((/total_box, 5/), float, -9999.)
-  ; SM64cm_stats   = new((/total_box, 5/), float, -9999.)
+  SM64cm_stats   = new((/total_box, 5/), float, -9999.)
 
-  Qle_stats      = -9999.
-  Qh_stats       = -9999.
+  ; Qle_stats      = -9999.
+  ; Qh_stats       = -9999.
   ; Fwsoil_stats   = -9999.
   ; deltaT_stats   = -9999.
-  ; SM64cm_stats   = -9999.
+  SM64cm_stats   = -9999.
 
   ; _____________________________ Start Main Loop ______________________________
   do case_num = 0,case_sum-1
@@ -139,17 +139,17 @@ if operation .eq. "calc" then
     print("case_num = " +case_num)
 
     ; ______________________________ SET DATA _________________________________
-    Qle      = new((/day_sum,lat_sum,lon_sum/),float,def_value)
-    Qh       = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+    ; Qle      = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+    ; Qh       = new((/day_sum,lat_sum,lon_sum/),float,def_value)
     ; deltaT   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
     ; Fwsoil   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
-    ; SM64cm   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
+    SM64cm   = new((/day_sum,lat_sum,lon_sum/),float,def_value)
 
-    Qle      = 0.
-    Qh       = 0.
+    ; Qle      = 0.
+    ; Qh       = 0.
     ; deltaT   = 0.
     ; Fwsoil   = 0.
-    ; SM64cm   = 0.
+    SM64cm   = 0.
 
     day_step_s = 0
 
@@ -170,15 +170,15 @@ if operation .eq. "calc" then
       filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
       f1 = addfile (filename1,"r")
 
-      Qle(day_step_s:day_step_e,:,:)      = f1->Qle(:,{A:B},{C:D})
-      Qh(day_step_s:day_step_e,:,:)       = f1->Qh(:,{A:B},{C:D})
+      ; Qle(day_step_s:day_step_e,:,:)      = f1->Qle(:,{A:B},{C:D})
+      ; Qh(day_step_s:day_step_e,:,:)       = f1->Qh(:,{A:B},{C:D})
       ; Fwsoil(day_step_s:day_step_e,:,:)   = f1->Fwsoil(:,{A:B},{C:D})
       ; deltaT(day_step_s:day_step_e,:,:)   = f1->VegT(:,{A:B},{C:D}) - f1->Tair(:,{A:B},{C:D})
-      ; SM64cm(day_step_s:day_step_e,:,:)   = ( f1->SoilMoist(:,0,{A:B},{C:D})*0.022  \
-      ;                                         + f1->SoilMoist(:,1,{A:B},{C:D})*0.058 \
-      ;                                         + f1->SoilMoist(:,2,{A:B},{C:D})*0.154 \
-      ;                                         + f1->SoilMoist(:,3,{A:B},{C:D})*0.409)\
-      ;                                         / 0.643
+      SM64cm(day_step_s:day_step_e,:,:)   = ( f1->SoilMoist(:,0,{A:B},{C:D})*0.022  \
+                                              + f1->SoilMoist(:,1,{A:B},{C:D})*0.058 \
+                                              + f1->SoilMoist(:,2,{A:B},{C:D})*0.154 \
+                                              + f1->SoilMoist(:,3,{A:B},{C:D})*0.409)\
+                                              / 0.643
       ; calc fist day of next year
       day_step_s = day_step_e + 1
 
@@ -189,61 +189,61 @@ if operation .eq. "calc" then
     ; _____________________________ MASK HW DAY ________________________________
     if heatwave .eq. "hw-90th" then
       print("mask HW")
-      Qle      = where(HW .eq. 1, Qle, def_value)
-      Qh       = where(HW .eq. 1, Qh, def_value)
+      ; Qle      = where(HW .eq. 1, Qle, def_value)
+      ; Qh       = where(HW .eq. 1, Qh, def_value)
       ; Fwsoil   = where(HW .eq. 1, Fwsoil, def_value)
       ; deltaT   = where(HW .eq. 1, deltaT, def_value)
-      ; SM64cm   = where(HW .eq. 1, SM64cm, def_value)
+      SM64cm   = where(HW .eq. 1, SM64cm, def_value)
     end if
 
     ; _______________________________ MASK PFT __________________________________
     print("mask PFT")
     ; trees
-    Qle_tree      = where(PFT_mask_multi .eq. 1, Qle, def_value)
-    Qh_tree       = where(PFT_mask_multi .eq. 1, Qh, def_value)
+    ; Qle_tree      = where(PFT_mask_multi .eq. 1, Qle, def_value)
+    ; Qh_tree       = where(PFT_mask_multi .eq. 1, Qh, def_value)
     ; Fwsoil_tree   = where(PFT_mask_multi .eq. 1, Fwsoil, def_value)
     ; deltaT_tree   = where(PFT_mask_multi .eq. 1, deltaT, def_value)
-    ; SM64cm_tree   = where(PFT_mask_multi .eq. 1, SM64cm, def_value)
+    SM64cm_tree   = where(PFT_mask_multi .eq. 1, SM64cm, def_value)
 
     ; non-trees
-    Qle      = where(PFT_mask_multi .eq. 2, Qle, def_value)
-    Qh       = where(PFT_mask_multi .eq. 2, Qh, def_value)
+    ; Qle      = where(PFT_mask_multi .eq. 2, Qle, def_value)
+    ; Qh       = where(PFT_mask_multi .eq. 2, Qh, def_value)
     ; Fwsoil   = where(PFT_mask_multi .eq. 2, Fwsoil, def_value)
     ; deltaT   = where(PFT_mask_multi .eq. 2, deltaT, def_value)
-    ; SM64cm   = where(PFT_mask_multi .eq. 2, SM64cm, def_value)
+    SM64cm   = where(PFT_mask_multi .eq. 2, SM64cm, def_value)
 
     loc1 = case_num
     loc2 = case_num + case_sum
     groups = case_sum*2+1
 
     do count = 0, 3
-      Qle_stats(count*groups+loc1, :)    = boxplot_stats_mmy(Qle(ts_s(count):ts_e(count),:,:),def_value)
-      Qle_stats(count*groups+loc2, :)    = boxplot_stats_mmy(Qle_tree(ts_s(count):ts_e(count),:,:),def_value)
-
-      Qh_stats(count*groups+loc1, :)     = boxplot_stats_mmy(Qh(ts_s(count):ts_e(count),:,:),def_value)
-      Qh_stats(count*groups+loc2, :)     = boxplot_stats_mmy(Qh_tree(ts_s(count):ts_e(count),:,:),def_value)
+      ; Qle_stats(count*groups+loc1, :)    = boxplot_stats_mmy(Qle(ts_s(count):ts_e(count),:,:),def_value)
+      ; Qle_stats(count*groups+loc2, :)    = boxplot_stats_mmy(Qle_tree(ts_s(count):ts_e(count),:,:),def_value)
+      ;
+      ; Qh_stats(count*groups+loc1, :)     = boxplot_stats_mmy(Qh(ts_s(count):ts_e(count),:,:),def_value)
+      ; Qh_stats(count*groups+loc2, :)     = boxplot_stats_mmy(Qh_tree(ts_s(count):ts_e(count),:,:),def_value)
 
       ; Fwsoil_stats(count*groups+loc1, :) = boxplot_stats_mmy(Fwsoil(ts_s(count):ts_e(count),:,:),def_value)
       ; Fwsoil_stats(count*groups+loc2, :) = boxplot_stats_mmy(Fwsoil_tree(ts_s(count):ts_e(count),:,:),def_value)
       ;
       ; deltaT_stats(count*groups+loc1, :) = boxplot_stats_mmy(deltaT(ts_s(count):ts_e(count),:,:),def_value)
       ; deltaT_stats(count*groups+loc2, :) = boxplot_stats_mmy(deltaT_tree(ts_s(count):ts_e(count),:,:),def_value)
-      ;
-      ; SM64cm_stats(count*groups+loc1, :) = boxplot_stats_mmy(SM64cm(ts_s(count):ts_e(count),:,:),def_value)
-      ; SM64cm_stats(count*groups+loc2, :) = boxplot_stats_mmy(SM64cm_tree(ts_s(count):ts_e(count),:,:),def_value)
+
+      SM64cm_stats(count*groups+loc1, :) = boxplot_stats_mmy(SM64cm(ts_s(count):ts_e(count),:,:),def_value)
+      SM64cm_stats(count*groups+loc2, :) = boxplot_stats_mmy(SM64cm_tree(ts_s(count):ts_e(count),:,:),def_value)
     end do ; count
 
-    delete(Qle)
-    delete(Qh)
+    ; delete(Qle)
+    ; delete(Qh)
     ; delete(deltaT)
     ; delete(Fwsoil)
-    ; delete(SM64cm)
+    delete(SM64cm)
 
-    delete(Qle_tree)
-    delete(Qh_tree)
+    ; delete(Qle_tree)
+    ; delete(Qh_tree)
     ; delete(Fwsoil_tree)
     ; delete(deltaT_tree)
-    ; delete(SM64cm_tree)
+    delete(SM64cm_tree)
   end do ; case_num
 
   if heatwave .eq. "hw-90th" then
@@ -261,15 +261,15 @@ if operation .eq. "calc" then
   ; print(Qle_stats)
   ; Qle_stats@_FillValue = -99999.
 
-  option@fout = "Qle_box_stats.txt"
-  format      = case_sum+"f20.4"
-  write_matrix (Qle_stats, format, option)
-  delete(option@fout)
-
-  option@fout = "Qh_box_stats.txt"
-  format      = case_sum+"f20.4"
-  write_matrix (Qh_stats, format, option)
-  delete(option@fout)
+  ; option@fout = "Qle_box_stats.txt"
+  ; format      = case_sum+"f20.4"
+  ; write_matrix (Qle_stats, format, option)
+  ; delete(option@fout)
+  ;
+  ; option@fout = "Qh_box_stats.txt"
+  ; format      = case_sum+"f20.4"
+  ; write_matrix (Qh_stats, format, option)
+  ; delete(option@fout)
 
   ; option@fout = "Fwsoil_box_stats.txt"
   ; format      = case_sum+"f20.4"
@@ -280,11 +280,11 @@ if operation .eq. "calc" then
   ; format      = case_sum+"f20.4"
   ; write_matrix (deltaT_stats, format, option)
   ; delete(option@fout)
-  ;
-  ; option@fout = "SM64cm_box_stats.txt"
-  ; format      = case_sum+"f20.4"
-  ; write_matrix (SM64cm_stats, format, option)
-  ; delete(option@fout)
+  
+  option@fout = "SM64cm_box_stats.txt"
+  format      = case_sum+"f20.4"
+  write_matrix (SM64cm_stats, format, option)
+  delete(option@fout)
 
 else if operation .eq. "plot" then
 

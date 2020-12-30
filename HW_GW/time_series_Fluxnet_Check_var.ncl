@@ -14,18 +14,13 @@ end setvalues
 ;_____________________________________
 
 ; ================================== Options ===================================
-year        = 2013
-time_tot    = 365 ; *8
 
-filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr/outputs-daily/cable_out_"+year+"_SE_Aus.nc"
+filename_hw = "/g/data/w35/Shared_data/Observations/Fluxnet_data/Post-processed_PLUMBER2_outputs/Nc_files/Flux/AU-Tum_2002-2017_OzFlux_Flux.nc"
 f           = addfile (filename_hw,"r")
-var  = dim_avg_n_Wrap(f->LAI(:,:,:),0) ;*24*2600
+var         = f->Qle(:,0,0) ;*24*2600
+var1        = f->Qh(:,0,0) ;*24*2600
+var2        = f->Rnet(:,0,0) ;*24*2600
 delete(f)
-;
-; filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr-DeepRoot/outputs-daily/cable_out_"+year+"_SE_Aus.nc"
-; f           = addfile (filename_hw,"r")
-; var2 = f->froot(:,:,:)
-; delete(f)
 
 ; var2 = new((/12,12,14/),float)
 ; do month = 1,12
@@ -53,55 +48,70 @@ delete(f)
 ; delete(f)
 ; ================================= Plotting ===================================
 res                    = True
-res@cnFillMode         = "RasterFill"            ; Raster Mode
-res@cnFillOn           = True                    ;��ɫ
-res@tmBorderThicknessF = 3.0
+; res@cnFillMode         = "RasterFill"            ; Raster Mode
+; res@cnFillOn           = True                    ;��ɫ
+; res@tmBorderThicknessF = 3.0
 
 res@gsnDraw            = True  ; Don't draw plots
 res@gsnFrame           = True  ; ����ҳ
 res@lbLabelBarOn       = True
+;
+; ;************** ����labelbar ***************
+; res@lbBoxLinesOn       = True                       ;�ر�lbar box ����
+; res@lbTitleFont        = 25
+; res@lbLabelFont        = 25
+; res@lbTitleFontHeightF = 0.013
+; res@lbLabelFontHeightF = 0.013
+; res@txString           = ""
+; res@tmXBLabelFont      = 25 ;Sets the font index for the bottom X-Axis labels.
+; res@tmYLLabelFont      = 25
+;
+; ;*************** ���õ�ֵ�� *****************
+; res@cnLinesOn          = False                       ; �رյ�ֵ������
+; res@cnLineColor        = "black"
+; res@cnLineThicknessF   = 1.5
+; res@cnLineLabelsOn     = False
+; res@gsnMaximize        = True
+; res@cnExplicitLabelBarLabelsOn = True   ;?
+; res@cnLevelSelectionMode = "ExplicitLevels"
+;
+; ;************ ����������ֵ��Χ **************
+; res@tmXBLabelFontThicknessF = 0.015
+; res@tmYLLabelFontThicknessF = 0.015
+; res@tmXBLabelFontHeightF = 0.015
+; res@tmYLLabelFontHeightF = 0.015
+; res@tmYLMode  = "Explicit"
+; res@tmXBMode  = "Explicit"
+;
+; res@gsnLeftString       = ""
+; res@gsnRightString      = ""
 
-;************** ����labelbar ***************
-res@lbBoxLinesOn       = True                       ;�ر�lbar box ����
-res@lbTitleFont        = 25
-res@lbLabelFont        = 25
-res@lbTitleFontHeightF = 0.013
-res@lbLabelFontHeightF = 0.013
-res@txString           = ""
-res@tmXBLabelFont      = 25 ;Sets the font index for the bottom X-Axis labels.
-res@tmYLLabelFont      = 25
-
-;*************** ���õ�ֵ�� *****************
-res@cnLinesOn          = False                       ; �رյ�ֵ������
-res@cnLineColor        = "black"
-res@cnLineThicknessF   = 1.5
-res@cnLineLabelsOn     = False
-res@gsnMaximize        = True
-res@cnExplicitLabelBarLabelsOn = True   ;?
-res@cnLevelSelectionMode = "ExplicitLevels"
-
-;************ ����������ֵ��Χ **************
-res@tmXBLabelFontThicknessF = 0.015
-res@tmYLLabelFontThicknessF = 0.015
-res@tmXBLabelFontHeightF = 0.015
-res@tmYLLabelFontHeightF = 0.015
-res@tmYLMode  = "Explicit"
-res@tmXBMode  = "Explicit"
-
-res@gsnLeftString       = ""
-res@gsnRightString      = ""
-
-pic1 = "./plots/Check_LAI_"+year
+pic1 = "./plots/Check_Tum-Qle-Qh"
 wks1 = gsn_open_wks("pdf",pic1)
-gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed");"WhiteBlueGreenYellowRed");"GMT_haxby");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
+gsn_define_colormap(wks1,"srip_reanalysis");"WhiteBlueGreenYellowRed");"GMT_haxby");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
-
-res@txString = "LAI" ;"Water Table Depth" ;var@long_name
+x = ispan(0,23,1) ;"Water Table Depth" ;var@long_name
 ; levels = fspan(-1.,1.,21)
 ; res@cnLevels = levels
-; do soil = 0, 5
-  plots = gsn_csm_contour(wks1,var,res)
-; end do
+tmp  = var(0:23)
+tmp1 = var1(0:23)
+tmp2 = var2(0:23)
+do counter = 1,30
+  tmp  = tmp + var(counter*24:counter*24+23)
+  tmp1 = tmp1 + var1(counter*24:counter*24+23)
+  tmp2 = tmp2 + var2(counter*24:counter*24+23)
+end do
+
+tmp  = tmp/31
+tmp1 = tmp1/31
+tmp2 = tmp2/31
+
+res@txString = "Qle"
+plots = gsn_csm_xy(wks1,x,tmp,res)
+res@txString = "Rnet"
+plots = gsn_csm_xy(wks1,x,tmp1,res)
+res@txString = "Qh"
+plots = gsn_csm_xy(wks1,x,tmp2,res)
   ; plots = gsn_csm_contour(wks1,var2(day_num, :,:),res)
 ; end do
 ; counter = 0
