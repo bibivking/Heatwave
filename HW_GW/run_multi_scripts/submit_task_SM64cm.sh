@@ -13,6 +13,6 @@
 
 module load ncl/6.6.2
 
-cd /g/data/w35/mm3972/scripts/Heatwave/HW_GW
+cd /g/data/w35/mm3972/scripts/Heatwave/HW_GW/run_multi_scripts
 
-ncl pftplot_HESS_HW.ncl
+ncl pdf_calc_HESS_HW_SM64cm.ncl

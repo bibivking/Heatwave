@@ -13,7 +13,7 @@ end setvalues
 
 begin
 
-fname_out  = "./restart_nc/restart_2018.nc"
+fname_out  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/FREE_DRAIN/restarts/restart_1999.nc"
 finout     = addfile (fname_out, "w")     ; open output file
 
 print(avg(finout->froot(0,:)))

@@ -48,10 +48,11 @@ end
 ; ================================= Start ======================================
 begin
 
-case_name = (/"CTL-30x3+30yr-DeepRoot/outputs"/);"CTL-30x3+30yr/outputs"/);, "FREE_DRAIN/outputs-spinup30x3yr"/)
-
+case_name = (/"CTL-30x3+30yr/outputs-daily"/)
+            ; "CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr", \
+            ; "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
 path      = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-pic_message = "CTL_vs_FREE_DRAIN"
+pic_message = "CTL"
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
 
@@ -694,7 +695,7 @@ option@row    = False
 ; option@tspace = 0
 
 do case_num = 0, case_sum-1
-  option@fout = "DEEP_ROOT_GRACE_"+year_s+"-"+year_e+".txt"
+  option@fout = pic_message+"_GRACE_PFT-"+PFT+"_"+year_s+"-"+year_e+".txt"
   tmp      = new((/6,total/),float,default_value)
   tmp(0,:) = GRACE_global_ave(0,:)
   tmp(1,:) = TWS_global_ave(case_num,:)

@@ -73,12 +73,17 @@ do event_num = 0, event_sum-1
 end do
 
 message    = "subday-24h"
-pic_name   = "CABLE-HESS_"+message+"_PFT-"+PFT+"_"+scale+"_"+year_s+"-"+year_e
+
+pic_name   = "CABLE-HESS_"+message+"_PFT-"+PFT+"_"+scale+"_"+year_s
 
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 
-case_name = (/"CTL-30x3+30yr","FREE_DRAIN", "CTL-30x3+30yr_2019-WetSoil",\
-              "CTL-30x3+30yr_2019-DeepRoot"/)
+case_name = (/"CTL-30x3+30yr","FREE_DRAIN",\
+              "CTL-30x3+30yr_2019-DeepRoot",\
+              "CTL-30x3+30yr_2019-WetSoil"/)
+
+case_brf  = (/"non-Tree CTL","      FD","      CTL+DR","     CTL+WetS", \
+              "Tree CTL","   FD","   CTL+DR","   CTL+WetS"/)
 
 order_name  = (/"(a)","(b)","(c)","(d)","(e)","(f)",\
                 "(g)","(h)","(i)","(j)","(k)","(l)"/)
@@ -180,76 +185,76 @@ do case_num = 0, case_sum -1
                              ; 0 is 00:00
         day_e = (day-1)*8+8  ; the last day's 24h
 
-        ; trees
-        tmp = where(PFT_mask_multi .eq. 1, Tair_tmp(day_s:day_e,:,:), default_val)
+        ; non-trees
+        tmp = where(PFT_mask_multi .eq. 2, Tair_tmp(day_s:day_e,:,:), default_val)
         tmp@_FillValue = default_val
         Tair(case_num,counter,:)   = dim_avg_n_Wrap(tmp,(/1,2/))
         delete(tmp)
 
-        tmp = where(PFT_mask_multi .eq. 1, Qle_tmp(day_s:day_e,:,:), default_val)
-        tmp@_FillValue = default_val
-        Qle(case_num,counter,:)    = dim_avg_n_Wrap(tmp,(/1,2/))
-        delete(tmp)
-
-        tmp = where(PFT_mask_multi .eq. 1, Qh_tmp(day_s:day_e,:,:), default_val)
-        tmp@_FillValue = default_val
-        plot = gsn_csm_contour(wks1,dim_avg_n_Wrap(tmp,0),res1)
-        Qh(case_num,counter,:)     = dim_avg_n_Wrap(tmp,(/1,2/))
-        delete(tmp)
-
-        tmp = where(PFT_mask_multi .eq. 1, deltaT_tmp(day_s:day_e,:,:), default_val)
-        tmp@_FillValue = default_val
-        deltaT(case_num,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
-        delete(tmp)
-
-        tmp = where(PFT_mask_multi .eq. 1, Fwsoil_tmp(day_s:day_e,:,:), default_val)
-        tmp@_FillValue = default_val
-        Fwsoil(case_num,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
-        delete(tmp)
-
-        tmp = where(PFT_mask_multi .eq. 1, Rnet_tmp(day_s:day_e,:,:), default_val)
-        tmp@_FillValue = default_val
-        Rnet(case_num,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
-        delete(tmp)
-
-        tmp = where(PFT_mask_multi .eq. 1, Qg_tmp(day_s:day_e,:,:), default_val)
-        tmp@_FillValue = default_val
-        Qg(case_num,counter,:)     = dim_avg_n_Wrap(tmp,(/1,2/))
-        delete(tmp)
-
-        ; non-trees
-        tmp = where(PFT_mask_multi .eq. 2, Tair_tmp(day_s:day_e,:,:), default_val)
-        tmp@_FillValue = default_val
-        Tair(case_num+case_sum,counter,:)   = dim_avg_n_Wrap(tmp,(/1,2/))
-        delete(tmp)
-
         tmp = where(PFT_mask_multi .eq. 2, Qle_tmp(day_s:day_e,:,:), default_val)
         tmp@_FillValue = default_val
-        Qle(case_num+case_sum,counter,:)    = dim_avg_n_Wrap(tmp,(/1,2/))
+        Qle(case_num,counter,:)    = dim_avg_n_Wrap(tmp,(/1,2/))
         delete(tmp)
 
         tmp = where(PFT_mask_multi .eq. 2, Qh_tmp(day_s:day_e,:,:), default_val)
         tmp@_FillValue = default_val
         plot = gsn_csm_contour(wks1,dim_avg_n_Wrap(tmp,0),res1)
-        Qh(case_num+case_sum,counter,:)     = dim_avg_n_Wrap(tmp,(/1,2/))
+        Qh(case_num,counter,:)     = dim_avg_n_Wrap(tmp,(/1,2/))
         delete(tmp)
 
         tmp = where(PFT_mask_multi .eq. 2, deltaT_tmp(day_s:day_e,:,:), default_val)
         tmp@_FillValue = default_val
-        deltaT(case_num+case_sum,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
+        deltaT(case_num,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
         delete(tmp)
 
         tmp = where(PFT_mask_multi .eq. 2, Fwsoil_tmp(day_s:day_e,:,:), default_val)
         tmp@_FillValue = default_val
-        Fwsoil(case_num+case_sum,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
+        Fwsoil(case_num,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
         delete(tmp)
 
         tmp = where(PFT_mask_multi .eq. 2, Rnet_tmp(day_s:day_e,:,:), default_val)
         tmp@_FillValue = default_val
-        Rnet(case_num+case_sum,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
+        Rnet(case_num,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
         delete(tmp)
 
         tmp = where(PFT_mask_multi .eq. 2, Qg_tmp(day_s:day_e,:,:), default_val)
+        tmp@_FillValue = default_val
+        Qg(case_num,counter,:)     = dim_avg_n_Wrap(tmp,(/1,2/))
+        delete(tmp)
+
+        ; trees
+        tmp = where(PFT_mask_multi .eq. 1, Tair_tmp(day_s:day_e,:,:), default_val)
+        tmp@_FillValue = default_val
+        Tair(case_num+case_sum,counter,:)   = dim_avg_n_Wrap(tmp,(/1,2/))
+        delete(tmp)
+
+        tmp = where(PFT_mask_multi .eq. 1, Qle_tmp(day_s:day_e,:,:), default_val)
+        tmp@_FillValue = default_val
+        Qle(case_num+case_sum,counter,:)    = dim_avg_n_Wrap(tmp,(/1,2/))
+        delete(tmp)
+
+        tmp = where(PFT_mask_multi .eq. 1, Qh_tmp(day_s:day_e,:,:), default_val)
+        tmp@_FillValue = default_val
+        plot = gsn_csm_contour(wks1,dim_avg_n_Wrap(tmp,0),res1)
+        Qh(case_num+case_sum,counter,:)     = dim_avg_n_Wrap(tmp,(/1,2/))
+        delete(tmp)
+
+        tmp = where(PFT_mask_multi .eq. 1, deltaT_tmp(day_s:day_e,:,:), default_val)
+        tmp@_FillValue = default_val
+        deltaT(case_num+case_sum,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
+        delete(tmp)
+
+        tmp = where(PFT_mask_multi .eq. 1, Fwsoil_tmp(day_s:day_e,:,:), default_val)
+        tmp@_FillValue = default_val
+        Fwsoil(case_num+case_sum,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
+        delete(tmp)
+
+        tmp = where(PFT_mask_multi .eq. 1, Rnet_tmp(day_s:day_e,:,:), default_val)
+        tmp@_FillValue = default_val
+        Rnet(case_num+case_sum,counter,:) = dim_avg_n_Wrap(tmp,(/1,2/))
+        delete(tmp)
+
+        tmp = where(PFT_mask_multi .eq. 1, Qg_tmp(day_s:day_e,:,:), default_val)
         tmp@_FillValue = default_val
         Qg(case_num+case_sum,counter,:)     = dim_avg_n_Wrap(tmp,(/1,2/))
         delete(tmp)
@@ -315,44 +320,113 @@ Qg_avg     = dim_avg_n_Wrap(Qg,1)
 Fwsoil_avg     = dim_avg_n_Wrap(Fwsoil,(/1,2/))
 print(Fwsoil_avg)
 
-
 ;_____________________________ PLOT ___________________________________
 pic = "./plots/"+pic_name
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"rainbow")
-;"BlueWhiteOrangeRed") ;"BlueYellowRed")             ;����ɫ��
 
-res                    = True
-res@gsnDraw            = False
-res@gsnFrame           = False
-res@gsnMaximize        = False
-res@vpHeightF          = 0.5
-res@vpWidthF           = 0.90
-res@vpXF               = 0.08
-res@vpYF               = 0.7
-res@pmLegendWidthF     = 0.10                     ; Resize legend width
-res@pmLegendHeightF    = 0.10                     ; and height
-res@tiXAxisFontHeightF = 0.02
-res@tiYAxisFontHeightF = 0.02
+Thicknesses  = (/ 1.5, 1.5, 1.5, 1.5, \
+                  1.5, 1.5, 1.5, 1.5  /)
+DashPatterns = (/ 1, 1, 1, 1, \
+                  0, 0, 0, 0  /)
+Colors       = (/ "blue3","brown2","springgreen4","darkorange", \
+                  "blue3","brown2","springgreen4","darkorange" /)
+Opacities    = (/ 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1/)
+
+res                      = True
+res@gsnDraw              = False
+res@gsnFrame             = False
+res@gsnMaximize          = False
+res@vpHeightF            = 0.4
+res@vpWidthF             = 0.70
+res@vpXF                 = 0.08
+res@vpYF                 = 0.7
+res@tiXAxisFontHeightF   = 0.02
+res@tiYAxisFontHeightF   = 0.02
 res@tmXBLabelFontHeightF = 0.02
 res@tmYLLabelFontHeightF = 0.02
-res@gsnPaperOrientation = "landscape";"portrait";"landscape" ;"auto"
+res@gsnPaperOrientation  = "landscape";"portrait";"landscape" ;"auto"
 
-Thicknesses = (/  1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,1.0/)
-DashPatterns= (/0, 0, 0, 0, 1, 1, 1, 1, 0/)
-Colors      = (/"black","red","blue","green","black","red","blue","green"/)
-              ; "purple","blue","chartreuse","orange","cyan","yellow"/)
-Opacities   = (/0.1, 0.1, 0.1, 0.1/)
+x                        = ispan(1,ts_tot,1)
+res@tmXBMode             = "Explicit"
+res@tmXBValues           = ispan(1,ts_tot,1)
+res@tmXBLabels           = tostring(ispan(0,24,3))
+res@trXMinF              = 1.
+res@trXMaxF              = ts_tot
+
+res1 = res
+
+res@xyLineThicknesses   = Thicknesses         ; make second line thicker
+res@xyDashPatterns      = DashPatterns
+res@xyLineColors        = Colors
+res@tiXAxisString       = "hr"
+
+; resources for "left" variable
+resL                        = res
+resL@tiYAxisString          = "Tleaf - Tair (~S~o~N~C)"
+resL@trYMinF                = -4.
+resL@trYMaxF                = 10.
+
+resR                        = res
+resR@tiYAxisString          = "Tair (~S~o~N~C)"
+resR@trYMinF                = 20.
+resR@trYMaxF                = 43.
+resR@xyMarkLineMode         = "Markers"
+resR@xyMarkers              = (/6, 16/)
+resR@xyMarkerColors         = (/"red","red"/) ; 3 different colors
+resR@xyExplicitLegendLabels = (/"non-Tree Tair","Tree Tair"/)
+
+resR@pmLegendDisplayMode    = "Always"
+resR@lgPerimOn              = False      ; No legend perimeter.
+resR@pmLegendParallelPosF   = 0.25
+resR@pmLegendOrthogonalPosF = -1.05
+resR@lgBoxMinorExtentF      = 0.3
+resR@pmLegendWidthF         = 0.20
+resR@pmLegendHeightF        = 0.07
+resR@lgItemOrder            = (/ 1,0 /)   ; Reorder the legends
+
+
+plots = new(3,graphic)
+
+plots(0) = gsn_csm_xy2(wks,x,deltaT_avg,Tair_avg(::case_sum,:),resL,resR)
+
+res@pmLegendDisplayMode    = "Always"
+res@lgPerimOn              = False
+res@pmLegendParallelPosF   = 0.25
+res@pmLegendOrthogonalPosF = -1.2
+res@lgBoxMinorExtentF      = 0.3
+res@pmLegendWidthF         = 0.20
+res@pmLegendHeightF        = 0.25
+res@lgItemOrder            = (/ 7,6,5,4,3,2,1,0 /)   ; Reorder the legends
+res@xyExplicitLegendLabels = case_brf
+
+res@tiYAxisString  = "LH (W m~S~-2~N~)"
+res@trYMinF        = -50.
+res@trYMaxF        = 400.
+plots(1)           = gsn_csm_xy(wks,x,Qle_avg,res)
+
+
+res@pmLegendDisplayMode = "Never"
+res@tiYAxisString  = "SH (W m~S~-2~N~)"
+res@trYMinF        = -50.
+res@trYMaxF        = 400.
+plots(2)           = gsn_csm_xy(wks,x,Qh_avg,res)
 
 txres                   = True
 txres@txPerimOn         = False
 txres@txFont            = 25
-txres@txFontHeightF     = 0.03
+txres@txFontHeightF     = 0.028
 
 amres                   = True
 amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
 amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
+
+do count = 0,2
+  print("count = "+count)
+  txid1   = gsn_create_text(wks, order_name(count), txres)
+  annoid1 = gsn_add_annotation(plots(count), txid1, amres)
+end do
 
 pres                    = True
 pres@gsnMaximize        = True
@@ -365,60 +439,6 @@ pres@lbLabelFont        = 25
 pres@lbTitleFontHeightF = 0.01
 pres@lbLabelFontHeightF = 0.01
 
-res@tmXBMode  = "Explicit"
-x             = ispan(1,ts_tot,1)
-res@tmXBValues= ispan(1,ts_tot,1)
-res@tmXBLabels= tostring(ispan(0,24,3))
-res@trXMinF   = 1.
-res@trXMaxF   = ts_tot
-
-res1 = res
-
-res@xyLineThicknesses   = Thicknesses         ; make second line thicker
-res@xyDashPatterns      = DashPatterns
-res@xyLineColors        = Colors
-res@xyExplicitLegendLabels = case_name
-
-res@tiXAxisString  = "hr"
-
-plots = new(3,graphic)
-
-res@pmLegendDisplayMode = "Never"
-
-; resources for "left" variable
-resL                = res
-resL@tiYAxisString  = "DeltaT (C)"
-resL@trYMinF        = -5.
-resL@trYMaxF        = 10.
-
-; resources for "right" variable
-resR                = res
-resR@tiYAxisString  = "Tair (C)"
-resR@trYMinF        =   15.
-resR@trYMaxF        =   45.
-resR@xyMarkLineMode = "Markers"                 ; dashed line for 2nd
-resR@xyMarkers      = (/6, 6, 6, 6, 16, 16, 16, 16/)               ; 3 different markers
-resR@xyMarkerColors = (/"red","red","red","red","red","red","red","red"/) ; 3 different colors
-
-plots(0) = gsn_csm_xy2(wks,x,deltaT_avg,Tair_avg,resL,resR)
-
-res@pmLegendDisplayMode = "Never"
-res@tiYAxisString  = "Qle (W/m2)"
-res@trYMinF        = -100.
-res@trYMaxF        = 400.
-plots(1)           = gsn_csm_xy(wks,x,Qle_avg,res)
-
-res@tiYAxisString  = "Qh (W/m2)"
-res@trYMinF        = -100.
-res@trYMaxF        = 400.
-plots(2)           = gsn_csm_xy(wks,x,Qh_avg,res)
-
-do count = 0,2
-  print("count = "+count)
-  txid1   = gsn_create_text(wks, order_name(count), txres)
-  annoid1 = gsn_add_annotation(plots(count), txid1, amres)
-end do
-
 gsn_panel(wks,(/plots/),(/3,1/),pres)
 
 delete(plots)
@@ -426,14 +446,14 @@ delete(plots)
 
 plots = new(2,graphic)
 
-res@tiYAxisString  = "Rnet (W/m2)"
-res@trYMinF        =   -400.
+res@tiYAxisString  = "Rnet (W m~S~-2~N~)"
+res@trYMinF        =   -200.
 res@trYMaxF        =   700.
 plots(0)           = gsn_csm_xy(wks,x,Rnet_avg,res)
 
-res@tiYAxisString  = "Qg (W/m2)"
-res@trYMinF        = -400.
-res@trYMaxF        = 700.
+res@tiYAxisString  = "Qg (W m~S~-2~N~)"
+res@trYMinF        = -600.
+res@trYMaxF        = 600.
 plots(1)           = gsn_csm_xy(wks,x,Qg_avg,res)
 
 

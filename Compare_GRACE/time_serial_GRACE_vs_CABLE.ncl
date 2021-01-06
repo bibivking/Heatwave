@@ -48,10 +48,11 @@ end
 ; ================================= Start ======================================
 begin
 
-case_name = (/"CTL-30x3+30yr/outputs"/);, "FREE_DRAIN/outputs-spinup30x3yr"/)
-
+case_name = (/"FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
+            ; "CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr", \
+            ; "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
 path      = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-pic_message = "CTL_vs_FREE_DRAIN"
+pic_message = "FD+DR"
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
 
@@ -707,7 +708,7 @@ DashPatterns	   = (/0.,0.,0.,0.,0./)      ; make all lines solid
 Labels           = (/"TWS", "GWMoist","SoilMoist", "CanopInt", "SWE" /)
 
 do case_num = 0,case_sum-1
-  pic = "./plots/time_serial_GRACE_JPL06-"+grace_version+"_vs_"+cable_version+"-"+case_name(case_num)+"_PFT-"+PFT+"_"+pic_message+"_"+scale+"_"+time_scale
+  pic = "./plots/time_serial_GRACE_JPL06-"+grace_version+"_vs_"+cable_version+"_PFT-"+PFT+"_"+pic_message+"_"+scale+"_"+time_scale
   wks = gsn_open_wks("pdf",pic)
   gsn_define_colormap(wks,"WhiteBlueGreenYellowRed")
 

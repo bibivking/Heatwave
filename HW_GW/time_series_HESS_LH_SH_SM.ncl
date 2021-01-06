@@ -340,26 +340,26 @@ if LH_SH_scale .eq. "seasonal" then
 
   ; all
   ; gsnAboveYRefLineBarColors
-  res1@gsnXYBarChartColors = (/"blue","white","white","white"/) ; gsnBelowYRefLineBarColors
-  res1@xyLineColor        = "blue" ;(/"blue","black","black","black"/)
-  plot_Qle                 = gsn_csm_xy(wks, x, Qle_season(1,0,:)-Qle_season(0,0,:),res1)
+  res1@gsnXYBarChartColors2 = (/"blue","white","white","white"/) ; gsnBelowYRefLineBarColors
+  res1@xyLineColor          = "blue" ;(/"blue","black","black","black"/)
+  plot_Qle                  = gsn_csm_xy(wks, x, Qle_season(1,0,:)-Qle_season(0,0,:),res1)
 
   delete(res1@tiYAxisString)
-  res1@gsnXYBarChartColors = (/"red","white","white","white"/)
-  res1@xyLineColor        = "red" ;(/"red","black","black","black"/)
-  plot_Qh                  = gsn_csm_xy(wks, x, Qh_season(1,0,:)-Qh_season(0,0,:),res1)
+  res1@gsnXYBarChartColors2 = (/"red","white","white","white"/)
+  res1@xyLineColor          = "red" ;(/"red","black","black","black"/)
+  plot_Qh                   = gsn_csm_xy(wks, x, Qh_season(1,0,:)-Qh_season(0,0,:),res1)
   overlay(plot_Qh, plot_Qle)
 
   plots(0) = plot_Qh ;plot_Qh
 
   ; trees
-  res1@gsnXYBarChartColors = (/"blue","white","white","white"/) ; gsnBelowYRefLineBarColors
-  res1@xyLineColor         = "blue" ;(/"blue","black","black","black"/)
-  plot_Qle1                = gsn_csm_xy(wks, x, Qle_season(1,1,:)-Qle_season(0,1,:),res1)
+  res1@gsnXYBarChartColors2 = (/"blue","white","white","white"/) ; gsnBelowYRefLineBarColors
+  res1@xyLineColor          = "blue" ;(/"blue","black","black","black"/)
+  plot_Qle1                 = gsn_csm_xy(wks, x, Qle_season(1,1,:)-Qle_season(0,1,:),res1)
 
-  res1@gsnXYBarChartColors = (/"red","white","white","white"/)
-  res1@xyLineColor         = "red" ;(/"red","black","black","black"/)
-  plot_Qh1                 = gsn_csm_xy(wks, x, Qh_season(1,1,:)-Qh_season(0,1,:),res1)
+  res1@gsnXYBarChartColors2 = (/"red","white","white","white"/)
+  res1@xyLineColor          = "red" ;(/"red","black","black","black"/)
+  plot_Qh1                  = gsn_csm_xy(wks, x, Qh_season(1,1,:)-Qh_season(0,1,:),res1)
   overlay(plot_Qh1, plot_Qle1)
 
   plots(1) = plot_Qh1 ;plot_Qh1

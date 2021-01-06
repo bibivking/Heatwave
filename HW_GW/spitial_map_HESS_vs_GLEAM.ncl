@@ -14,12 +14,13 @@ end setvalues
 ;_____________________________________
 
 ; =================================== Path =====================================
-case_name   = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/) ;,"CTL-30x3+30yr-DeepRoot/outputs"/)
+case_name   = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/);, \
+                ;"CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
 path_mum    = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 case_sum    = dimsizes(case_name)
 path        = new(case_sum,"string")
-pic_message = "CTL_vs_FREE_DRAIN"
-order_name  = (/"(a)","(b)","(c)","(d)","(e)","(f)","(g)","(h)"/)
+pic_message = "CTL_vs_FD"
+order_name  = (/"(c)","(d)","(e)","(f)","(g)","(h)"/) ; "(a)","(b)",
 
 do case_num = 0, case_sum -1
    path(case_num) = path_mum+case_name(case_num);+"/outputs"
@@ -32,10 +33,9 @@ year_s   = 2000
 year_e   = 2019
 year_sum = year_e-year_s+1
 row_sum  = 2
-col_sum  = 4
+col_sum  = 3
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
-
 
 ; ================================== OPTIONS ===================================
 plot_type = "all"
@@ -73,13 +73,13 @@ default_val = -1.e+33
 delete(f)
 
 Evap      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
-Fwsoil    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+; Fwsoil    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 ; Qh        = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 ; VegT      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 ; Tair      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 
 Evap      = 0.
-Fwsoil    = 0.
+; Fwsoil    = 0.
 ; Qh        = 0.
 ; VegT      = 0.
 ; Tair      = 0.
@@ -99,7 +99,7 @@ do case_num = 0, case_sum -1
       f        = addfile (filename,"r")
 
       Evap(case_num,year-year_s,:,:)     = dim_sum_n_Wrap(f->Evap(:,{A:B},{C:D}),0)
-      Fwsoil(case_num,year-year_s,:,:)   = dim_avg_n_Wrap(f->Fwsoil(:,{A:B},{C:D}),0)
+      ; Fwsoil(case_num,year-year_s,:,:)   = dim_avg_n_Wrap(f->Fwsoil(:,{A:B},{C:D}),0)
       ; Qh(case_num,year-year_s,:,:)       = dim_avg_n_Wrap(f->Qh(:,{A:B},{C:D}),0)
       ; VegT(case_num,year-year_s,:,:)     = dim_avg_n_Wrap(f->VegT(:,{A:B},{C:D}),0)
       ; Tair(case_num,year-year_s,:,:)     = dim_avg_n_Wrap(f->Tair(:,{A:B},{C:D}),0)
@@ -171,7 +171,6 @@ res@txString                = ""
 res@gsnLeftString           = ""
 res@gsnRightString          = ""
 
-
 if scale .eq. "Global" then
   res@trYMinF         = -60
   res@trYMaxF         = 80
@@ -196,10 +195,10 @@ else if scale .eq. "SE-AU" then
   res@mpMaxLonF       = 154.
   res@tmYLMode        = "Explicit"
   res@tmYLValues      = (/-40,-35,-30,-25/)
-  res@tmYLLabels      = (/"40~S~o~N~N","35~S~o~N~N","30~S~o~N~","25~S~o~N~S"/)
+  res@tmYLLabels      = (/"40~S~o~N~S","35~S~o~N~S","30~S~o~N~S","25~S~o~N~S"/)
   res@tmXBMode        = "Explicit"
   res@tmXBValues      = (/140,145,150/)
-  res@tmXBLabels      = (/"140~S~o~N~W","145~S~o~N~W","150~S~o~N~"/)
+  res@tmXBLabels      = (/"140~S~o~N~E","145~S~o~N~E","150~S~o~N~E"/)
 else if scale .eq. "AU" then
   res@gsnAddCyclic    = False
   res@trYMinF         = -44
@@ -244,8 +243,6 @@ amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
 amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
-
-;
 ; ; =========================== plot deltaT & Qh ===========================
 ; plots = new(case_sum*4,graphic)
 ;
@@ -302,7 +299,6 @@ amres@amJust            = "TopLeft"
 ; delete(res@cnLevels)
 ; delete(tmp)
 ;
-;
 ; ; ___ 2017-2019 ___
 ; ; delta T CTL
 ; res@cnLevels  = fspan(0,4,21)
@@ -352,9 +348,9 @@ amres@amJust            = "TopLeft"
 
 
 ; =========================== plot Evaptranspiration ===========================
-plots = new(case_sum*2+2+2,graphic)
+plots = new((case_sum+1)*2,graphic)
 
-pic = "./plots/HESS_vs_GLEAM_Fwsoil_"+pic_message
+pic = "./plots/HESS_vs_GLEAM_"+pic_message
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
@@ -372,85 +368,86 @@ annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
 counter = counter+1
 
 ; CTL
-plots(counter)  = gsn_csm_contour_map(wks, dim_avg_n_Wrap(Evap(0,1:9,:,:),0),res)
+plots(counter) = gsn_csm_contour_map(wks, dim_avg_n_Wrap(Evap(0,1:9,:,:),0),res)
 txid1          = gsn_create_text(wks, order_name(counter), txres)
 annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
 counter        = counter + 1
-delete(res@cnLevels)
+; delete(res@cnLevels)
 
 ; FREE_DRAIN - CTL
-res@cnLevels  = fspan(-200,0,21)
-res@cnFillPalette = "MPL_hot";"MPL_autumn";"MPL_BrBG";"ViBlGrWhYeOrRe"
+; res@cnLevels  = fspan(-200,0,21)
+; res@cnFillPalette = "MPL_hot";"MPL_autumn";"MPL_BrBG";"ViBlGrWhYeOrRe"
 
-tmp = Evap(1,1:9,:,:)
-tmp = tmp - Evap(0,1:9,:,:)
-printVarSummary(tmp)
-plots(counter)  = gsn_csm_contour_map(wks, dim_avg_n_Wrap(tmp,0),res)
+; tmp = Evap(1,1:9,:,:)
+; tmp = tmp - Evap(0,1:9,:,:)
+; printVarSummary(tmp)
+plots(counter) = gsn_csm_contour_map(wks, Evap(1,1:9,:,:),res) ;dim_avg_n_Wrap(tmp,0),res)
 txid1          = gsn_create_text(wks, order_name(counter), txres)
 annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
 counter        = counter + 1
 delete(res@cnLevels)
-delete(tmp)
-
-; Fwsoil FREE_DRAIN - CTL
-res@cnLevels  = fspan(-0.4,0.0,21)
-res@cnFillPalette = "MPL_hot";"MPL_autumn";"MPL_BrBG";"ViBlGrWhYeOrRe"
-
-tmp = Fwsoil(1,1:9,:,:)
-tmp = tmp - Fwsoil(0,1:9,:,:)
-printVarSummary(tmp)
-plots(counter)  = gsn_csm_contour_map(wks, dim_avg_n_Wrap(tmp,0),res)
-txid1          = gsn_create_text(wks, order_name(counter), txres)
-annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
-counter        = counter + 1
-delete(res@cnLevels)
-delete(tmp)
-
+; delete(tmp)
+;
+; ; Fwsoil FREE_DRAIN - CTL
+; res@cnLevels  = fspan(-0.4,0.0,21)
+; res@cnFillPalette = "MPL_hot";"MPL_autumn";"MPL_BrBG";"ViBlGrWhYeOrRe"
+;
+; tmp = Fwsoil(1,1:9,:,:)
+; tmp = tmp - Fwsoil(0,1:9,:,:)
+; printVarSummary(tmp)
+; plots(counter)  = gsn_csm_contour_map(wks, dim_avg_n_Wrap(tmp,0),res)
+; txid1          = gsn_create_text(wks, order_name(counter), txres)
+; annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
+; counter        = counter + 1
+; delete(res@cnLevels)
+; delete(tmp)
 
 ; ___ 2017-2019 ___
 res@lbLabelBarOn = True
+
 ; GLEAM
-res@cnLevels  = fspan(0,1000,21)
-res@cnFillPalette = "vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap_GLEAM(16:18,:,:),0),res)
+res@cnLevels  = fspan(-200,200,21)
+res@cnFillPalette = "ViBlGrWhYeOrRe";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap_GLEAM(16:18,:,:),0)-dim_avg_n_Wrap(Evap_GLEAM(1:9,:,:),0),res)
 txid1   = gsn_create_text(wks, order_name(counter), txres)
 annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
 counter = counter+1
 
 ; CLT
-plots(counter)  = gsn_csm_contour_map(wks, dim_avg_n_Wrap(Evap(0,16:18,:,:),0),res)
+plots(counter) = gsn_csm_contour_map(wks, dim_avg_n_Wrap(Evap(0,16:18,:,:),0)-dim_avg_n_Wrap(Evap(0,1:9,:,:),0),res)
 txid1          = gsn_create_text(wks, order_name(counter), txres)
 annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
 counter        = counter + 1
-delete(res@cnLevels)
+; delete(res@cnLevels)
 
 ; FREE_DRAIN - CTL
-res@cnLevels  = fspan(-200,0,21)
-res@cnFillPalette = "MPL_hot";"MPL_autumn";"MPL_BrBG";"ViBlGrWhYeOrRe"
+; res@cnLevels  = fspan(-200,0,21)
+; res@cnFillPalette = "MPL_hot";"MPL_autumn";"MPL_BrBG";"ViBlGrWhYeOrRe"
 
-tmp = Evap(1,16:18,:,:)
-tmp = tmp - Evap(0,16:18,:,:)
-printVarSummary(tmp)
-plots(counter)  = gsn_csm_contour_map(wks, dim_avg_n_Wrap(tmp,0),res)
+; tmp = Evap(1,16:18,:,:)
+; tmp = tmp - Evap(0,16:18,:,:)
+; printVarSummary(tmp)
+plots(counter) = gsn_csm_contour_map(wks, dim_avg_n_Wrap(Evap(1,16:18,:,:),0)-dim_avg_n_Wrap(Evap(1,1:9,:,:),0), res)
+;dim_avg_n_Wrap(tmp,0),res)
 txid1          = gsn_create_text(wks, order_name(counter), txres)
 annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
 counter        = counter + 1
-delete(res@cnLevels)
-delete(tmp)
+; delete(res@cnLevels)
+; delete(tmp)
 
-; Fwsoil FREE_DRAIN - CTL
-res@cnLevels  = fspan(-0.4,0.0,21)
-res@cnFillPalette = "MPL_hot";"MPL_autumn";"MPL_BrBG";"ViBlGrWhYeOrRe" "precip4_diff_19lev"
-
-tmp = Fwsoil(1,16:18,:,:)
-tmp = tmp - Fwsoil(0,16:18,:,:)
-printVarSummary(tmp)
-plots(counter)  = gsn_csm_contour_map(wks, dim_avg_n_Wrap(tmp,0),res)
-txid1          = gsn_create_text(wks, order_name(counter), txres)
-annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
-counter        = counter + 1
-delete(res@cnLevels)
-delete(tmp)
+; ; Fwsoil FREE_DRAIN - CTL
+; res@cnLevels  = fspan(-0.4,0.0,21)
+; res@cnFillPalette = "MPL_hot";"MPL_autumn";"MPL_BrBG";"ViBlGrWhYeOrRe" "precip4_diff_19lev"
+;
+; tmp = Fwsoil(1,16:18,:,:)
+; tmp = tmp - Fwsoil(0,16:18,:,:)
+; printVarSummary(tmp)
+; plots(counter)  = gsn_csm_contour_map(wks, dim_avg_n_Wrap(tmp,0),res)
+; txid1          = gsn_create_text(wks, order_name(counter), txres)
+; annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
+; counter        = counter + 1
+; delete(res@cnLevels)
+; delete(tmp)
 
 gsn_panel(wks,(/plots/),(/row_sum,col_sum/),pres)
 

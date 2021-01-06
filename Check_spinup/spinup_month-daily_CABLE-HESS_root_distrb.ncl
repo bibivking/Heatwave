@@ -396,4 +396,5 @@ do soil = 0,5
   delete(res@trYMaxF)
   delete(res@trYMinF)
 end do
+exit
 end

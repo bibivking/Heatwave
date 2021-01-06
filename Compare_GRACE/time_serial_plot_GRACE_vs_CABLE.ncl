@@ -14,9 +14,9 @@ end setvalues
 begin
 
 ; =============================== Pre-define ===================================
-case_name   = (/"CTL","FREE_DRAIN"/) ;,"DEEP_ROOT"/)
+case_name   = (/"CTL","FREE_DRAIN","DEEP_ROOT","FD+DR"/) ;,"DEEP_ROOT"/)
 path        = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-pic_message = "CTL_vs_FREE_DRAIN"
+pic_message = "CTL-FD-DR-FD+DR"
 
 year_s         = 2000
 year_e         = 2019
@@ -27,6 +27,7 @@ case_sum       = dimsizes(case_name)
 default_value  = -99999.
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
+order_name     = (/"(a)","(b)","(c)","(d)","(e)","(f)"/)
 
 ; ================================ Set Regrid ==================================
 PFT           = "all" ; "tree" ;"all"
@@ -38,16 +39,6 @@ grace_version = "Original-fill-nan"
                 ;"Gap-fill" : Sanaa's gap fill
                 ;"Original" : if this option, should alwasy set GRACE_start_year = 2003
                 ;             GRACE_end_year <= 2010, since too many gaps after 2010
-
-; set PFT
-if PFT .eq. "all" then
-  iveg_s = 0
-  iveg_e = 20
-else if PFT .eq. "tree" then
-  iveg_s = 1
-  iveg_e = 4
-end if
-end if
 
 
 ; ================================= PLOT ======================================
@@ -74,21 +65,19 @@ res@tmBorderThicknessF     = 3.
 res@txFont                 = "times-bold"
 res@xyMonoLineColor        = False             ; want colored lines
 res@tmXBMode               = "Explicit"
-res@tiXAxisString          = "Year"
-res@tiYAxisString          = "TWSA (km/m3)"
+; res@tiXAxisString          = "Year"
+res@tiYAxisString          = "TWSA (mm)"
 res@tfPolyDrawOrder        = "PreDraw"
 
-; modify legend
-; res@pmLegendDisplayMode    = "Always"
 res@lgPerimOn              = False      ; No legend perimeter.
-res@lgJustification        = "TopRight"
+; res@lgJustification        = "TopRight"
 ; res@pmLegendSide           = "Bottom"
-res@pmLegendParallelPosF   = 0.5       ; Move to right
-res@pmLegendOrthogonalPosF = 0.5     ; Move into plot
-res@pmLegendWidthF         = 0.3       ; Decrease width
-res@pmLegendHeightF        = 0.1       ; Decrease height
-res@lgBoxMinorExtentF      = 0.2       ; Shorten the legend lines
-res@lgItemOrder            = (/ 5,4,3,2,1,0 /)   ; Reorder the legends
+res@pmLegendParallelPosF   = 0.7       ; Move to right
+res@pmLegendOrthogonalPosF = -0.6     ; Move into plot
+res@pmLegendWidthF         = 0.15       ; Decrease width
+res@pmLegendHeightF        = 0.15       ; Decrease height
+res@lgBoxMinorExtentF      = 0.3       ; Shorten the legend lines
+res@lgItemOrder            = (/ 2,1,0 /)   ; Reorder the legends
 
 LineColors       = (/ "black","darkgreen","cornflowerblue","peru","darkolivegreen1","orchid"/) ; "navy",colors chosen
 LineThicknesses	 = (/2.5,2.5,1.5,1.5,1.5,1.5/)      ; line thicknesses
@@ -104,6 +93,8 @@ res@xyLineOpacities        = Opacities
 x                          = ispan(1,total,1)
 res@tmXBValues             = ispan(1,total+1,12*2)
 res@tmXBLabels             = tostring(ispan(year_s,year_e+1,2))
+res@trXMaxF                = max(x)+1
+res@trXMinF                = min(x)
 res@trYMaxF                = 200.
 res@trYMinF                = -100.
 
@@ -118,7 +109,7 @@ pres@gsnMaximize  = True
 txres               = True
 txres@txPerimOn     = False
 ; txres@txFont        = "times-bold"
-txres@txFontHeightF = 0.018
+txres@txFontHeightF = 0.025
 
 amres               = True
 
@@ -126,6 +117,13 @@ plots = new(case_sum,graphic)
 poly  = new(case_sum*2,graphic)
 
 do case_num = 0,case_sum-1
+  ; add legend
+  if case_num .eq. 0 then
+    res@pmLegendDisplayMode    = "Always"
+  else
+    res@pmLegendDisplayMode    = "Never"
+  end if
+
   ; read ascii
   txt_name = case_name(case_num)+"_GRACE_"+year_s+"-"+year_e+".txt"
   tmp      = asciiread(txt_name,(/6,total/),"float")
@@ -134,22 +132,12 @@ do case_num = 0,case_sum-1
   MBE      = avg(tmp(1,:) - tmp(0,:))     ; Mean Bias Error (MBE)
   plots(case_num) = gsn_csm_xy (wks,x,tmp(0:2,:),res)  ; Create another filled XY plot.
 
-  ; add order
-  if case_num .eq. 0 then
-    txid1 = gsn_create_text(wks, "(a)", txres)
-    res@pmLegendDisplayMode    = "Always"
-  else if case_num .eq. 1 then
-    txid1 = gsn_create_text(wks, "(b)", txres)
-    res@pmLegendDisplayMode    = "Never"
-  else if case_num .eq. 2 then
-    txid1 = gsn_create_text(wks, "(c)", txres)
-    res@pmLegendDisplayMode    = "Never"
-  end if
-  end if
-  end if
+
+
   amres@amParallelPosF        = -0.485    ; This is the right edge of the plot.
   amres@amOrthogonalPosF      = -0.46    ; This is the bottom edge of the plot.
   amres@amJust                = "TopLeft"
+  txid1   = gsn_create_text(wks, order_name(case_num), txres)
   annoid1 = gsn_add_annotation(plots(case_num), txid1, amres)
   delete(amres@amJust)
 
@@ -184,6 +172,6 @@ do case_num = 0, case_sum-1
   counter = counter + 1
   end do
 end do
-gsn_panel(wks,(/plots/),(/1,case_sum/),pres)
+gsn_panel(wks,(/plots/),(/2,2/),pres)
 
 end

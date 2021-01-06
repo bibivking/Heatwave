@@ -1,0 +1,162 @@
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	case_num = 0
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	mask hw-90th
+(0)	mask PFT
+(0)	4156335
+(0)	double
+(0)	3265865
+(0)	1642646
+(0)	double
+(0)	1168972
+(0)	167632
+(0)	double
+(0)	176317
+(0)	1255348
+(0)	double
+(0)	1092675
+(0)	case_num = 1
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	mask hw-90th
+(0)	mask PFT
+(0)	4156335
+(0)	double
+(0)	3265865
+(0)	1642646
+(0)	double
+(0)	1168972
+(0)	167632
+(0)	double
+(0)	176317
+(0)	1255348
+(0)	double
+(0)	1092675
+(0)	case_num = 2
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	mask hw-90th
+(0)	mask PFT
+(0)	4156335
+(0)	double
+(0)	3265865
+(0)	1642646
+(0)	double
+(0)	1168972
+(0)	167632
+(0)	double
+(0)	176317
+(0)	1255348
+(0)	double
+(0)	1092675
+(0)	case_num = 3
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	mask hw-90th
+(0)	mask PFT
+(0)	4156335
+(0)	double
+(0)	3265865
+(0)	1642646
+(0)	double
+(0)	1168972
+(0)	167632
+(0)	double
+(0)	176317
+(0)	1255348
+(0)	double
+(0)	1092675
+(0)	write out
+fatal:Undefined identifier: (Qle_y) is undefined, can't continue
+fatal:["Execute.c":8637]:Execute: Error occurred at or near line 314 in file pdf_calc_HESS_HW_deltaT.ncl
+
+
+======================================================================================
+                  Resource Usage on 2021-01-03 18:25:36:
+   Job Id:             15351194.gadi-pbs
+   Project:            w35
+   Exit Status:        0
+   Service Units:      11.68
+   NCPUs Requested:    1                      NCPUs Used: 1               
+                                           CPU Time Used: 00:06:02                                   
+   Memory Requested:   180.0GB               Memory Used: 45.9GB          
+   Walltime requested: 04:00:00            Walltime Used: 00:07:47        
+   JobFS requested:    100.0MB                JobFS used: 0B              
+======================================================================================
