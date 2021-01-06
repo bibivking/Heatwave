@@ -11,4 +11,6 @@
 */*.txt
 */*.nc
 ./backup
-
+*sh.o*
+*/*sh.o*
+*/*/*sh.o*
