@@ -18,8 +18,8 @@ scale      = "SE-AU"
 year_s     = 2019
 year_e     = 2019
 
-HW_day_s   = (/ 15, 22/)
-HW_day_e   = (/ 19, 27/)
+HW_day_s   = (/ 1 /) ;15, 22/)
+HW_day_e   = (/ 31 /) ;19, 27/)
 event_sum  = dimsizes(HW_day_s)
 
 day_tot    = 0
@@ -42,7 +42,7 @@ order_name  = (/"(a)","(b)","(c)","(d)",\
                 "(q)","(r)","(s)","(t)"/)
 
 ; 0, 1, 2, 3 , 4 , 5,  6,  7
-; 3, 6, 9, 12, 15, 18, 21, 24
+; 0, 3, 6, 9, 12, 15, 18, 21, 24
 
 if PFT .eq. "all" then
   iveg_s = 0
@@ -116,11 +116,12 @@ do case_num = 0, case_sum -1
 
     do event_num = 0,event_sum-1
       do day = HW_day_s(event_num),HW_day_e(event_num)
-        ts = (HW_day_s(event_num)-1)*8+4
-        Qle(case_num,:,:)    = Qle(case_num,:,:) + where(PFT_mask .eq. 1, Qle_tmp(ts,:,:), default_val)/day_tot
-        Qh(case_num,:,:)     = Qh(case_num,:,:)  + where(PFT_mask .eq. 1,Qh_tmp(ts,:,:), default_val)/day_tot
-        deltaT(case_num,:,:) = deltaT(case_num,:,:) + where(PFT_mask .eq. 1,deltaT_tmp(ts,:,:), default_val)/day_tot
-        Fwsoil(case_num,:,:) = Fwsoil(case_num,:,:) + where(PFT_mask .eq. 1,Fwsoil_tmp(ts,:,:), default_val)/day_tot
+        ; ts = (HW_day_s(event_num)-1)*8+4
+        ts = (day-1)*8+6;6-6pm ;7 - 9pm
+        Qle(case_num,:,:)    = Qle(case_num,:,:) + where(PFT_mask .eq. 1, Qle_tmp(ts,:,:) - Qle_tmp(ts+1,:,:), default_val)/day_tot
+        Qh(case_num,:,:)     = Qh(case_num,:,:)  + where(PFT_mask .eq. 1,Qh_tmp(ts,:,:) - Qh_tmp(ts+1,:,:), default_val)/day_tot
+        deltaT(case_num,:,:) = deltaT(case_num,:,:) + where(PFT_mask .eq. 1,deltaT_tmp(ts,:,:) - deltaT_tmp(ts+1,:,:), default_val)/day_tot
+        Fwsoil(case_num,:,:) = Fwsoil(case_num,:,:) + where(PFT_mask .eq. 1,Fwsoil_tmp(ts,:,:) - Fwsoil_tmp(ts+1,:,:), default_val)/day_tot
       end do
     end do
   end do ; year
@@ -272,98 +273,111 @@ pres@lbTitleFont        = 25
 pres@lbLabelFont        = 25
 pres@lbTitleFontHeightF = 0.01
 pres@lbLabelFontHeightF = 0.01
+pres@gsnPanelYWhiteSpacePercent = 0.5
+pres@gsnPanelXWhiteSpacePercent = 0.5
 
 txres                   = True
 txres@txPerimOn         = False
 txres@txFont            = 25
-txres@txFontHeightF     = 0.05
+txres@txFontHeightF     = 0.03
 
 amres                   = True
 amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
 amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
-Qle_CTL_lvl    = (/0, 10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400/)
-Fw_CTL_lvl     = fspan(0,1.,21)
+Qle_CTL_lvl    = (/25., 50, 100, 150, 200, 250, 300, 350, 400/)
+Fw_CTL_lvl     = fspan(0.1,0.9,9)
 Qh_CTL_lvl     = Qle_CTL_lvl
-deltaT_CTL_lvl = fspan(0,15,16)
+deltaT_CTL_lvl = fspan(1,12,12)
 
-diff_color = "BlAqGrWh2YeOrReVi22"; "ViBlGrWhYeOrRe";
-Qle_diff_lvl    = (/-200, -150, -100, -50, -40, -30, -20, -10, 10, 20, 30, 40, 50, 100, 150, 200/)
-Fw_diff_lvl     = fspan(-0.6,0.6,25)
+; diff_color = "BlAqGrWh2YeOrReVi22"; "ViBlGrWhYeOrRe";
+Qle_diff_lvl    = (/-200, -150, -100, -50, -25., 0, 25., 50, 100, 150, 200/) ;-40, -30, -20, -10;10, 20, 30, 40,
+Fw_diff_lvl     = fspan(-0.6,0.6,13)
 Qh_diff_lvl     = Qle_diff_lvl
-deltaT_diff_lvl = (/-4., -3.5, -3., -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4. /)
+deltaT_diff_lvl = (/-5., -4., -3., -2, -1, -0.5, 0, 0.5, 1, 2, 3, 4., 5./)
 
 plots = new(case_sum*4,graphic)
 do case_num = 0,case_sum-1
-  if case_num .eq. 0 then
+  ; if case_num .eq. 0 then
     res@lbLabelBarOn  = True
 
-    ; Fwsoil
-    res@cnLevels      = Fw_CTL_lvl
-    res@cnFillPalette = "WhiteBlueGreenYellowRed";"MPL_RdBu";"vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-    plots(case_num*4) = gsn_csm_contour_map(wks,Fwsoil(0,:,:),res)
-    delete(res@cnLevels)
-
-    ; Qle
-    res@cnLevels      = Qle_CTL_lvl
-    res@cnFillPalette = "WhiteBlueGreenYellowRed";"MPL_RdBu";"vegetation_ClarkU";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-    plots(case_num*4+1) = gsn_csm_contour_map(wks,Qle(0,:,:),res)
-    delete(res@cnLevels)
-
     ; deltaT
-    res@cnLevels      = deltaT_CTL_lvl
-    res@cnFillPalette = "WhiteBlueGreenYellowRed";"NCV_blue_red";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-    plots(case_num*4+2) = gsn_csm_contour_map(wks,deltaT(0,:,:),res)
+    res@cnLevels      = deltaT_diff_lvl ;deltaT_CTL_lvl
+    res@cnFillPalette = "BlAqGrWh2YeOrReVi22"
+    ; res@cnFillPalette = "precip3_16lev";"WhiteBlueGreenYellowRed";"vegetation_ClarkU";"NCV_blue_red";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+    ; plots(case_num*4) = gsn_csm_contour_map(wks,deltaT(0,:,:),res)
+    plots(case_num*4) = gsn_csm_contour_map(wks,deltaT(case_num,:,:),res)
     delete(res@cnLevels)
 
     ; Qh
-    res@cnLevels      = Qh_CTL_lvl
-    res@cnFillPalette = "WhiteBlueGreenYellowRed";"NCV_blue_red";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-    plots(case_num*4+3) = gsn_csm_contour_map(wks,Qh(0,:,:),res)
+    res@cnLevels      = Qh_diff_lvl ;Qh_CTL_lvl
+    ; plots(case_num*4+1) = gsn_csm_contour_map(wks,Qh(0,:,:),res)
+    plots(case_num*4+1) = gsn_csm_contour_map(wks,Qh(case_num,:,:),res)
+    delete(res@cnLevels)
+    delete(res@cnFillPalette)
+
+    ; Qle
+    delete(res@cnFillPalette)
+    cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
+    res@cnFillPalette = cmap(::-1,:)
+
+    res@cnLevels      = Qle_diff_lvl ;Qle_CTL_lvl
+    ;cmap = read_colormap_file("WhiteBlueGreenYellowRed");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
+    ; res@cnFillPalette = "spread_15lev";cmap(::-1,:)
+    ; plots(case_num*4+2) = gsn_csm_contour_map(wks,Qle(0,:,:),res)
+    plots(case_num*4+2) = gsn_csm_contour_map(wks,Qle(case_num,:,:),res)
     delete(res@cnLevels)
 
-  else
-    if case_num .lt.case_sum-1 then
-      res@lbLabelBarOn  = False
-    else
-      res@lbLabelBarOn  = True
-    end if
-
-    res@cnLevels      = Fw_diff_lvl
-    res@cnFillPalette = diff_color
-    tmp  = Fwsoil(case_num,:,:)
-    tmp  = tmp - Fwsoil(0,:,:)
-    plots(case_num*4) = gsn_csm_contour_map(wks,tmp,res)
-    delete(tmp)
+    ; Fwsoil
+    res@cnLevels      = fspan(-0.1,0.1,21) ;Fw_CTL_lvl
+    ; plots(case_num*4+3) = gsn_csm_contour_map(wks,Fwsoil(0,:,:),res)
+    plots(case_num*4+3) = gsn_csm_contour_map(wks,Fwsoil(case_num,:,:),res)
     delete(res@cnLevels)
+    delete(res@cnFillPalette)
 
-    res@cnLevels      = Qle_diff_lvl
-    res@cnFillPalette = diff_color
-    tmp  = Qle(case_num,:,:)
-    tmp  = tmp - Qle(0,:,:)
-    plots(case_num*4+1) = gsn_csm_contour_map(wks,tmp,res)
-    delete(tmp)
-    delete(res@cnLevels)
-
-    res@cnLevels      = deltaT_diff_lvl
-    res@cnFillPalette = diff_color
-    tmp  = deltaT(case_num,:,:)
-    tmp  = tmp - deltaT(0,:,:)
-    plots(case_num*4+2) = gsn_csm_contour_map(wks,tmp,res)
-    delete(tmp)
-    delete(res@cnLevels)
-
-    res@cnLevels      = Qh_diff_lvl
-    res@cnFillPalette = diff_color
-    tmp  = Qh(case_num,:,:)
-    tmp  = tmp - Qh(0,:,:)
-    plots(case_num*4+3) = gsn_csm_contour_map(wks,tmp,res)
-    delete(tmp)
-    delete(res@cnLevels)
-
-
-  end if
+  ; else
+  ;   if case_num .lt.case_sum-1 then
+  ;     res@lbLabelBarOn  = False
+  ;   else
+  ;     res@lbLabelBarOn  = True
+  ;   end if
+  ;   delete(res@cnFillPalette)
+  ;   res@cnLevels      = deltaT_diff_lvl
+  ;   res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22"
+  ;   tmp  = deltaT(case_num,:,:)
+  ;   tmp  = tmp - deltaT(0,:,:)
+  ;   plots(case_num*4) = gsn_csm_contour_map(wks,tmp,res)
+  ;   delete(tmp)
+  ;   delete(res@cnLevels)
+  ;
+  ;   res@cnLevels      = Qh_diff_lvl
+  ;   tmp  = Qh(case_num,:,:)
+  ;   tmp  = tmp - Qh(0,:,:)
+  ;   plots(case_num*4+1) = gsn_csm_contour_map(wks,tmp,res)
+  ;   delete(tmp)
+  ;   delete(res@cnLevels)
+  ;
+  ;   ; delete(cmap)
+  ;   delete(res@cnFillPalette)
+  ;   cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
+  ;   res@cnFillPalette = cmap(::-1,:)
+  ;
+  ;   res@cnLevels      = Qle_diff_lvl
+  ;   tmp  = Qle(case_num,:,:)
+  ;   tmp  = tmp - Qle(0,:,:)
+  ;   plots(case_num*4+2) = gsn_csm_contour_map(wks,tmp,res)
+  ;   delete(tmp)
+  ;   delete(res@cnLevels)
+  ;
+  ;   res@cnLevels      = Fw_diff_lvl
+  ;   tmp  = Fwsoil(case_num,:,:)
+  ;   tmp  = tmp - Fwsoil(0,:,:)
+  ;   plots(case_num*4+3) = gsn_csm_contour_map(wks,tmp,res)
+  ;   delete(tmp)
+  ;   delete(res@cnLevels)
+  ;
+  ; end if
 end do
 
 do cnt = 0, 15

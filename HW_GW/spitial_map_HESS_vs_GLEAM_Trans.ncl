@@ -19,7 +19,7 @@ case_name   = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"
 path_mum    = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 case_sum    = dimsizes(case_name)
 path        = new(case_sum,"string")
-pic_message = "CTL_vs_FD"
+pic_message = "CTL_vs_FD_Trans"
 order_name  = (/"(c)","(d)","(e)","(f)","(g)","(h)"/) ; "(a)","(b)",
 
 do case_num = 0, case_sum -1
@@ -72,13 +72,13 @@ CABLE_lon = f->x
 default_val = -1.e+33
 delete(f)
 
-Evap      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+TVeg      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 ; Fwsoil    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 ; Qh        = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 ; VegT      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 ; Tair      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 
-Evap      = 0.
+TVeg      = 0.
 ; Fwsoil    = 0.
 ; Qh        = 0.
 ; VegT      = 0.
@@ -98,7 +98,7 @@ do case_num = 0, case_sum -1
       filename = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc"
       f        = addfile (filename,"r")
 
-      Evap(case_num,year-year_s,:,:)     = dim_sum_n_Wrap(f->Evap(:,{A:B},{C:D}),0)
+      TVeg(case_num,year-year_s,:,:)     = dim_sum_n_Wrap(f->TVeg(:,{A:B},{C:D}),0)
       ; Fwsoil(case_num,year-year_s,:,:)   = dim_avg_n_Wrap(f->Fwsoil(:,{A:B},{C:D}),0)
       ; Qh(case_num,year-year_s,:,:)       = dim_avg_n_Wrap(f->Qh(:,{A:B},{C:D}),0)
       ; VegT(case_num,year-year_s,:,:)     = dim_avg_n_Wrap(f->VegT(:,{A:B},{C:D}),0)
@@ -107,25 +107,25 @@ do case_num = 0, case_sum -1
    end do ; year
 end do ; case_num
 
-Evap     = Evap*3600.*24.
+TVeg     = TVeg*3600.*24.
 
 ; VegT     = VegT-273.15
 ; Tair     = Tair-273.15
 
 ; ================================ READ GLEAM ==================================
 ; use 2000-2019
-gleam_ET = path_GLEAM+"/E_1980_2018_GLEAM_v3.3a_YR.nc"
+gleam_ET = path_GLEAM+"/Et_1980_2018_GLEAM_v3.3a_YR.nc"
 G_ET     = addfile (gleam_ET,"r")
 
-E_tmp    = G_ET->E(:,{C:D},{A:B})
+Et_tmp    = G_ET->Et(:,{C:D},{A:B})
 
-Evap_GLEAM = E_tmp(time|20:38,lat|:, lon|:)
-printVarSummary(Evap_GLEAM)
+TVeg_GLEAM = Et_tmp(time|20:38,lat|:, lon|:)
+printVarSummary(TVeg_GLEAM)
 delete(G_ET)
 
 ; ___________________________ Regrid GLEAM ______________________________
-Evap_GLEAM_regrid = linint2_Wrap(Evap_GLEAM&lon,Evap_GLEAM&lat,Evap_GLEAM,False,CABLE_lon,CABLE_lat,0)
-printVarSummary(Evap_GLEAM_regrid)
+TVeg_GLEAM_regrid = linint2_Wrap(TVeg_GLEAM&lon,TVeg_GLEAM&lat,TVeg_GLEAM,False,CABLE_lon,CABLE_lat,0)
+printVarSummary(TVeg_GLEAM_regrid)
 
 
 ; ================================= Plotting ===================================
@@ -249,7 +249,7 @@ amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
 amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
-; =========================== plot Evaptranspiration ===========================
+; =============================== plot Transpiration ===========================
 plots = new((case_sum+1)*2,graphic)
 
 pic = "./plots/HESS_vs_GLEAM_"+pic_message
@@ -264,43 +264,43 @@ res@lbLabelBarOn = True
 ; GLEAM -----
 res@cnLevels  = fspan(0,1000,21)
 res@cnFillPalette = "vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-res@lbTitleString = "E (mm yr~S~-1~N~)"
+res@lbTitleString = "Et (mm yr~S~-1~N~)"
 
-plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap_GLEAM(1:9,:,:),0),res)
+plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(TVeg_GLEAM(1:9,:,:),0),res)
 txid1   = gsn_create_text(wks, order_name(counter), txres)
 annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
 counter = counter+1
-delete(res@cnLevels)
+; delete(res@cnLevels)
 
 ; -----
-res@cnLevels  = (/-400,-350,-300,-250,-200,-150,-100,-50,0,50,100,150,200,250,300,350,400/)
-delete(res@cnFillPalette)
-cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
-res@cnFillPalette = cmap(::-1,:)
-res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
+; res@cnLevels  = (/-400,-350,-300,-250,-200,-150,-100,-50,0,50,100,150,200,250,300,350,400/)
+; delete(res@cnFillPalette)
+; cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
+; res@cnFillPalette = cmap(::-1,:)
+; res@lbTitleString = "~F5~D"+"~F25~Et (mm yr~S~-1~N~)"
 
 ; CTL - GLEAM
-tmp_GLEAM = doubletofloat(dim_avg_n_Wrap(Evap_GLEAM_regrid(1:9,:,:),0))
-tmp       = dim_avg_n_Wrap(Evap(0,1:9,:,:),0)
-tmp       = tmp - tmp_GLEAM
+; tmp_GLEAM = doubletofloat(dim_avg_n_Wrap(TVeg_GLEAM_regrid(1:9,:,:),0))
+; tmp       = dim_avg_n_Wrap(TVeg(0,1:9,:,:),0)
+; tmp       = tmp - tmp_GLEAM
 
-printVarSummary(tmp)
-plots(counter) = gsn_csm_contour_map(wks, tmp, res)
+; printVarSummary(tmp)
+plots(counter) = gsn_csm_contour_map(wks, dim_avg_n_Wrap(TVeg(0,1:9,:,:),0), res)
 txid1          = gsn_create_text(wks, order_name(counter), txres)
 annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
 counter        = counter + 1
-delete(tmp)
+; delete(tmp)
 
 ; FD - GLEAM
-tmp = dim_avg_n_Wrap(Evap(1,1:9,:,:),0)
-tmp = tmp - tmp_GLEAM
-plots(counter) = gsn_csm_contour_map(wks, tmp, res)
+; tmp = dim_avg_n_Wrap(TVeg(1,1:9,:,:),0)
+; tmp = tmp - tmp_GLEAM
+plots(counter) = gsn_csm_contour_map(wks, dim_avg_n_Wrap(TVeg(1,1:9,:,:),0), res)
 txid1          = gsn_create_text(wks, order_name(counter), txres)
 annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
 counter        = counter + 1
-delete(res@cnLevels)
-delete(tmp)
-delete(tmp_GLEAM)
+; delete(res@cnLevels)
+; delete(tmp)
+; delete(tmp_GLEAM)
 ;
 ; ; Fwsoil FREE_DRAIN - CTL
 ; res@cnLevels  = fspan(-0.4,0.0,21)
@@ -313,50 +313,54 @@ delete(tmp_GLEAM)
 ; txid1          = gsn_create_text(wks, order_name(counter), txres)
 ; annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
 ; counter        = counter + 1
-; delete(res@cnLevels)
+delete(res@cnLevels)
 ; delete(tmp)
 ;
 ; ; ___ 2017-2018 ___
 res@lbLabelBarOn            = True
 
 ; GLEAM 2017-2018
-delete(res@cnFillPalette)
-res@cnLevels  = fspan(0,1000,21)
-res@cnFillPalette = "vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-res@lbTitleString = "E (mm yr~S~-1~N~)"
+; res@cnLevels  = fspan(0,1000,21)
+; res@cnFillPalette = "vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
 
-; tmp = dim_avg_n_Wrap(Evap_GLEAM(17:18,:,:),0)
-; tmp = tmp - dim_avg_n_Wrap(Evap_GLEAM(1:9,:,:),0)
-plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap_GLEAM(17:18,:,:),0),res)
+delete(res@cnFillPalette)
+res@cnLevels      = (/-200,-175,-150,-125,-100,-75,-50,-25,0,25,50,75,100,125,150,175,200/)
+cmap              = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
+res@cnFillPalette = cmap(::-1,:)
+res@lbTitleString = "~F5~D"+"~F25~Et (mm yr~S~-1~N~)" ;"Et (mm yr~S~-1~N~)"
+
+tmp = dim_avg_n_Wrap(TVeg_GLEAM(17:18,:,:),0)
+tmp = tmp - dim_avg_n_Wrap(TVeg_GLEAM(1:9,:,:),0)
+plots(counter) = gsn_csm_contour_map(wks,tmp,res)
 txid1   = gsn_create_text(wks, order_name(counter), txres)
 annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
 counter = counter+1
-delete(res@cnLevels)
-; delete(tmp)
+; delete(res@cnLevels)
+delete(tmp)
 
 ; ----
-tmp_GLEAM     = doubletofloat(dim_avg_n_Wrap(Evap_GLEAM_regrid(17:18,:,:),0))
-res@cnLevels  = (/-400,-350,-300,-250,-200,-150,-100,-50,0,50,100,150,200,250,300,350,400/)
+; tmp_GLEAM     = doubletofloat(dim_avg_n_Wrap(TVeg_GLEAM_regrid(17:18,:,:),0))
+; res@cnLevels  = (/-400,-350,-300,-250,-200,-150,-100,-50,0,50,100,150,200,250,300,350,400/)
+;
+; delete(res@cnFillPalette)
+; cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
+; res@cnFillPalette = cmap(::-1,:)
 
-delete(res@cnFillPalette)
-cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
-res@cnFillPalette = cmap(::-1,:)
-
-res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
+; res@lbTitleString = "~F5~D"+"~F25~Et (mm yr~S~-1~N~)"
 
 ; CTL - GLEAM
-tmp = dim_avg_n_Wrap(Evap(0,17:18,:,:),0)
-tmp = tmp - tmp_GLEAM ; dim_avg_n_Wrap(Evap(0,1:9,:,:),0) ;
-printVarSummary(tmp)
-plots(counter) = gsn_csm_contour_map(wks, tmp, res)
+tmp = dim_avg_n_Wrap(TVeg(0,17:19,:,:),0)
+tmp = tmp - dim_avg_n_Wrap(TVeg(0,1:9,:,:),0) ;tmp_GLEAM
+; printVarSummary(tmp)
+plots(counter) = gsn_csm_contour_map(wks, tmp, res) ;2017-2019
 txid1          = gsn_create_text(wks, order_name(counter), txres)
 annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
 counter        = counter + 1
 delete(tmp)
 
 ; FD - GLEAM
-tmp = dim_avg_n_Wrap(Evap(1,17:18,:,:),0)
-tmp = tmp - tmp_GLEAM ;dim_avg_n_Wrap(Evap(1,1:9,:,:),0)
+tmp = dim_avg_n_Wrap(TVeg(1,17:19,:,:),0)
+tmp = tmp - dim_avg_n_Wrap(TVeg(1,1:9,:,:),0) ;tmp_GLEAM ;
 plots(counter) = gsn_csm_contour_map(wks, tmp, res)
 txid1          = gsn_create_text(wks, order_name(counter), txres)
 annoid1        = gsn_add_annotation(plots(counter), txid1, amres)

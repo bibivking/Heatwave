@@ -26,8 +26,8 @@ case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr
 message      = "CTL_vs_FD_vs_DR"
 pic_name     = "HW_box-pdf_plot_"+heatwave+"_"+scale+"_"+message
 
-var_name     = (/"Qle", "Qh", "Fwsoil", "deltaT", "SM64cm"/)
-
+var_name     = (/"deltaT", "Qh", "Qle", "Fwsoil"/) ; , "SM64cm"
+var_sum      = dimsizes(var_name)
 order_name   = (/"(a)","(b)","(c)","(d)","(e)","(f)"/)
 
 ; ================================= Predefine ==================================
@@ -56,7 +56,7 @@ nVar       = case_sum*8
 
 wks = gsn_open_wks("pdf","./plots/"+pic_name)
 
-do var_num = 0, 4
+do var_num = 0, var_sum -1
 
   ; =============================== READ IN ======================================
   txt_name   = "./txt/"+var_name(var_num)+"_box_stats.txt"
@@ -68,29 +68,29 @@ do var_num = 0, 4
 
   if var_name(var_num) .eq. "Qle" then
     ranges = (/0., 212./)
-    bin_bdy= (/0., 250./)
+    bin_bdy= (/0., 230./)
     y_bdy  = (/0., 10./)
-    y_title = "LH (W/m2)"
+    y_title = "LH (W m~S~-2~N~)"
   else if var_name(var_num) .eq. "Qh" then
     ranges = (/0., 212./)
     bin_bdy= (/-50., 350./)
     y_bdy  = (/0., 2.9/)
-    y_title = "SH (W/m2)"
-  else if var_name(var_num) .eq. "Fwsoil" then
-    ranges = (/0., 1.0/)
-    bin_bdy= (/0., 1./)
-    y_bdy  = (/0., 2.9/)
-    y_title = "Fwsoil (-)"
+    y_title = "SH (W m~S~-2~N~)"
   else if var_name(var_num) .eq. "deltaT" then
     ranges = (/0., 5.6/)
     bin_bdy= (/-3., 6./)
     y_bdy  = (/0., 5.4/)
-    y_title = "Tleaf - Tair (C)"
+    y_title = "~F5~D"+"~F25~T (~S~o~N~C)"
+  else if var_name(var_num) .eq. "Fwsoil" then
+    ranges = (/0., 1./)
+    bin_bdy= (/0., 1.1/)
+    y_bdy  = (/0., 2.9/)
+    y_title = "~F5~b"
   else if var_name(var_num) .eq. "SM64cm" then
     ranges = (/0.1, 0.312/)
     bin_bdy= (/0.05, 0.45/)
     y_bdy  = (/0., 5./)
-    y_title = "SM (m3/m3)"
+    y_title = "SM64cm (m~S~3~N~ m~S~-3~N~)"
   end if
   end if
   end if
@@ -128,7 +128,7 @@ do var_num = 0, 4
   ; plot = boxplot_mmy(wks, x, data_stats, opti, res)
   plot = boxplot_mmy(wks,x,data_stats,opti,res,llres, ranges(0), ranges(1), y_title)
 
-  if var_num .eq. 0 then
+  if var_num .eq. 2 then
     textres = True
     gres    = True
 
@@ -238,9 +238,16 @@ do var_num = 0, 4
   res1@vpYF            = 0.865
   plot4 = gsn_csm_xy (wks, data_pdf(0,:), data_pdf(29:32,:), res1)
 
-  pres                      =  True
-  pres@gsLineThicknessF     =  2.0                      ;-- polyline thickness
-  pres@gsLineColor          = "blue"                    ;-- polyline color
+  ; pres                    = True                                      ; ���� panel resources.
+  ; pres@gsnMaximize        = True
+  ; pres@gsnPanelLabelBar   = False                    ; ���� panel labelbar.
+  ; pres@cnLevelSelectionMode = "ExplicitLevels" ;"ManualLevels"
+  ; pres@lbBoxLinesOn       = True                       ;�ر�lbar box ����
+  ; pres@lbTitleFont        = 25
+  ; pres@lbLabelFont        = 25
+  ; pres@lbLabelBarOn       = False ; True                    ; �رո���plot��labelbar
+  ; pres@lbTitleFontHeightF = 0.2
+  ; pres@lbLabelFontHeightF = 0.2
 
   txres                   = True
   txres@txPerimOn         = False

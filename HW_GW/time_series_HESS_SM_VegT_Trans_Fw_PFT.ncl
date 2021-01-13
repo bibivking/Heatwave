@@ -18,17 +18,15 @@ hydr_param = True
 time_scale = "daily" ;"monthly" ; "daily"
 scale      = "SE-AU"
 PFT        = "tree" ; "tree" ;"all"
-year_s     = 2019
+year_s     = 2000
 year_e     = 2019
 year_sum   = year_e-year_s+1
 
 ; ______________________________ Path _________________________________
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-case_name = (/"CTL","CTL_RST_2019"/);,"FREE_DRAIN"/);
-           ;"FREE_DRAIN","PUMPx10","PUMPx100"/)
-           ;,"PUMP","PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
-pic_message = "spinup200yr"
-pic_name   = "HESS_SM_VegT_Trans_Fw_"+case_name(0)+"_vs_"+case_name(1)+"_"+pic_message+"_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
+case_name =  (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/)
+pic_message = "CTL_FD"
+pic_name   = "HESS_SM_VegT_Trans_Fw_"+pic_message+"_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 Depth          = (/1.1, 5.1, 15.7, 43.85, 118.55, 316.4, 1710/) ; including aquifer
 

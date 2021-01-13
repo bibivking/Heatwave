@@ -1,0 +1,1023 @@
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	daily
+
+Variable: SoilMoist
+Type: float
+Total Size: 1636320 bytes
+            409080 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [7] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	case_num = 0
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 1
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 2
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 3
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	prepare to plot
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 21739680 bytes
+            5434920 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [93] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 21739680 bytes
+            5434920 values
+Number of Dimensions: 4
+Dimensions and sizes:	[case | 4] x [PFT | 2] x [depth | 93] x [time | 7305]
+Coordinates: 
+            depth: [ 0..460]
+            time: [1..7305]
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+
+Variable: depth (coordinate)
+Type: float
+Total Size: 372 bytes
+            93 values
+Number of Dimensions: 1
+Dimensions and sizes:	[depth | 93]
+Coordinates: 
+(0)	 0
+(1)	 5
+(2)	10
+(3)	15
+(4)	20
+(5)	25
+(6)	30
+(7)	35
+(8)	40
+(9)	45
+(10)	50
+(11)	55
+(12)	60
+(13)	65
+(14)	70
+(15)	75
+(16)	80
+(17)	85
+(18)	90
+(19)	95
+(20)	100
+(21)	105
+(22)	110
+(23)	115
+(24)	120
+(25)	125
+(26)	130
+(27)	135
+(28)	140
+(29)	145
+(30)	150
+(31)	155
+(32)	160
+(33)	165
+(34)	170
+(35)	175
+(36)	180
+(37)	185
+(38)	190
+(39)	195
+(40)	200
+(41)	205
+(42)	210
+(43)	215
+(44)	220
+(45)	225
+(46)	230
+(47)	235
+(48)	240
+(49)	245
+(50)	250
+(51)	255
+(52)	260
+(53)	265
+(54)	270
+(55)	275
+(56)	280
+(57)	285
+(58)	290
+(59)	295
+(60)	300
+(61)	305
+(62)	310
+(63)	315
+(64)	320
+(65)	325
+(66)	330
+(67)	335
+(68)	340
+(69)	345
+(70)	350
+(71)	355
+(72)	360
+(73)	365
+(74)	370
+(75)	375
+(76)	380
+(77)	385
+(78)	390
+(79)	395
+(80)	400
+(81)	405
+(82)	410
+(83)	415
+(84)	420
+(85)	425
+(86)	430
+(87)	435
+(88)	440
+(89)	445
+(90)	450
+(91)	455
+(92)	460
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+
+Variable: Qle_season
+Type: float
+Total Size: 2560 bytes
+            640 values
+Number of Dimensions: 3
+Dimensions and sizes:	[4] x [2] x [80]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL
+Type: float
+Total Size: 46080 bytes
+            11520 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [6] x [240]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL_tmp
+Type: float
+Total Size: 15360 bytes
+            3840 values
+Number of Dimensions: 5
+Dimensions and sizes:	[season | 4] x [time | 20] x [case | 4] x [PFT | 2] x [soil | 6]
+Coordinates: 
+            season: [DJF..SON]
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL_season
+Type: float
+Total Size: 15360 bytes
+            3840 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [6] x [80]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	daily
+
+Variable: SoilMoist
+Type: float
+Total Size: 1636320 bytes
+            409080 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [7] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	case_num = 0
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 1
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 2
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 3
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+warning:Dimension (0) has not been defined
+warning:Dimension (1) has not been defined
+warning:Dimension (2) has not been defined
+(0)	prepare to plot
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 21739680 bytes
+            5434920 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [93] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 21739680 bytes
+            5434920 values
+Number of Dimensions: 4
+Dimensions and sizes:	[case | 4] x [PFT | 2] x [depth | 93] x [time | 7305]
+Coordinates: 
+            depth: [ 0..460]
+            time: [1..7305]
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+
+Variable: depth (coordinate)
+Type: float
+Total Size: 372 bytes
+            93 values
+Number of Dimensions: 1
+Dimensions and sizes:	[depth | 93]
+Coordinates: 
+(0)	 0
+(1)	 5
+(2)	10
+(3)	15
+(4)	20
+(5)	25
+(6)	30
+(7)	35
+(8)	40
+(9)	45
+(10)	50
+(11)	55
+(12)	60
+(13)	65
+(14)	70
+(15)	75
+(16)	80
+(17)	85
+(18)	90
+(19)	95
+(20)	100
+(21)	105
+(22)	110
+(23)	115
+(24)	120
+(25)	125
+(26)	130
+(27)	135
+(28)	140
+(29)	145
+(30)	150
+(31)	155
+(32)	160
+(33)	165
+(34)	170
+(35)	175
+(36)	180
+(37)	185
+(38)	190
+(39)	195
+(40)	200
+(41)	205
+(42)	210
+(43)	215
+(44)	220
+(45)	225
+(46)	230
+(47)	235
+(48)	240
+(49)	245
+(50)	250
+(51)	255
+(52)	260
+(53)	265
+(54)	270
+(55)	275
+(56)	280
+(57)	285
+(58)	290
+(59)	295
+(60)	300
+(61)	305
+(62)	310
+(63)	315
+(64)	320
+(65)	325
+(66)	330
+(67)	335
+(68)	340
+(69)	345
+(70)	350
+(71)	355
+(72)	360
+(73)	365
+(74)	370
+(75)	375
+(76)	380
+(77)	385
+(78)	390
+(79)	395
+(80)	400
+(81)	405
+(82)	410
+(83)	415
+(84)	420
+(85)	425
+(86)	430
+(87)	435
+(88)	440
+(89)	445
+(90)	450
+(91)	455
+(92)	460
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+
+Variable: Qle_season
+Type: float
+Total Size: 2560 bytes
+            640 values
+Number of Dimensions: 3
+Dimensions and sizes:	[4] x [2] x [80]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL
+Type: float
+Total Size: 46080 bytes
+            11520 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [6] x [240]
+Coordinates: 
+Number Of Attributes: 3
+  reference :	function rmMonAnnCycLLLT in contrib.ncl
+  anomaly_op_ncl :	Annual Cycle Removed:function rmMonAnnCycLLLT:contributed.ncl
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL_tmp
+Type: float
+Total Size: 15360 bytes
+            3840 values
+Number of Dimensions: 5
+Dimensions and sizes:	[season | 4] x [time | 20] x [case | 4] x [PFT | 2] x [soil | 6]
+Coordinates: 
+            season: [DJF..SON]
+Number Of Attributes: 3
+  _FillValue :	-1e+33
+  anomaly_op_ncl :	Annual Cycle Removed:function rmMonAnnCycLLLT:contributed.ncl
+  reference :	function rmMonAnnCycLLLT in contrib.ncl
+
+Variable: EVAPFBL_season
+Type: float
+Total Size: 15360 bytes
+            3840 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [6] x [80]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	daily
+
+Variable: SoilMoist
+Type: float
+Total Size: 1636320 bytes
+            409080 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [7] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	case_num = 0
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 1
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 2
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 3
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	prepare to plot
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 21739680 bytes
+            5434920 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [93] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 21739680 bytes
+            5434920 values
+Number of Dimensions: 4
+Dimensions and sizes:	[case | 4] x [PFT | 2] x [depth | 93] x [time | 7305]
+Coordinates: 
+            depth: [ 0..460]
+            time: [1..7305]
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+
+Variable: depth (coordinate)
+Type: float
+Total Size: 372 bytes
+            93 values
+Number of Dimensions: 1
+Dimensions and sizes:	[depth | 93]
+Coordinates: 
+(0)	 0
+(1)	 5
+(2)	10
+(3)	15
+(4)	20
+(5)	25
+(6)	30
+(7)	35
+(8)	40
+(9)	45
+(10)	50
+(11)	55
+(12)	60
+(13)	65
+(14)	70
+(15)	75
+(16)	80
+(17)	85
+(18)	90
+(19)	95
+(20)	100
+(21)	105
+(22)	110
+(23)	115
+(24)	120
+(25)	125
+(26)	130
+(27)	135
+(28)	140
+(29)	145
+(30)	150
+(31)	155
+(32)	160
+(33)	165
+(34)	170
+(35)	175
+(36)	180
+(37)	185
+(38)	190
+(39)	195
+(40)	200
+(41)	205
+(42)	210
+(43)	215
+(44)	220
+(45)	225
+(46)	230
+(47)	235
+(48)	240
+(49)	245
+(50)	250
+(51)	255
+(52)	260
+(53)	265
+(54)	270
+(55)	275
+(56)	280
+(57)	285
+(58)	290
+(59)	295
+(60)	300
+(61)	305
+(62)	310
+(63)	315
+(64)	320
+(65)	325
+(66)	330
+(67)	335
+(68)	340
+(69)	345
+(70)	350
+(71)	355
+(72)	360
+(73)	365
+(74)	370
+(75)	375
+(76)	380
+(77)	385
+(78)	390
+(79)	395
+(80)	400
+(81)	405
+(82)	410
+(83)	415
+(84)	420
+(85)	425
+(86)	430
+(87)	435
+(88)	440
+(89)	445
+(90)	450
+(91)	455
+(92)	460
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+
+Variable: Qle_season
+Type: float
+Total Size: 2560 bytes
+            640 values
+Number of Dimensions: 3
+Dimensions and sizes:	[4] x [2] x [80]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL
+Type: float
+Total Size: 46080 bytes
+            11520 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [6] x [240]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL_tmp
+Type: float
+Total Size: 15360 bytes
+            3840 values
+Number of Dimensions: 5
+Dimensions and sizes:	[season | 4] x [time | 20] x [case | 4] x [PFT | 2] x [soil | 6]
+Coordinates: 
+            season: [DJF..SON]
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL_season
+Type: float
+Total Size: 15360 bytes
+            3840 values
+Number of Dimensions: 4
+Dimensions and sizes:	[4] x [2] x [6] x [80]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
