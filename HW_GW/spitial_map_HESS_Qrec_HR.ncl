@@ -21,12 +21,11 @@ case_sum    = dimsizes(case_name)
 path        = new(case_sum,"string")
 pic_message = "CTL_vs_FD"
 order_name  = (/"(c)","(d)","(e)","(f)","(g)","(h)"/) ; "(a)","(b)",
+ET_plot     = False
 
 do case_num = 0, case_sum -1
    path(case_num) = path_mum+case_name(case_num);+"/outputs"
 end do
-
-path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/yearly";
 
 ; ================================= Predefine ==================================
 year_s   = 2000
@@ -73,16 +72,14 @@ default_val = -1.e+33
 delete(f)
 
 Evap      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
-; Fwsoil    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
-; Qh        = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
-; VegT      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
-; Tair      = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+Fwsoil    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
+Q2botsoil = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val) ; Qrec from the aqufier to bottom soil layer
+Q2aquifer = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val) ; Qrec from bottom soil layer to aquifer
 
 Evap      = 0.
-; Fwsoil    = 0.
-; Qh        = 0.
-; VegT      = 0.
-; Tair      = 0.
+Fwsoil    = 0.
+Q2botsoil = 0.
+Q2aquifer = 0.
 
 do case_num = 0, case_sum -1
    do year = year_s, year_e
@@ -99,34 +96,39 @@ do case_num = 0, case_sum -1
       f        = addfile (filename,"r")
 
       Evap(case_num,year-year_s,:,:)     = dim_sum_n_Wrap(f->Evap(:,{A:B},{C:D}),0)
-      ; Fwsoil(case_num,year-year_s,:,:)   = dim_avg_n_Wrap(f->Fwsoil(:,{A:B},{C:D}),0)
-      ; Qh(case_num,year-year_s,:,:)       = dim_avg_n_Wrap(f->Qh(:,{A:B},{C:D}),0)
-      ; VegT(case_num,year-year_s,:,:)     = dim_avg_n_Wrap(f->VegT(:,{A:B},{C:D}),0)
-      ; Tair(case_num,year-year_s,:,:)     = dim_avg_n_Wrap(f->Tair(:,{A:B},{C:D}),0)
+      Fwsoil(case_num,year-year_s,:,:)   = dim_avg_n_Wrap(f->Fwsoil(:,{A:B},{C:D}),0)
+
+      Qrec_tmp = f->Qrecharge(:,{A:B},{C:D})
+      Q2botsoil(case_num,year-year_s,:,:) = dim_sum_n_Wrap(where(Qrec_tmp .le. 0, Qrec_tmp, 0),0)
+      Q2aquifer(case_num,year-year_s,:,:) = dim_sum_n_Wrap(where(Qrec_tmp .ge. 0, Qrec_tmp, 0),0)
+
       delete(f)
    end do ; year
 end do ; case_num
 
 Evap     = Evap*3600.*24.
+Q2botsoil= Q2botsoil*3600.*24.*(-1.)
+Q2aquifer= Q2aquifer*3600.*24.
 
-; VegT     = VegT-273.15
-; Tair     = Tair-273.15
+
 
 ; ================================ READ GLEAM ==================================
-; use 2000-2019
-gleam_ET = path_GLEAM+"/E_1980_2018_GLEAM_v3.3a_YR.nc"
-G_ET     = addfile (gleam_ET,"r")
+if ET_plot .eq. True then
+  path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/yearly";
+  ; use 2000-2019
+  gleam_ET = path_GLEAM+"/E_1980_2018_GLEAM_v3.3a_YR.nc"
+  G_ET     = addfile (gleam_ET,"r")
 
-E_tmp    = G_ET->E(:,{C:D},{A:B})
+  E_tmp    = G_ET->E(:,{C:D},{A:B})
 
-Evap_GLEAM = E_tmp(time|20:38,lat|:, lon|:)
-printVarSummary(Evap_GLEAM)
-delete(G_ET)
+  Evap_GLEAM = E_tmp(time|20:38,lat|:, lon|:)
+  printVarSummary(Evap_GLEAM)
+  delete(G_ET)
 
-; ___________________________ Regrid GLEAM ______________________________
-Evap_GLEAM_regrid = linint2_Wrap(Evap_GLEAM&lon,Evap_GLEAM&lat,Evap_GLEAM,False,CABLE_lon,CABLE_lat,0)
-printVarSummary(Evap_GLEAM_regrid)
-
+  ; ___________________________ Regrid GLEAM ______________________________
+  Evap_GLEAM_regrid = linint2_Wrap(Evap_GLEAM&lon,Evap_GLEAM&lat,Evap_GLEAM,False,CABLE_lon,CABLE_lat,0)
+  printVarSummary(Evap_GLEAM_regrid)
+end if
 
 ; ================================= Plotting ===================================
 res                         = True
@@ -255,19 +257,81 @@ amres@amJust            = "TopLeft"
 ; =========================== plot Evaptranspiration ===========================
 plots = new((case_sum+1)*2,graphic)
 
-pic = "./plots/HESS_vs_GLEAM_"+pic_message
+pic = "./plots/HESS_Qrec_HR_"+pic_message
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"rainbow") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
 counter = 0
 
 ; ___ 2001-2009 ___
-res@lbLabelBarOn = True
 
-; GLEAM -----
-res@cnLevels  = fspan(0,1000,21)
+if ET_plot .eq. True then
+
+  ; =========== Plotting GLEAM ==============
+  plots = new((case_sum+1)*2,graphic)
+
+  res@lbLabelBarOn = True
+
+  ; 2001-2009
+  res@cnLevels      = fspan(0,1000,21)
+  res@cnFillPalette = "vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+  res@lbTitleString = "E (mm yr~S~-1~N~)"
+
+  plots(0) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap(0,1:9,:,:),0),res)
+  plots(1) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap(1,1:9,:,:),0),res)
+
+  delete(res@cnLevels)
+  delete(res@cnFillPalette)
+
+  res@cnLevels  = (/-400,-350,-300,-250,-200,-150,-100,-50,0,50,100,150,200,250,300,350,400/)
+  cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
+  res@cnFillPalette = cmap(::-1,:)
+  res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
+
+  tmp      = dim_avg_n_Wrap(Evap(1,1:9,:,:),0)
+  tmp      = tmp - dim_avg_n_Wrap(Evap(0,1:9,:,:),0)
+  plots(2) = gsn_csm_contour_map(wks,tmp,res)
+  delete(tmp)
+  delete(res@cnLevels)
+  delete(res@cnFillPalette)
+
+  ; 2017-2019
+  res@cnLevels      = fspan(0,1000,21)
+  res@cnFillPalette = "vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+  res@lbTitleString = "E (mm yr~S~-1~N~)"
+
+  plots(3) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap(0,17:19,:,:),0),res)
+  plots(4) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap(1,17:19,:,:),0),res)
+
+  delete(res@cnLevels)
+  delete(res@cnFillPalette)
+
+  res@cnLevels  = (/-400,-350,-300,-250,-200,-150,-100,-50,0,50,100,150,200,250,300,350,400/)
+  cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
+  res@cnFillPalette = cmap(::-1,:)
+  res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
+
+  tmp      = dim_avg_n_Wrap(Evap(1,17:19,:,:),0)
+  tmp      = tmp - dim_avg_n_Wrap(Evap(0,17:19,:,:),0)
+  plots(5) = gsn_csm_contour_map(wks,tmp,res)
+  delete(tmp)
+  delete(res@cnLevels)
+  delete(res@cnFillPalette)
+
+  do counter = 0, 5
+    txid1   = gsn_create_text(wks, order_name(counter), txres)
+    annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
+  end do
+  delete(plots)
+end if
+
+
+plots = new((case_sum+1)*2,graphic)
+
+; Q2botsoil
+res@cnLevels  = fspan(0,100,21)
 res@cnFillPalette = "vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-res@lbTitleString = "E (mm yr~S~-1~N~)"
+res@lbTitleString = "Qrec (mm yr~S~-1~N~)"
 
 plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap_GLEAM(1:9,:,:),0),res)
 txid1   = gsn_create_text(wks, order_name(counter), txres)
@@ -304,21 +368,7 @@ counter        = counter + 1
 delete(res@cnLevels)
 delete(tmp)
 delete(tmp_GLEAM)
-;
-; ; Fwsoil FREE_DRAIN - CTL
-; res@cnLevels  = fspan(-0.4,0.0,21)
-; res@cnFillPalette = "MPL_hot";"MPL_autumn";"MPL_BrBG";"ViBlGrWhYeOrRe"
-;
-; tmp = Fwsoil(1,1:9,:,:)
-; tmp = tmp - Fwsoil(0,1:9,:,:)
-; printVarSummary(tmp)
-; plots(counter)  = gsn_csm_contour_map(wks, dim_avg_n_Wrap(tmp,0),res)
-; txid1          = gsn_create_text(wks, order_name(counter), txres)
-; annoid1        = gsn_add_annotation(plots(counter), txid1, amres)
-; counter        = counter + 1
-; delete(res@cnLevels)
-; delete(tmp)
-;
+
 ; ; ___ 2017-2018 ___
 res@lbLabelBarOn            = True
 

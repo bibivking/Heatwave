@@ -99,12 +99,17 @@ Qh       = 0.
 deltaT   = 0.
 Fwsoil   = 0.
 
+Fwsoil_diff_max = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val)
+Fwsoil_diff_max = 0
+
 do case_num = 0, case_sum -1
   print("case_num = " +case_num)
   do year = year_s,year_e
     filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc" ; outputs/
     f1 = addfile (filename1,"r")
 
+    Rain_tmp     = f1->Rainf(0:60*8,{A:B},{C:D})
+    Rain_tmp     = Rain_tmp*3*3600
     Qle_tmp      = f1->Qle(0:60*8,{A:B},{C:D})
     Qh_tmp       = f1->Qh(0:60*8,{A:B},{C:D})
     deltaT_tmp   = f1->VegT(0:60*8,{A:B},{C:D})
@@ -117,11 +122,15 @@ do case_num = 0, case_sum -1
     do event_num = 0,event_sum-1
       do day = HW_day_s(event_num),HW_day_e(event_num)
         ; ts = (HW_day_s(event_num)-1)*8+4
-        ts = (day-1)*8+6;6-6pm ;7 - 9pm
-        Qle(case_num,:,:)    = Qle(case_num,:,:) + where(PFT_mask .eq. 1, Qle_tmp(ts,:,:) - Qle_tmp(ts+1,:,:), default_val)/day_tot
-        Qh(case_num,:,:)     = Qh(case_num,:,:)  + where(PFT_mask .eq. 1,Qh_tmp(ts,:,:) - Qh_tmp(ts+1,:,:), default_val)/day_tot
-        deltaT(case_num,:,:) = deltaT(case_num,:,:) + where(PFT_mask .eq. 1,deltaT_tmp(ts,:,:) - deltaT_tmp(ts+1,:,:), default_val)/day_tot
-        Fwsoil(case_num,:,:) = Fwsoil(case_num,:,:) + where(PFT_mask .eq. 1,Fwsoil_tmp(ts,:,:) - Fwsoil_tmp(ts+1,:,:), default_val)/day_tot
+        ts = (day-1)*8+6 ;6-6pm ;7 - 9pm
+        Rain = dim_sum_n_Wrap(Rain_tmp(ts:ts+3,:,:),0)
+        Qle(case_num,:,:)    = Qle(case_num,:,:) + where(PFT_mask .eq. 1 .and. Rain .lt. 0.01, Qle_tmp(ts,:,:) - Qle_tmp(ts+3,:,:), default_val)/day_tot
+        Qh(case_num,:,:)     = Qh(case_num,:,:)  + where(PFT_mask .eq. 1 .and. Rain .lt. 0.01, Qh_tmp(ts,:,:) - Qh_tmp(ts+3,:,:), default_val)/day_tot
+        deltaT(case_num,:,:) = deltaT(case_num,:,:) + where(PFT_mask .eq. 1 .and. Rain .lt. 0.01, deltaT_tmp(ts,:,:) - deltaT_tmp(ts+3,:,:), default_val)/day_tot
+        Fwsoil(case_num,:,:) = where(PFT_mask .eq. 1 .and. Rain .lt. 0.01, Fwsoil_tmp(ts,:,:) - Fwsoil_tmp(ts+3,:,:), default_val);/day_tot ;Fwsoil(case_num,:,:) +
+        ; print(abs(Fwsoil_diff_max(case_num,:,:)))
+        Fwsoil_diff_max(case_num,:,:) = where(Fwsoil(case_num,:,:) .lt. Fwsoil_diff_max(case_num,:,:), Fwsoil(case_num,:,:), Fwsoil_diff_max(case_num,:,:))
+        delete(Rain)
       end do
     end do
   end do ; year
@@ -158,6 +167,14 @@ Fwsoil!1      = "lat"
 Fwsoil!2      = "lon"
 Fwsoil&lat    = lat
 Fwsoil&lon    = lon
+
+
+Fwsoil_diff_max!0      = "time"
+Fwsoil_diff_max!1      = "lat"
+Fwsoil_diff_max!2      = "lon"
+Fwsoil_diff_max&lat    = lat
+Fwsoil_diff_max&lon    = lon
+
 
 ; ================================= Plotting ===================================
 pic = "./plots/"+pic_name
@@ -332,7 +349,7 @@ do case_num = 0,case_sum-1
     ; Fwsoil
     res@cnLevels      = fspan(-0.1,0.1,21) ;Fw_CTL_lvl
     ; plots(case_num*4+3) = gsn_csm_contour_map(wks,Fwsoil(0,:,:),res)
-    plots(case_num*4+3) = gsn_csm_contour_map(wks,Fwsoil(case_num,:,:),res)
+    plots(case_num*4+3) = gsn_csm_contour_map(wks,Fwsoil_diff_max(case_num,:,:),res) ;Fwsoil(case_num,:,:),res)
     delete(res@cnLevels)
     delete(res@cnFillPalette)
 

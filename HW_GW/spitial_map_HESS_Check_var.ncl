@@ -14,13 +14,35 @@ end setvalues
 ;_____________________________________
 
 ; ================================== Options ===================================
-year        = 2013
-time_tot    = 365 ; *8
+year_s        = 2017
+year_e        = 2019
+year_sum      = year_e - year_s+1
+time_tot      = 365 ; *8
 
-filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr/outputs-daily/cable_out_"+year+"_SE_Aus.nc"
+
+filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr/outputs-daily/cable_out_"+year_s+"_SE_Aus.nc"
 f           = addfile (filename_hw,"r")
-var  = dim_avg_n_Wrap(f->LAI(:,:,:),0) ;*24*2600
-delete(f)
+; var1  = dim_sum_n_Wrap(f->Qrecharge(:,:,:)*24*3600,0)/year_sum
+iveg   = f->iveg(:,:)
+var1   = where( iveg .ge. 1 .and. iveg .le. 4, dim_avg_n_Wrap(f->LAI(:,:,:),0), f->LAI@_FillValue)
+; do year = year_s+1, year_e
+; filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr/outputs-daily/cable_out_"+year+"_SE_Aus.nc"
+; f           = addfile (filename_hw,"r")
+; var1         = var1 + dim_sum_n_Wrap(f->Qrecharge(:,:,:)*24*3600,0) ;*24*2600
+; delete(f)
+; end do
+;
+; filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/FREE_DRAIN/outputs-spinup30x3yr/cable_out_"+year_s+"_SE_Aus.nc"
+; f           = addfile (filename_hw,"r")
+; var  = dim_sum_n_Wrap(f->Qrecharge(:,:,:)*24*3600,0)/year_sum
+;
+; do year = year_s+1, year_e
+; filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/FREE_DRAIN/outputs-spinup30x3yr/cable_out_"+year+"_SE_Aus.nc"
+; f           = addfile (filename_hw,"r")
+; var         = var + dim_sum_n_Wrap(f->Qrecharge(:,:,:)*24*3600,0) ;*24*2600
+; delete(f)
+; end do
+
 ;
 ; filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr-DeepRoot/outputs-daily/cable_out_"+year+"_SE_Aus.nc"
 ; f           = addfile (filename_hw,"r")
@@ -91,16 +113,16 @@ res@tmXBMode  = "Explicit"
 res@gsnLeftString       = ""
 res@gsnRightString      = ""
 
-pic1 = "./plots/Check_LAI_"+year
+pic1 = "./plots/Check_LAI_"+year_s
 wks1 = gsn_open_wks("pdf",pic1)
-gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed");"WhiteBlueGreenYellowRed");"GMT_haxby");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
+gsn_define_colormap(wks1,"spread_15lev");"WhiteBlueGreenYellowRed");"GMT_haxby");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
 
 res@txString = "LAI" ;"Water Table Depth" ;var@long_name
-; levels = fspan(-1.,1.,21)
-; res@cnLevels = levels
+levels = fspan(0.,6.,13) ;fspan(-500.,500.,51)
+res@cnLevels = levels
 ; do soil = 0, 5
-  plots = gsn_csm_contour(wks1,var,res)
+  plots = gsn_csm_contour(wks1,var1,res)
 ; end do
   ; plots = gsn_csm_contour(wks1,var2(day_num, :,:),res)
 ; end do

@@ -16,14 +16,14 @@ end setvalues
 ; ================================= Predefine ==================================
 year_s   = 2000
 year_e   = 2019
-row_sum  = 4
+row_sum  = 3
 col_sum  = 4
 heatwave = "hw-90th" ; "hw-90th" ; "all-day"
 scale    = "SE-AU"   ; "45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 case_name= (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr", \
-             "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
+             "CTL-30x3+30yr-DeepRoot/outputs-daily"/);,"FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
 path_mum = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-message  = "CTL_FD_DR_FD+DR-FD"
+message  = "CTL_FD_DR";_FD+DR-FD"
 pic      = "./plots/Spitial_HESS_LH_SH_"+heatwave+"_"+message
 
 year_sum = year_e-year_s+1
@@ -374,7 +374,7 @@ do cnt = 1,2
       plots(case_num*4+3) = gsn_csm_contour_map(wks,Fwsoil_avg(0,cnt,:,:),res)
       delete(res@cnLevels)
 
-    else if case_num .lt. 3 then
+    else if case_num .lt. 2 then
       res@lbLabelBarOn  = False
 
       delete(res@cnFillPalette)
@@ -412,7 +412,7 @@ do cnt = 1,2
       delete(tmp)
       delete(res@cnLevels)
 
-    else if case_num .eq. 3 then
+    else if case_num .eq. 2 then
       res@lbLabelBarOn  = True
 
       delete(res@cnFillPalette)
@@ -454,12 +454,12 @@ do cnt = 1,2
     end if
   end do
 
-  do count = 0, 15
+  do count = 0, 11 ;15
     txid1   = gsn_create_text(wks, order_name(count), txres)
     annoid1 = gsn_add_annotation(plots(count), txid1, amres)
   end do
 
-  gsn_panel(wks,(/plots/),(/4,4/),pres)
+  gsn_panel(wks,(/plots/),(/row_sum,col_sum/),pres)
   delete(res@cnFillPalette)
 end do ; cnt
 exit
