@@ -374,8 +374,8 @@ do cnt = 1,2
       plots(case_num*4+3) = gsn_csm_contour_map(wks,Fwsoil_avg(0,cnt,:,:),res)
       delete(res@cnLevels)
 
-    else if case_num .lt. 2 then
-      res@lbLabelBarOn  = False
+    else if case_num .le. 2 then
+      res@lbLabelBarOn  = True
 
       delete(res@cnFillPalette)
       res@cnLevels      = deltaT_diff_lvl
@@ -411,45 +411,45 @@ do cnt = 1,2
       plots(case_num*4+3) = gsn_csm_contour_map(wks,tmp,res)
       delete(tmp)
       delete(res@cnLevels)
-
-    else if case_num .eq. 2 then
-      res@lbLabelBarOn  = True
-
-      delete(res@cnFillPalette)
-      res@cnLevels      = deltaT_diff_lvl
-      res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22"
-      tmp  = deltaT_avg(case_num,cnt,:,:)
-      tmp  = tmp - deltaT_avg(1,cnt,:,:)
-      plots(case_num*4) = gsn_csm_contour_map(wks,tmp,res)
-      delete(tmp)
-      delete(res@cnLevels)
-
-      res@cnLevels      = Qh_diff_lvl
-      tmp  = Qh_avg(case_num,cnt,:,:)
-      tmp  = tmp - Qh_avg(1,cnt,:,:)
-      plots(case_num*4+1) = gsn_csm_contour_map(wks,tmp,res)
-      delete(tmp)
-      delete(res@cnLevels)
-
-      ; delete(cmap)
-      delete(res@cnFillPalette)
-      cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
-      res@cnFillPalette = cmap(::-1,:)
-
-      res@cnLevels      = Qle_diff_lvl
-      tmp  = Qle_avg(case_num,cnt,:,:)
-      tmp  = tmp - Qle_avg(1,cnt,:,:)
-      plots(case_num*4+2) = gsn_csm_contour_map(wks,tmp,res)
-      delete(tmp)
-      delete(res@cnLevels)
-
-      res@cnLevels      = Fw_diff_lvl
-      tmp  = Fwsoil_avg(case_num,cnt,:,:)
-      tmp  = tmp - Fwsoil_avg(1,cnt,:,:)
-      plots(case_num*4+3) = gsn_csm_contour_map(wks,tmp,res)
-      delete(tmp)
-      delete(res@cnLevels)
-    end if
+    ;
+    ; else if case_num .eq. 2 then
+    ;   res@lbLabelBarOn  = True
+    ;
+    ;   delete(res@cnFillPalette)
+    ;   res@cnLevels      = deltaT_diff_lvl
+    ;   res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22"
+    ;   tmp  = deltaT_avg(case_num,cnt,:,:)
+    ;   tmp  = tmp - deltaT_avg(1,cnt,:,:)
+    ;   plots(case_num*4) = gsn_csm_contour_map(wks,tmp,res)
+    ;   delete(tmp)
+    ;   delete(res@cnLevels)
+    ;
+    ;   res@cnLevels      = Qh_diff_lvl
+    ;   tmp  = Qh_avg(case_num,cnt,:,:)
+    ;   tmp  = tmp - Qh_avg(1,cnt,:,:)
+    ;   plots(case_num*4+1) = gsn_csm_contour_map(wks,tmp,res)
+    ;   delete(tmp)
+    ;   delete(res@cnLevels)
+    ;
+    ;   ; delete(cmap)
+    ;   delete(res@cnFillPalette)
+    ;   cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
+    ;   res@cnFillPalette = cmap(::-1,:)
+    ;
+    ;   res@cnLevels      = Qle_diff_lvl
+    ;   tmp  = Qle_avg(case_num,cnt,:,:)
+    ;   tmp  = tmp - Qle_avg(1,cnt,:,:)
+    ;   plots(case_num*4+2) = gsn_csm_contour_map(wks,tmp,res)
+    ;   delete(tmp)
+    ;   delete(res@cnLevels)
+    ;
+    ;   res@cnLevels      = Fw_diff_lvl
+    ;   tmp  = Fwsoil_avg(case_num,cnt,:,:)
+    ;   tmp  = tmp - Fwsoil_avg(1,cnt,:,:)
+    ;   plots(case_num*4+3) = gsn_csm_contour_map(wks,tmp,res)
+    ;   delete(tmp)
+    ;   delete(res@cnLevels)
+    ; end if
     end if
     end if
   end do
