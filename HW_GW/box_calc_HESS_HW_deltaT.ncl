@@ -23,8 +23,8 @@ scale        = "SE-AU"   ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
 case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/);, \
                 ; "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
-var_name     = "Qh"
-select_region= True
+var_name     = "deltaT"
+
 iveg_tree_s = 1
 iveg_tree_e = 4
 iveg_nontree_s = 5
@@ -52,17 +52,9 @@ end do
 ; ts_e    = (/ day_sum-1,       3652,       4382,       7304/)
 
 
-;         ;  2001,2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2017, 2018, 2019
-; ts_s    = (/366, 731, 1096, 1461, 1829, 2192, 2557, 2922, 3288, 6210, 6575, 6940/)
-; ts_e    = (/730,1095, 1460, 1828, 2191, 2556, 2921, 3287, 3653, 6574, 6939, 7304/)
-
-; 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,\
-; 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
-ts_s    = (/335, 700, 1065, 1430, 1796, 2161, 2526, 2891, 3257, 3622,\
-           3987,4352, 4718, 5083, 5448, 5813, 6179, 6544, 6909/)
-
-ts_e    = (/425, 790, 1155, 1521, 1886, 2251, 2616, 2982, 3347, 3712, \
-           4077, 4443, 4808, 5173, 5538, 5904, 6269, 6634, 6999/)
+        ;  2001,2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2017, 2018, 2019
+ts_s    = (/366, 731, 1096, 1461, 1829, 2192, 2557, 2922, 3288, 6210, 6575, 6940/)
+ts_e    = (/730,1095, 1460, 1828, 2191, 2556, 2921, 3287, 3653, 6574, 6939, 7304/)
 
 
 ; =================================== Path =====================================
@@ -99,24 +91,13 @@ lon_sum   = dimsizes(f->Rainf(0,0,{C:D}))
 def_value = f->Rainf@_FillValue
 
 ; PFT mask
-if select_region .eq. True then
-  LAI      = dim_avg_n_Wrap(f->LAI(:,{A:B},{C:D}),0)
-  PFT_mask = where(LAI .gt. 1.5, f->iveg({A:B},{C:D}), def_value)
-  PFT_mask = where((f->latitude({A:B},{C:D}) .le. -35.) .and. (f->latitude({A:B},{C:D}) .ge. -40.)   \
-            .and.  (f->longitude({A:B},{C:D}) .le. 149.) .and. (f->longitude({A:B},{C:D}) .ge. 145.),\
-             PFT_mask, def_value)
-  PFT_mask = where((PFT_mask .ge. iveg_tree_s) .and. (PFT_mask .le. iveg_tree_e), 1, PFT_mask)
-  PFT_mask = where((PFT_mask .ge. iveg_nontree_s) .and. (PFT_mask .le. iveg_nontree_e), 2, PFT_mask)
-else
-  PFT_mask = where((f->iveg({A:B},{C:D}) .ge. iveg_tree_s) .and. (f->iveg({A:B},{C:D}) .le. iveg_tree_e), 1, f->iveg({A:B},{C:D}))
-  PFT_mask = where((PFT_mask .ge. iveg_nontree_s) .and. (PFT_mask .le. iveg_nontree_e), 2, PFT_mask)
-end if
-
+PFT_mask = where((f->iveg({A:B},{C:D}) .ge. iveg_tree_s) .and. (f->iveg({A:B},{C:D}) .le. iveg_tree_e), 1, f->iveg({A:B},{C:D}))
+PFT_mask = where((PFT_mask .ge. iveg_nontree_s) .and. (PFT_mask .le. iveg_nontree_e), 2, PFT_mask)
 PFT_mask_multi = new((/day_sum,dimsizes(PFT_mask(:,0)),dimsizes(PFT_mask(0,:))/),float)
 do z = 0, day_sum-1
   PFT_mask_multi(z,:,:) = PFT_mask
 end do
-; delete(PFT_mask)
+delete(PFT_mask)
 delete(f)
 
 total_box      = case_sum*2*dimsizes(ts_s)+dimsizes(ts_s)-1 ;case_sum*2*4+3 ; case_sum x PFT all/tree x 4 time periods + space
@@ -139,36 +120,6 @@ if heatwave .eq. "hw-90th" then
   delete(filename_hw)
   delete(fhw)
 end if
-; ====================== Checking mask ===========================
-wks = gsn_open_wks("pdf","check")
-gsn_define_colormap(wks,"rainbow")
-
-res                         = True
-res@gsnDraw                 = True  ; Don't draw plots
-res@gsnFrame                = True  ; ����ҳ
-res@gsnMaximize             = False
-
-res@vpHeightF 	            = 0.4               ; change aspect ratio of plot
-res@vpWidthF 	              = 0.8
-res@tiYAxisFontThicknessF   = 3.
-res@tmXBMajorThicknessF     = 3.
-res@tmXBMinorThicknessF     = 3.
-res@tmYLMajorThicknessF     = 3.
-res@tmYLMinorThicknessF     = 3.
-res@tmYLLabelFontThicknessF = 3.
-res@tmBorderThicknessF      = 3.
-res@txFont                  = 25
-res@txFontHeightF           = 0.015            ; change title font heights
-res@gsnPaperOrientation     = "landscape";"portrait";"landscape" ;"auto"
-
-res@cnFillMode             = "RasterFill"            ; Raster Mode
-res@cnFillOn               = True                            ;��ɫ
-res@cnLinesOn              = False
-res@cnLineLabelsOn         = False
-res@cnExplicitLabelBarLabelsOn = True   ;?
-res@cnLevelSelectionMode   = "ExplicitLevels"
-
-plot = gsn_csm_contour_map(wks,PFT_mask,res)
 
 ; _____________________________ Calc Box Stats ________________________________
 var_stats      = new((/total_box, 5/), float, -9999.)

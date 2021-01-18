@@ -169,11 +169,12 @@ begin
             polyres@gsLineColor = boxcolor(gg)
         end if
         ; polyres@gsLineOpacityF = 0.7
-        if mod(gg,7) .lt. 3 then ;for 2 droughts ; if mod(gg,9) .lt. 4 then
-          polyres@gsLineDashPattern = 5 ; gsLineOpacityF
-        else
-          polyres@gsLineDashPattern = 0
-        end if
+        polyres@gsLineDashPattern = 0 
+        ; if mod(gg,7) .lt. 3 then ;for 2 droughts ; if mod(gg,9) .lt. 4 then
+        ;   polyres@gsLineDashPattern = 5 ; gsLineOpacityF
+        ; else
+        ;   polyres@gsLineDashPattern = 0
+        ; end if
         ;
         ; ; Maximum horizontal solid line
         ; yy = (/y(gg,4),y(gg,4)/)
