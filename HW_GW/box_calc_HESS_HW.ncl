@@ -21,8 +21,8 @@ year_e       = 2019
 operation    = "calc"    ;"calc" ; "plot"
 scale        = "SE-AU"   ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
-case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr", \
-                 "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
+case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/);, \
+                ; "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
 var_name     = "Qh"
 
 iveg_tree_s = 1
@@ -46,10 +46,15 @@ end do
 
 ; _________ 4 time periods __________
           ;  all years,  2001-2009,  2010-2011,   2017-2019
-          ;   2000-1-1,   2001-1-1,   2010-1-1,    2017-1-1
-ts_s    = (/         0,        366,       3653,       6210/)
-          ; 2019-12-31, 2009-12-31, 2011-12-31,  2019-12-31
-ts_e    = (/ day_sum-1,       3652,       4382,       7304/)
+;           ;   2000-1-1,   2001-1-1,   2010-1-1,    2017-1-1
+; ts_s    = (/         0,        366,       3653,       6210/)
+;           ; 2019-12-31, 2009-12-31, 2011-12-31,  2019-12-31
+; ts_e    = (/ day_sum-1,       3652,       4382,       7304/)
+
+
+        ;  2001,2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2017, 2018, 2019
+ts_s    = (/366, 731, 1096, 1461, 1829, 2192, 2557, 2922, 3288, 6210, 6575, 6940/)
+ts_e    = (/730,1095, 1460, 1828, 2191, 2556, 2921, 3287, 3653, 6574, 6939, 7304/)
 
 
 ; =================================== Path =====================================
@@ -95,7 +100,7 @@ end do
 delete(PFT_mask)
 delete(f)
 
-total_box      = case_sum*2*4+3 ; case_sum x PFT all/tree x 4 time periods + space
+total_box      = case_sum*2*dimsizes(ts_s)+dimsizes(ts_s)-1 ;case_sum*2*4+3 ; case_sum x PFT all/tree x 4 time periods + space
 
 ; ______________________________ READ HW _________________________________
 if heatwave .eq. "hw-90th" then
@@ -184,7 +189,7 @@ do case_num = 0,case_sum-1
   loc2 = case_num + case_sum
   groups = case_sum*2+1
 
-  do count = 0, 3
+  do count = 0, dimsizes(ts_s)-1
     var_stats(count*groups+loc1, :)    = boxplot_stats_mmy(var_val(ts_s(count):ts_e(count),:,:),def_value)
     var_stats(count*groups+loc2, :)    = boxplot_stats_mmy(var_val_tree(ts_s(count):ts_e(count),:,:),def_value)
   end do ; count
@@ -207,8 +212,8 @@ option@row    = False
 var_stats   = where( ismissing(var_stats), -9999., var_stats)
 print(var_stats)
 var_stats@_FillValue = -9999.
-option@fout = var_name+"_box_stats.txt"
-format      = case_sum+"f20.4"
+option@fout = var_name+"_CTL_FD_yearly_box_stats.txt"
+format      = "5f20.4"
 write_matrix (var_stats, format, option)
 delete(option@fout)
 

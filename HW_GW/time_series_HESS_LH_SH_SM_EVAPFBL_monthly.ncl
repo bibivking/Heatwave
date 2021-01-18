@@ -47,7 +47,7 @@ layer_depth    = (/"lvl 1","lvl 2","lvl 3","lvl 4","lvl 5","lvl 6"/);,\
                   ; "L1","L2","L3","L4","L5","L6"/)
                  ;(/"0~2.2cm","2.2~8cm","8~23.4cm","23.4~64.3cm","64.3~172.8cm","172.8~460cm"/)
 
-order_name     = (/"(a)","(b)","(c)","(d)","(e)","(f)","(g)","(h)","(i)"/)
+order_name     = (/"(a)","(b)","(a)","(b)","(c)","(d)","(e)","(f)","(g)","(h)","(i)"/)
 
 iveg_tree_s    = 1
 iveg_tree_e    = 4
@@ -364,6 +364,25 @@ else if EVAPFBL_scale .eq. "annual" then
     EVAPFBL_bar(:,1,:,counter+1) = EVAPFBL_annual(2,:,:,year)
     counter = counter + 2
   end do
+
+  CTL_tree_all_SD    = stddev(EVAPFBL_annual(0,1,0,:))
+  CTL_tree_deep_SD   = stddev(EVAPFBL_annual(0,1,1,:))
+  CTL_tree_shallow_SD= stddev(EVAPFBL_annual(0,1,0,:)-EVAPFBL_annual(0,1,1,:))
+  CTL_tree_deep_SD_rate   = CTL_tree_deep_SD/CTL_tree_all_SD*100.
+  CTL_tree_shallow_SD_rate= CTL_tree_shallow_SD/CTL_tree_all_SD*100.
+
+  FD_tree_all_SD     = stddev(EVAPFBL_annual(1,1,0,:))
+  FD_tree_deep_SD    = stddev(EVAPFBL_annual(1,1,1,:))
+  FD_tree_shallow_SD = stddev(EVAPFBL_annual(1,1,0,:)-EVAPFBL_annual(1,1,1,:))
+  FD_tree_deep_SD_rate   = FD_tree_deep_SD/FD_tree_all_SD*100.
+  FD_tree_shallow_SD_rate= FD_tree_shallow_SD/FD_tree_all_SD*100.
+
+  DR_tree_all_SD     = stddev(EVAPFBL_annual(2,1,0,:))
+  DR_tree_deep_SD    = stddev(EVAPFBL_annual(2,1,1,:))
+  DR_tree_shallow_SD = stddev(EVAPFBL_annual(2,1,0,:)-EVAPFBL_annual(2,1,1,:))
+  DR_tree_deep_SD_rate   = DR_tree_deep_SD/DR_tree_all_SD*100.
+  DR_tree_shallow_SD_rate= DR_tree_shallow_SD/DR_tree_all_SD*100.
+
   delete(EVAPFBL_annual)
 end if
 end if
@@ -668,46 +687,62 @@ else if EVAPFBL_plot .eq. "bar" then
   delete(x)
   year_tot         = year_sum*2
   res2@tmXBValues  = ispan(1,year_tot+1,2*2)
-  x                = ispan(1,year_tot,1)
+  x                = ispan(1,year_tot,1)+0.5
   res2@tmXBLabels  = ispan(year_s,year_e+1,2)
   res2@trXMinF     = 1.
   res2@trXMaxF     = year_tot+1
 
-
   ; All layers
-  res2@gsnXYBarChartColors2 = (/"blue","forestgreen"/)
-  res2@xyLineColors         = (/"white","forestgreen"/)
+  res2@xyLineColors         = "white"
   res2@tiYAxisString        = "Et (mm yr~S~-1~N~)"
 
-  res2@gsnXYBarChartFillOpacityF      = 0.3
+  ; res2@gsnXYBarChartFillOpacityF      = 0.3
+  res2@gsnXYBarChartColors2 = (/"lightskyblue","lightpink"/)
   plot_all_layers1          = gsn_csm_xy(wks, x, EVAPFBL_bar(1,0,0,:),res2) ; tree, CTL&FD, all layers
   delete(res2@tiYAxisString)
+  res2@gsnXYBarChartColors2 = (/"lightskyblue","yellowgreen"/)
   plot_all_layers2          = gsn_csm_xy(wks, x, EVAPFBL_bar(1,1,0,:),res2) ; tree, CTL&DR, all layers
 
   ; Deep soils
-  res2@gsnXYBarChartFillOpacityF      = 1.
+  ; res2@gsnXYBarChartFillOpacityF      = 1.
+  res2@tiYAxisString        = "Et (mm yr~S~-1~N~)"
+  res2@gsnXYBarChartColors2 = (/"blue","red"/)
   plot_deep_soil1           = gsn_csm_xy(wks, x, EVAPFBL_bar(1,0,1,:),res2) ; tree, CTL&FD, all layers
+  delete(res2@tiYAxisString)
+  res2@gsnXYBarChartColors2 = (/"blue","forestgreen"/)
   plot_deep_soil2           = gsn_csm_xy(wks, x, EVAPFBL_bar(1,1,1,:),res2) ; tree, CTL&DR, all layers
 
-  overlay(plot_deep_soil1, plot_all_layers1)
-  overlay(plot_deep_soil2, plot_all_layers2)
+  overlay(plot_all_layers1, plot_deep_soil1)
+  overlay(plot_all_layers2, plot_deep_soil2)
 
-  plots(2) = plot_deep_soil1
-  plots(3) = plot_deep_soil2
+  plots(2) = plot_all_layers1
+  plots(3) = plot_all_layers2
 
   textres                   = True
   gres                      = True
   lineres                   = True
-  lineres@lgLineColors      = (/"blue","blue","forestgreen","forestgreen"/)
   lineres@lgLineThicknesses = 10.    ; line thicknesses
-  lineres@lgLabelFontHeightF = 0.1
+  lineres@lgLabelFontHeightF = 0.15
   lineres@LineLengthPercent = 2.    ; expressed as %, 0->100, length of line
   gres@YPosPercent          = 95.  ;expressed as %, 0->100, sets position of top border of legend (Default = 95.)
   gres@XPosPercent          = 30.  ;expressed as %, 0->100, sets position of left border of legend (Default = 5.)
   lineres@lgDashIndexes     = (/0,0,0,0/)
-  textres@lgLabels          = (/"CTL Shollow","CTL Deep","FD Shollow","FD Deep"/)
+  lineres@lgLineColors      = (/"lightskyblue","blue","lightpink","red"/)
+
+  textres@lgLabels          = (/\
+                                "CTL Shallow ("+sprintf("%4.2f",CTL_tree_shallow_SD)+","+sprintf("%4.2f",CTL_tree_shallow_SD_rate)+"%)" ,\
+                                "CTL Deep ("+sprintf("%4.2f",CTL_tree_deep_SD)+","+sprintf("%4.2f",CTL_tree_deep_SD_rate)+"%)" ,\
+                                "FD Shallow ("+sprintf("%4.2f",FD_tree_shallow_SD)+","+sprintf("%4.2f",FD_tree_shallow_SD_rate)+"%)" ,\
+                                "FD Deep ("+sprintf("%4.2f",FD_tree_deep_SD)+","+sprintf("%4.2f",FD_tree_deep_SD_rate)+"%)"\
+                                /)
   plots(2) = simple_legend(wks,plots(2),gres,lineres,textres)
-  textres@lgLabels          = (/"CTL Shollow","CTL Deep","DR Shollow","DR Deep"/)
+  lineres@lgLineColors      = (/"lightskyblue","blue","yellowgreen","forestgreen"/)
+  textres@lgLabels          =  (/\
+                                "CTL Shallow ("+sprintf("%4.2f",CTL_tree_shallow_SD)+","+sprintf("%4.2f",CTL_tree_shallow_SD_rate)+"%)" ,\
+                                "CTL Deep ("+sprintf("%4.2f",CTL_tree_deep_SD)+","+sprintf("%4.2f",CTL_tree_deep_SD_rate)+"%)" ,\
+                                "DR Shallow ("+sprintf("%4.2f",DR_tree_shallow_SD)+","+sprintf("%4.2f",DR_tree_shallow_SD_rate)+"%)" ,\
+                                "DR Deep ("+sprintf("%4.2f",DR_tree_deep_SD)+","+sprintf("%4.2f",DR_tree_deep_SD_rate)+"%)"\
+                                /)
   plots(3) = simple_legend(wks,plots(3),gres,lineres,textres)
   delete(x)
 else if EVAPFBL_plot .eq. "profile" then
@@ -760,9 +795,9 @@ res@cnLevels       = fspan(-0.1,0.1,21)
 res@cnFillPalette  = "MPL_BrBG" ;"ViBlGrWhYeOrRe"
 ; res@tiXAxisString  = "Year"
 
-res@lbLabelBarOn   = False
 
 ; FD - CTL
+res@lbLabelBarOn   = False
 res@tiYAxisString  = "Depth (cm)"
 tmp                = SoilMoist_regrid(1,1,::-1,:) - SoilMoist_regrid(0,1,::-1,:)
 plots(4)           = gsn_csm_contour(wks, tmp*1., res)
@@ -770,6 +805,7 @@ delete(res@tiYAxisString)
 delete(tmp)
 
 ; DR - CTL
+res@lbLabelBarOn   = True
 tmp                = SoilMoist_regrid(2,1,::-1,:) - SoilMoist_regrid(0,1,::-1,:)
 plots(5)           = gsn_csm_contour(wks, tmp*1., res)
 delete(tmp)

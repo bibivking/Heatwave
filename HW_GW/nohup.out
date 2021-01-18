@@ -1151,3 +1151,650 @@ Number Of Attributes: 1
 (0)	year = 2017
 (0)	year = 2018
 (0)	year = 2019
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	daily
+
+Variable: SoilMoist
+Type: float
+Total Size: 1227240 bytes
+            306810 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [7] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	case_num = 0
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 1
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 2
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+
+
+Variable: unnamed (return)
+Type: float
+Total Size: 24 bytes
+            6 values
+Number of Dimensions: 2
+Dimensions and sizes:	[3] x [2]
+Coordinates: 
+Number Of Attributes: 2
+  _FillValue :	-1e+33
+  sum_op_ncl :	dim_sum_n function was applied
+(0,0)	7.532162
+(0,1)	11.18696
+(1,0)	7.182728
+(1,1)	10.65051
+(2,0)	7.634261
+(2,1)	11.42942
+(0)	prepare to plot
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 16304760 bytes
+            4076190 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [93] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 16304760 bytes
+            4076190 values
+Number of Dimensions: 4
+Dimensions and sizes:	[case | 3] x [PFT | 2] x [depth | 93] x [time | 7305]
+Coordinates: 
+            depth: [ 0..460]
+            time: [1..7305]
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+
+Variable: Qle_season
+Type: float
+Total Size: 1920 bytes
+            480 values
+Number of Dimensions: 3
+Dimensions and sizes:	[3] x [2] x [80]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL
+Type: float
+Total Size: 34560 bytes
+            8640 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [6] x [240]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL_tmp
+Type: float
+Total Size: 2880 bytes
+            720 values
+Number of Dimensions: 4
+Dimensions and sizes:	[year | 20] x [case | 3] x [PFT | 2] x [soil | 6]
+Coordinates: 
+Number Of Attributes: 2
+  _FillValue :	-1e+33
+  NCL :	month_to_annual
+
+Variable: EVAPFBL_annual
+Type: float
+Total Size: 960 bytes
+            240 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [2] x [year | 20]
+Coordinates: 
+Number Of Attributes: 3
+  sum_op_ncl :	dim_sum_n over dimension(s): soil
+  NCL :	month_to_annual
+  _FillValue :	-1e+33
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 0
+(0)	case_num = 1
+
+Variable: Evap_GLEAM_regrid
+Type: double
+Total Size: 10293592 bytes
+            1286699 values
+Number of Dimensions: 3
+Dimensions and sizes:	[time | 19] x [y | 241] x [x | 281]
+Coordinates: 
+            time: [11139.5..17714]
+            y: [-40..-28]
+            x: [140..154]
+Number Of Attributes: 5
+  _FillValue :	-999
+  units :	mm.year-1
+  long_name :	Actual evaporation
+  standard_name :	Actual evaporation
+  missing_value :	-999
+
+Variable: Trans_GLEAM_regrid
+Type: double
+Total Size: 10293592 bytes
+            1286699 values
+Number of Dimensions: 3
+Dimensions and sizes:	[time | 19] x [y | 241] x [x | 281]
+Coordinates: 
+            time: [11139.5..17714]
+            y: [-40..-28]
+            x: [140..154]
+Number Of Attributes: 5
+  _FillValue :	-999
+  units :	mm.year-1
+  long_name :	Transpiration
+  standard_name :	Transpiration
+  missing_value :	-999
+
+Variable: Esoil_GLEAM_regrid
+Type: double
+Total Size: 10293592 bytes
+            1286699 values
+Number of Dimensions: 3
+Dimensions and sizes:	[time | 19] x [y | 241] x [x | 281]
+Coordinates: 
+            time: [11139.5..17714]
+            y: [-40..-28]
+            x: [140..154]
+Number Of Attributes: 5
+  _FillValue :	-999
+  units :	mm.year-1
+  long_name :	Bare soil evaporation
+  standard_name :	Bare soil evaporation
+  missing_value :	-999
+warning:wkWidth is not a resource in the given object
+warning:wkHeight is not a resource in the given object
+warning:Dimension (0) has not been defined
+warning:Dimension (0) has not been defined
+warning:Dimension (0) has not been defined
+warning:Dimension (0) has not been defined
+input in flex scanner failed
+(0)	plot Q2botsoil
+
+Variable: cmap
+Type: float
+Total Size: 3184 bytes
+            796 values
+Number of Dimensions: 2
+Dimensions and sizes:	[199] x [4]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	9.96921e+36
+(0)	plot Q2aquifer
+(0)	plot Fwsoil_diff_max
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	daily
+
+Variable: SoilMoist
+Type: float
+Total Size: 1227240 bytes
+            306810 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [7] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	case_num = 0
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 1
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 2
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+
+
+Variable: unnamed (return)
+Type: float
+Total Size: 24 bytes
+            6 values
+Number of Dimensions: 2
+Dimensions and sizes:	[3] x [2]
+Coordinates: 
+Number Of Attributes: 2
+  _FillValue :	-1e+33
+  sum_op_ncl :	dim_sum_n function was applied
+(0,0)	7.532162
+(0,1)	11.18696
+(1,0)	7.182728
+(1,1)	10.65051
+(2,0)	7.634261
+(2,1)	11.42942
+(0)	prepare to plot
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 16304760 bytes
+            4076190 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [93] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 16304760 bytes
+            4076190 values
+Number of Dimensions: 4
+Dimensions and sizes:	[case | 3] x [PFT | 2] x [depth | 93] x [time | 7305]
+Coordinates: 
+            depth: [ 0..460]
+            time: [1..7305]
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+
+Variable: Qle_season
+Type: float
+Total Size: 1920 bytes
+            480 values
+Number of Dimensions: 3
+Dimensions and sizes:	[3] x [2] x [80]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL
+Type: float
+Total Size: 34560 bytes
+            8640 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [6] x [240]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL_tmp
+Type: float
+Total Size: 2880 bytes
+            720 values
+Number of Dimensions: 4
+Dimensions and sizes:	[year | 20] x [case | 3] x [PFT | 2] x [soil | 6]
+Coordinates: 
+Number Of Attributes: 2
+  _FillValue :	-1e+33
+  NCL :	month_to_annual
+
+Variable: EVAPFBL_annual
+Type: float
+Total Size: 960 bytes
+            240 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [2] x [year | 20]
+Coordinates: 
+Number Of Attributes: 3
+  sum_op_ncl :	dim_sum_n over dimension(s): soil
+  NCL :	month_to_annual
+  _FillValue :	-1e+33
+fatal:Variable (plot_all_soil1) is undefined
+fatal:["Execute.c":8637]:Execute: Error occurred at or near line 715 in file time_series_HESS_LH_SH_SM_EVAPFBL_monthly.ncl
+
+input in flex scanner failed
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+(0)	daily
+
+Variable: SoilMoist
+Type: float
+Total Size: 1227240 bytes
+            306810 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [7] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	case_num = 0
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 1
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	case_num = 2
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+
+
+Variable: unnamed (return)
+Type: float
+Total Size: 24 bytes
+            6 values
+Number of Dimensions: 2
+Dimensions and sizes:	[3] x [2]
+Coordinates: 
+Number Of Attributes: 2
+  _FillValue :	-1e+33
+  sum_op_ncl :	dim_sum_n function was applied
+(0,0)	7.532162
+(0,1)	11.18696
+(1,0)	7.182728
+(1,1)	10.65051
+(2,0)	7.634261
+(2,1)	11.42942
+(0)	prepare to plot
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 16304760 bytes
+            4076190 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [93] x [7305]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: SoilMoist_regrid
+Type: float
+Total Size: 16304760 bytes
+            4076190 values
+Number of Dimensions: 4
+Dimensions and sizes:	[case | 3] x [PFT | 2] x [depth | 93] x [time | 7305]
+Coordinates: 
+            depth: [ 0..460]
+            time: [1..7305]
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+(0)	4
+(1)	20
+
+Variable: Qle_season
+Type: float
+Total Size: 1920 bytes
+            480 values
+Number of Dimensions: 3
+Dimensions and sizes:	[3] x [2] x [80]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL
+Type: float
+Total Size: 34560 bytes
+            8640 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [6] x [240]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-1e+33
+
+Variable: EVAPFBL_tmp
+Type: float
+Total Size: 2880 bytes
+            720 values
+Number of Dimensions: 4
+Dimensions and sizes:	[year | 20] x [case | 3] x [PFT | 2] x [soil | 6]
+Coordinates: 
+Number Of Attributes: 2
+  _FillValue :	-1e+33
+  NCL :	month_to_annual
+
+Variable: EVAPFBL_annual
+Type: float
+Total Size: 960 bytes
+            240 values
+Number of Dimensions: 4
+Dimensions and sizes:	[3] x [2] x [2] x [year | 20]
+Coordinates: 
+Number Of Attributes: 3
+  sum_op_ncl :	dim_sum_n over dimension(s): soil
+  NCL :	month_to_annual
+  _FillValue :	-1e+33
