@@ -15,4 +15,6 @@ module load ncl/6.6.2
 
 cd /g/data/w35/mm3972/scripts/Heatwave/HW_GW
 
-ncl pftplot_HESS_HW.ncl
+#ncl scatter_HESS_HW_deltaT_WTD.ncl
+
+ncl time_accumulate_HESS_P-E.ncl

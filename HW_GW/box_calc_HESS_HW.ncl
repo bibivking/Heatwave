@@ -23,8 +23,9 @@ scale        = "SE-AU"   ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
 case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/);, \
                 ; "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
-var_name     = "Qh"
-select_region= True
+var_name     = "EF"
+select_region= False
+median_diff = True
 iveg_tree_s = 1
 iveg_tree_e = 4
 iveg_nontree_s = 5
@@ -56,13 +57,13 @@ end do
 ; ts_s    = (/366, 731, 1096, 1461, 1829, 2192, 2557, 2922, 3288, 6210, 6575, 6940/)
 ; ts_e    = (/730,1095, 1460, 1828, 2191, 2556, 2921, 3287, 3653, 6574, 6939, 7304/)
 
-; 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,\
-; 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
+         ; 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,\
+         ; 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
 ts_s    = (/335, 700, 1065, 1430, 1796, 2161, 2526, 2891, 3257, 3622,\
-           3987,4352, 4718, 5083, 5448, 5813, 6179, 6544, 6909/)
+           3987,4352, 4718, 5083, 5448, 5813, 6179, 6544, 6909/) ; ;
 
 ts_e    = (/425, 790, 1155, 1521, 1886, 2251, 2616, 2982, 3347, 3712, \
-           4077, 4443, 4808, 5173, 5538, 5904, 6269, 6634, 6999/)
+           4077, 4443, 4808,5173, 5538, 5904, 6269, 6634, 6999/) ; ;
 
 
 ; =================================== Path =====================================
@@ -97,14 +98,14 @@ f         = addfile (filename,"r")
 lat_sum   = dimsizes(f->Rainf(0,{A:B},0))
 lon_sum   = dimsizes(f->Rainf(0,0,{C:D}))
 def_value = f->Rainf@_FillValue
-
+def_iveg  = f->iveg@_FillValue
 ; PFT mask
 if select_region .eq. True then
   LAI      = dim_avg_n_Wrap(f->LAI(:,{A:B},{C:D}),0)
-  PFT_mask = where(LAI .gt. 1.5, f->iveg({A:B},{C:D}), def_value)
+  PFT_mask = where(LAI .gt. 1.5, f->iveg({A:B},{C:D}), def_iveg)
   PFT_mask = where((f->latitude({A:B},{C:D}) .le. -35.) .and. (f->latitude({A:B},{C:D}) .ge. -40.)   \
             .and.  (f->longitude({A:B},{C:D}) .le. 149.) .and. (f->longitude({A:B},{C:D}) .ge. 145.),\
-             PFT_mask, def_value)
+             PFT_mask, def_iveg)
   PFT_mask = where((PFT_mask .ge. iveg_tree_s) .and. (PFT_mask .le. iveg_tree_e), 1, PFT_mask)
   PFT_mask = where((PFT_mask .ge. iveg_nontree_s) .and. (PFT_mask .le. iveg_nontree_e), 2, PFT_mask)
 else
@@ -139,6 +140,7 @@ if heatwave .eq. "hw-90th" then
   delete(filename_hw)
   delete(fhw)
 end if
+
 ; ====================== Checking mask ===========================
 wks = gsn_open_wks("pdf","check")
 gsn_define_colormap(wks,"rainbow")
@@ -168,7 +170,7 @@ res@cnLineLabelsOn         = False
 res@cnExplicitLabelBarLabelsOn = True   ;?
 res@cnLevelSelectionMode   = "ExplicitLevels"
 
-plot = gsn_csm_contour_map(wks,PFT_mask,res)
+plot = gsn_csm_contour(wks,PFT_mask,res)
 
 ; _____________________________ Calc Box Stats ________________________________
 var_stats      = new((/total_box, 5/), float, -9999.)
@@ -209,6 +211,15 @@ do case_num = 0,case_sum-1
                                               + f1->SoilMoist(:,2,{A:B},{C:D})*0.154 \
                                               + f1->SoilMoist(:,3,{A:B},{C:D})*0.409)\
                                               / 0.643
+    else if var_name .eq. "EF" then
+      Qle_tmp = f1->Qle(:,{A:B},{C:D})
+      Qh_tmp  = f1->Qh(:,{A:B},{C:D})
+      var_val(day_step_s:day_step_e,:,:)   = where( (Qle_tmp +Qh_tmp) .ne. 0, \
+                                                     Qle_tmp/(Qh_tmp+ Qle_tmp), \
+                                                     def_value)
+      delete(Qle_tmp)
+      delete(Qh_tmp)
+    end if
     end if
     end if
     end if
@@ -229,7 +240,7 @@ do case_num = 0,case_sum-1
   ; _______________________________ MASK PFT __________________________________
   print("mask PFT")
   ; trees
-  var_val_tree      = where(PFT_mask_multi .eq. 1, var_val, def_value)
+  var_val_tree = where(PFT_mask_multi .eq. 1, var_val, def_value)
 
   ; non-trees
   var_val      = where(PFT_mask_multi .eq. 2, var_val, def_value)
@@ -239,6 +250,7 @@ do case_num = 0,case_sum-1
   groups = case_sum*2+1
 
   do count = 0, dimsizes(ts_s)-1
+    print(count)
     var_stats(count*groups+loc1, :)    = boxplot_stats_mmy(var_val(ts_s(count):ts_e(count),:,:),def_value)
     var_stats(count*groups+loc2, :)    = boxplot_stats_mmy(var_val_tree(ts_s(count):ts_e(count),:,:),def_value)
   end do ; count
@@ -266,4 +278,5 @@ format      = "5f20.4"
 write_matrix (var_stats, format, option)
 delete(option@fout)
 
+exit
 end

@@ -109,17 +109,20 @@ begin
         "trXMinF"              : min(xAxis)
         "trXMaxF"              : max(xAxis)
         "pmTickMarkDisplayMode": "Always"
+        "tfDoNDCOverlay"       : True
         "tmXBMode"             : "Explicit"
         "tmXBValues"           : xAxis
         "tmXBLabels"           : labarr
         "pmTitleDisplayMode"   : "Always"                   ; allow titles
         "tiYAxisString"        : title
-        "tmYROn"               : True
+        "tmYROn"               : False;True
         "tmYRLabelsOn"         : False
         "tmYRBorderOn"         : True
-        "tmXTOn"               : False
-        "tmXTBorderOn"         : False
-        "tmXTLabelsOn"         : False
+        "tmXTOn"               : True;False
+        "tmXTBorderOn"         : True;False
+        "tmXTLabelsOn"         : False;False
+        "tmXBLabelFontHeightF" : 0.015
+        "tmYLLabelFontHeightF" : 0.015
         "tmXBMajorOutwardLengthF" : 0.0098
         "tmXBMinorOutwardLengthF" : 0.0098
         "tmYLMajorOutwardLengthF" : 0.024
@@ -169,7 +172,7 @@ begin
             polyres@gsLineColor = boxcolor(gg)
         end if
         ; polyres@gsLineOpacityF = 0.7
-        polyres@gsLineDashPattern = 0 
+        polyres@gsLineDashPattern = 0
         ; if mod(gg,7) .lt. 3 then ;for 2 droughts ; if mod(gg,9) .lt. 4 then
         ;   polyres@gsLineDashPattern = 5 ; gsLineOpacityF
         ; else

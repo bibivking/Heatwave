@@ -15,7 +15,7 @@ end setvalues
 
 ; ================================= Predefine ==================================
 pic_name  = "Fwsoil_P-ET"
-case_name = (/"CTL","FREE_DRAIN"/) ;,"PUMPx10","PUMPx100"/);,"PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
+case_name = (/"CTL-30x3+30yr/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr"/) ;,"PUMPx10","PUMPx100"/);,"PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
 
 PFT       = "all" ; "tree" ;"all"
 plot_type = "spitial" ;"all" ; "spitial" ; "time_series"
@@ -60,7 +60,7 @@ end if
 ; =================================== Path =====================================
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
-  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)+"/outputs-spinup200yr"
+  path(case_num) = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"+case_name(case_num)
 end do
 
 ; ================================== SET Dim ===================================

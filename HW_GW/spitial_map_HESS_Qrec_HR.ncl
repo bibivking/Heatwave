@@ -468,7 +468,7 @@ else if ET_plot_type .eq. "Diff_Evap_Trans_Fwsoil" then
   delete(res@cnLevels)
 
 
-  res@cnLevels      = fspan(1,25,25)
+  res@cnLevels      = fspan(1,15,15)
   res@gsnDraw       = True  ; Don't draw plots
   res@gsnFrame      = True  ; ����ҳ
   res@lbLabelBarOn  = True
