@@ -4,12 +4,35 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 print(sns.__version__)
 
-fname = "./txt/scatter_WTD_Dr_CTL_PFT-tree_2010-11.txt"
+fname = "./txt/scatter_WTD_Dr_CTL_PFT-tree_2000-19.txt"
 x = pd.read_csv(fname, names=["wt_depth","delta_drain"], sep=" ", skipinitialspace=True)
 sns.displot(x, x="wt_depth", y="delta_drain")#, xlim=[0,10], ylim=[0,15])
-# plt.xlim(0, 15)
-# plt.ylim(10, 100)
+plt.xlim(0, 10)
+plt.ylim(-40, 100)
+plt.savefig("scatter_density_Dr_2000-19.png")
+
+fname1 = "./txt/scatter_WTD_Dr_CTL_PFT-tree_2001-09.txt"
+x1 = pd.read_csv(fname1, names=["wt_depth","delta_drain"], sep=" ", skipinitialspace=True)
+sns.displot(x1, x="wt_depth", y="delta_drain")#, xlim=[0,10], ylim=[0,15])
+plt.xlim(0, 10)
+plt.ylim(-40, 100)
+plt.savefig("scatter_density_Dr_2001-09.png")
+
+fname2 = "./txt/scatter_WTD_Dr_CTL_PFT-tree_2010-11.txt"
+x2 = pd.read_csv(fname2, names=["wt_depth","delta_drain"], sep=" ", skipinitialspace=True)
+sns.displot(x2, x="wt_depth", y="delta_drain")#, xlim=[0,10], ylim=[0,15])
+plt.xlim(0, 10)
+plt.ylim(-40, 100)
 plt.savefig("scatter_density_Dr_2010-11.png")
+
+fname3 = "./txt/scatter_WTD_Dr_CTL_PFT-tree_2017-19.txt"
+x3 = pd.read_csv(fname3, names=["wt_depth","delta_drain"], sep=" ", skipinitialspace=True)
+sns.displot(x3, x="wt_depth", y="delta_drain")#, xlim=[0,10], ylim=[0,15])
+plt.xlim(0, 10)
+plt.ylim(-40, 100)
+plt.savefig("scatter_density_Dr_2017-19.png")
+
+
 
 #
 # fig = plt.figure(figsize=[15,10])

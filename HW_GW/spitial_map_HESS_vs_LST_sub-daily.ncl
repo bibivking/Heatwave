@@ -17,6 +17,7 @@ PFT        = "all" ; "tree"
 scale      = "SE-AU"
 year_s     = 2019
 year_e     = 2019
+diff       = False
 
 HW_day_s   = (/ 1 /) ;15, 22/)
 HW_day_e   = (/ 31/) ;19, 27/)
@@ -27,15 +28,15 @@ do event_num = 0, event_sum-1
   day_tot = day_tot + (HW_day_e(event_num)-HW_day_s(event_num)+1)
 end do
 
-message    = "subday_map"
-pic_name   = "CABLE-HESS_"+message+"_PFT-"+PFT+"_"+scale+"_"+year_s+"-"+year_e
+if diff .eq. True then
+  message    = "LST_subday_diff"
+else
+  message    = "LST_subday"
+end if
+pic_name   = "HESS_"+message+"_"+scale+"_"+year_s+"-"+year_e
 
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-
-
-case_name = (/"CTL-30x3+30yr","FREE_DRAIN"/)
-;, "CTL-30x3+30yr_2019-WetSoil","CTL-30x3+30yr_2019-DeepRoot"
-
+case_name = (/"CTL-30x3+30yr","FREE_DRAIN","CTL-30x3+30yr_2019-DeepRoot"/)
 order_name  = (/"(a)","(b)","(c)","(d)",\
                 "(e)","(f)","(g)","(h)",\
                 "(i)","(j)","(k)","(l)",\
@@ -87,128 +88,106 @@ default_val = f1->Qle@_FillValue
 delete(filename1)
 delete(f1)
 
-; Qle      = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val)
-; Qh       = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val)
-; deltaT   = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val) ; *3
-; Fwsoil   = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val)
-VegT     = new((/case_sum,31,dimsizes(lat),dimsizes(lon)/),float,default_val)
-
-; Qle      = 0.
-; Qh       = 0.
-; deltaT   = 0.
-; Fwsoil   = 0.
+VegT     = new((/case_sum,2,31,dimsizes(lat),dimsizes(lon)/),float,default_val)
 VegT     = 0.
-;
-; Fwsoil_diff_max = new((/case_sum,dimsizes(lat),dimsizes(lon)/),float,default_val)
-; Fwsoil_diff_max = 0
 
+; ================================== VegT ======================================
 do case_num = 0, case_sum -1
   print("case_num = " +case_num)
   do year = year_s,year_e
     filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc" ; outputs/
     f1 = addfile (filename1,"r")
 
-    ; Rain_tmp     = f1->Rainf(0:60*8,{A:B},{C:D})
-    ; Rain_tmp     = Rain_tmp*3*3600
-    ; Qle_tmp      = f1->Qle(0:60*8,{A:B},{C:D})
-    ; Qh_tmp       = f1->Qh(0:60*8,{A:B},{C:D})
-    ; deltaT_tmp   = f1->VegT(0:60*8,{A:B},{C:D})
-    ; deltaT_tmp   = deltaT_tmp - f1->Tair(0:60*8,{A:B},{C:D})
-    ; Fwsoil_tmp   = f1->Fwsoil(0:60*8,{A:B},{C:D})
-    ; printVarSummary(Qle_tmp)
-    ; delete(f1)
-    ; delete(filename1)
-
-    ; do event_num = 0,event_sum-1
-      ; do day = HW_day_s(event_num),HW_day_e(event_num)
-        ; ts = (HW_day_s(event_num)-1)*8+4
-        ; ts = (day-1)*8+6 ;6-6pm ;7 - 9pm
-        ; Rain = dim_sum_n_Wrap(Rain_tmp(ts:ts+3,:,:),0)
-        ; Qle(case_num,:,:)    = Qle(case_num,:,:) + where(PFT_mask .eq. 1 .and. Rain .lt. 0.01, Qle_tmp(ts,:,:) - Qle_tmp(ts+3,:,:), default_val)/day_tot
-        ; Qh(case_num,:,:)     = Qh(case_num,:,:)  + where(PFT_mask .eq. 1 .and. Rain .lt. 0.01, Qh_tmp(ts,:,:) - Qh_tmp(ts+3,:,:), default_val)/day_tot
-        ; deltaT(case_num,:,:) = deltaT(case_num,:,:) + where(PFT_mask .eq. 1 .and. Rain .lt. 0.01, deltaT_tmp(ts,:,:) - deltaT_tmp(ts+3,:,:), default_val)/day_tot
-        ; Fwsoil(case_num,:,:) = where(PFT_mask .eq. 1 .and. Rain .lt. 0.01, Fwsoil_tmp(ts,:,:) - Fwsoil_tmp(ts+3,:,:), default_val);/day_tot ;Fwsoil(case_num,:,:) +
-        ; print(abs(Fwsoil_diff_max(case_num,:,:)))
-        ; Fwsoil_diff_max(case_num,:,:) = where(Fwsoil(case_num,:,:) .lt. Fwsoil_diff_max(case_num,:,:), Fwsoil(case_num,:,:), Fwsoil_diff_max(case_num,:,:))
-        ; delete(Rain)
-
-      ; end do
-    ; end do
-
     VegT_tmp   = f1->VegT(0:60*8,{A:B},{C:D})
     do event_num = 0,event_sum-1
       do day = HW_day_s(event_num),HW_day_e(event_num)
         ts = (day-1)*8+4 ;4 - 12pm
-        VegT(case_num,day-1, :,:) =  VegT_tmp(ts,:,:)
+        VegT(case_num, 0, day-1, :, :) = VegT_tmp(ts,:,:)
+        ts = (day-1)*8+5 ;5 - 12pm
+        VegT(case_num, 1, day-1, :, :) = VegT_tmp(ts,:,:) ;dim_avg_n_Wrap(VegT_tmp(ts:ts+1,:,:),0)
       end do
     end do
   end do ; year
 end do ; case_num
 delete(PFT_mask)
+
 VegT = VegT - 273.15
 
 VegT!0      = "case"
-VegT!1      = "time"
-VegT!2      = "lat"
-VegT!3      = "lon"
+VegT!1      = "time_step"
+VegT!2      = "time"
+VegT!3      = "lat"
+VegT!4      = "lon"
 VegT&lat    = lat
 VegT&lon    = lon
 
-; print("prepare to plot")
-; Qle!0      = "time"
-; Qle!1      = "lat"
-; Qle!2      = "lon"
-; Qle&lat    = lat
-; Qle&lon    = lon
-;
-; Qh!0      = "time"
-; Qh!1      = "lat"
-; Qh!2      = "lon"
-; Qh&lat    = lat
-; Qh&lon    = lon
-;
-; ; TVeg!0      = "time"
-; ; TVeg!1      = "lat"
-; ; TVeg!2      = "lon"
-; ; TVeg&lat    = lat
-; ; TVeg&lon    = lon
-;
-; deltaT!0      = "time"
-; deltaT!1      = "lat"
-; deltaT!2      = "lon"
-; deltaT&lat    = lat
-; deltaT&lon    = lon
-;
-; Fwsoil!0      = "time"
-; Fwsoil!1      = "lat"
-; Fwsoil!2      = "lon"
-; Fwsoil&lat    = lat
-; Fwsoil&lon    = lon
-;
-;
-; Fwsoil_diff_max!0      = "time"
-; Fwsoil_diff_max!1      = "lat"
-; Fwsoil_diff_max!2      = "lon"
-; Fwsoil_diff_max&lat    = lat
-; Fwsoil_diff_max&lon    = lon
-
 ; ================================== LST =======================================
+path_LST = "/g/data/w35/mm3972/data/MODIS_LST/";
+Terra    = "MOD11A1.006_1km_aid0001.nc"
+Aqua     = "MYD11A1.006_1km_aid0001.nc"
 
-path_LST  = "/g/data/w35/mm3972/data/MODIS_LST/MOD11A1.006_1km_aid0001.nc";
-filename2 = path_LST
+filename2 = path_LST+Terra
 f2  = addfile (filename2,"r")
 
-LST = tofloat(f2->LST_Day_1km(:,{A:B},{C:D}))* 0.02  - 273.15
-LST!0 = "time"
-LST!1 = "lat"
-LST!2 = "lon"
-print(doubletofloat(f2->lat({A:B})))
-LST&lat = f2->lat({A:B})
-LST&lon = f2->lon({C:D})
-LST@_FillValue = 0.
-printVarSummary(LST)
-pic_name = "Check_LST"
+filename3 = path_LST+Aqua
+f3  = addfile (filename3,"r")
 
+; Terra passes over Aus between 12 pm and 2 pm
+
+LST_Terra = tofloat(f2->LST_Day_1km(:,{A:B},{C:D}))
+LST_Terra = where(LST_Terra .ne. 0, LST_Terra*0.02-273.15,-9999.)
+LST_Terra@_FillValue = -9999.
+
+LST_Terra_regrid = linint2_Wrap(doubletofloat(f2->lon({C:D})),doubletofloat(f2->lat({A:B})),LST_Terra,False,lon,lat,0)
+LST_Terra_regrid!0 = "time"
+LST_Terra_regrid!1 = "lat"
+LST_Terra_regrid!2 = "lon"
+LST_Terra_regrid&lat = lat
+LST_Terra_regrid&lon = lon
+LST_Terra_regrid@_FillValue = -9999.
+printVarSummary(LST_Terra_regrid)
+
+
+; Aqua passes over Aus between 3:30 pm and 5:30 pm
+LST_Aqua = tofloat(f3->LST_Day_1km(:,{A:B},{C:D}))
+LST_Aqua = where(LST_Aqua .ne. 0, LST_Aqua*0.02-273.15,-9999.)
+LST_Aqua@_FillValue = -9999.
+
+LST_Aqua_regrid = linint2_Wrap(doubletofloat(f3->lon({C:D})),doubletofloat(f3->lat({A:B})),LST_Aqua,False,lon,lat,0)
+LST_Aqua_regrid!0 = "time"
+LST_Aqua_regrid!1 = "lat"
+LST_Aqua_regrid!2 = "lon"
+LST_Aqua_regrid&lat = lat
+LST_Aqua_regrid&lon = lon
+LST_Aqua_regrid@_FillValue = -9999.
+printVarSummary(LST_Aqua_regrid)
+
+; ================================== Tair ======================================
+if diff .eq. True then
+
+  Tair     = new((/2,31,dimsizes(lat),dimsizes(lon)/),float,default_val)
+  Tair     = 0.
+
+  filename1 = path(0)+"/cable_out_2019_SE_Aus.nc"
+  f1 = addfile (filename1,"r")
+  Tair_tmp   = f1->Tair(0:60*8,{A:B},{C:D})
+  do event_num = 0,event_sum-1
+    do day = HW_day_s(event_num),HW_day_e(event_num)
+      ts = (day-1)*8+4 ;4 - 12pm
+      Tair(0,day-1,:,:) =  Tair_tmp(ts,:,:)
+      ts = (day-1)*8+5 ;5 - 3pm
+      Tair(1,day-1,:,:) =  Tair_tmp(ts,:,:);dim_avg_n_Wrap(Tair_tmp(ts:ts+1,:,:),0)
+    end do
+  end do
+  delete(Tair_tmp)
+  Tair = Tair - 273.15
+
+  VegT(0,:,:,:,:) = VegT(0,:,:,:,:) - Tair
+  VegT(1,:,:,:,:) = VegT(1,:,:,:,:) - Tair
+  VegT(2,:,:,:,:) = VegT(2,:,:,:,:) - Tair
+  LST_Terra_regrid= LST_Terra_regrid - Tair(0,:,:,:)
+  LST_Aqua_regrid = LST_Aqua_regrid  - Tair(1,:,:,:)
+end if
 
 ; ================================= Plotting ===================================
 pic = "./plots/"+pic_name
@@ -262,7 +241,6 @@ res@txString                = ""
 res@gsnLeftString           = ""
 res@gsnRightString          = ""
 
-
 if scale .eq. "Global" then
   res@trYMinF         = -60
   res@trYMaxF         = 80
@@ -311,9 +289,6 @@ end if
 end if
 end if
 
-
-
-
 ;**************** ͼ�������� *****************
 pres                    = True
 pres@wkWidth            = 2500
@@ -330,129 +305,49 @@ pres@lbLabelFontHeightF = 0.01
 pres@gsnPanelYWhiteSpacePercent = 0.5
 pres@gsnPanelXWhiteSpacePercent = 0.5
 
-plots = new(3,graphic)
+txres                   = True
+txres@txPerimOn         = False
+txres@txFont            = 25
+txres@txFontHeightF     = 0.03
 
-res@cnLevels      = fspan(20,60, 41) ;deltaT_CTL_lvl
-res@cnFillPalette = "WhiteBlueGreenYellowRed"
+amres                   = True
+amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
+amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
+amres@amJust            = "TopLeft"
 
+
+plots = new(8,graphic)
+
+if diff .eq. True then
+  res@cnLevels      = fspan(-20,20, 41) ;deltaT_CTL_lvl
+  res@cnFillPalette = "testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
+else
+  res@cnLevels      = fspan( 20, 60, 41) ;deltaT_CTL_lvl
+  res@cnFillPalette = "WhiteBlueGreenYellowRed"
+end if
 do day = 0,30
   print("VegT")
-  plots(0) = gsn_csm_contour_map(wks,VegT(0,day,:,:),res)
-  plots(1) = gsn_csm_contour_map(wks,VegT(1,day,:,:),res)
+  plots(0) = gsn_csm_contour_map(wks,VegT(0,0,day,:,:),res)
+  plots(1) = gsn_csm_contour_map(wks,VegT(1,0,day,:,:),res)
+  plots(2) = gsn_csm_contour_map(wks,VegT(2,0,day,:,:),res)
   print("LST")
-  plots(2) = gsn_csm_contour_map(wks,LST(day,:,:),res)
-  gsn_panel(wks,(/plots/),(/1,3/),pres)
+  plots(3) = gsn_csm_contour_map(wks,LST_Terra_regrid(day,:,:),res)
+
+  print("VegT")
+  plots(4) = gsn_csm_contour_map(wks,VegT(0,1,day,:,:),res)
+  plots(5) = gsn_csm_contour_map(wks,VegT(1,1,day,:,:),res)
+  plots(6) = gsn_csm_contour_map(wks,VegT(2,1,day,:,:),res)
+  print("LST")
+  plots(7) = gsn_csm_contour_map(wks,LST_Aqua_regrid(day,:,:),res)
+
+  do cnt = 0, 7
+    txid1   = gsn_create_text(wks, order_name(cnt), txres)
+    annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
+  end do
+  gsn_panel(wks,(/plots/),(/2,4/),pres)
+
 end do
 
-
-; txres                   = True
-; txres@txPerimOn         = False
-; txres@txFont            = 25
-; txres@txFontHeightF     = 0.03
-;
-; amres                   = True
-; amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
-; amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
-; amres@amJust            = "TopLeft"
-;
-; Qle_CTL_lvl    = (/25., 50, 100, 150, 200, 250, 300, 350, 400/)
-; Fw_CTL_lvl     = fspan(0.1,0.9,9)
-; Qh_CTL_lvl     = Qle_CTL_lvl
-; deltaT_CTL_lvl = fspan(1,12,12)
-;
-; ; diff_color = "BlAqGrWh2YeOrReVi22"; "ViBlGrWhYeOrRe";
-; Qle_diff_lvl    = (/-200, -150, -100, -50, -25., 0, 25., 50, 100, 150, 200/) ;-40, -30, -20, -10;10, 20, 30, 40,
-; Fw_diff_lvl     = fspan(-0.6,0.6,13)
-; Qh_diff_lvl     = Qle_diff_lvl
-; deltaT_diff_lvl = (/-5., -4., -3., -2, -1, -0.5, 0, 0.5, 1, 2, 3, 4., 5./)
-;
-; plots = new(case_sum*4,graphic)
-; do case_num = 0,case_sum-1
-;   ; if case_num .eq. 0 then
-;     res@lbLabelBarOn  = True
-;
-;     ; deltaT
-;     res@cnLevels      = deltaT_diff_lvl ;deltaT_CTL_lvl
-;     res@cnFillPalette = "BlAqGrWh2YeOrReVi22"
-;     ; res@cnFillPalette = "precip3_16lev";"WhiteBlueGreenYellowRed";"vegetation_ClarkU";"NCV_blue_red";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-;     ; plots(case_num*4) = gsn_csm_contour_map(wks,deltaT(0,:,:),res)
-;     plots(case_num*4) = gsn_csm_contour_map(wks,deltaT(case_num,:,:),res)
-;     delete(res@cnLevels)
-;
-;     ; Qh
-;     res@cnLevels      = Qh_diff_lvl ;Qh_CTL_lvl
-;     ; plots(case_num*4+1) = gsn_csm_contour_map(wks,Qh(0,:,:),res)
-;     plots(case_num*4+1) = gsn_csm_contour_map(wks,Qh(case_num,:,:),res)
-;     delete(res@cnLevels)
-;     delete(res@cnFillPalette)
-;
-;     ; Qle
-;     delete(res@cnFillPalette)
-;     cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
-;     res@cnFillPalette = cmap(::-1,:)
-;
-;     res@cnLevels      = Qle_diff_lvl ;Qle_CTL_lvl
-;     ;cmap = read_colormap_file("WhiteBlueGreenYellowRed");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
-;     ; res@cnFillPalette = "spread_15lev";cmap(::-1,:)
-;     ; plots(case_num*4+2) = gsn_csm_contour_map(wks,Qle(0,:,:),res)
-;     plots(case_num*4+2) = gsn_csm_contour_map(wks,Qle(case_num,:,:),res)
-;     delete(res@cnLevels)
-;
-;     ; Fwsoil
-;     res@cnLevels      = fspan(-0.1,0.1,21) ;Fw_CTL_lvl
-;     ; plots(case_num*4+3) = gsn_csm_contour_map(wks,Fwsoil(0,:,:),res)
-;     plots(case_num*4+3) = gsn_csm_contour_map(wks,Fwsoil_diff_max(case_num,:,:),res) ;Fwsoil(case_num,:,:),res)
-;     delete(res@cnLevels)
-;     delete(res@cnFillPalette)
-;
-;   ; else
-;   ;   if case_num .lt.case_sum-1 then
-;   ;     res@lbLabelBarOn  = False
-;   ;   else
-;   ;     res@lbLabelBarOn  = True
-;   ;   end if
-;   ;   delete(res@cnFillPalette)
-;   ;   res@cnLevels      = deltaT_diff_lvl
-;   ;   res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22"
-;   ;   tmp  = deltaT(case_num,:,:)
-;   ;   tmp  = tmp - deltaT(0,:,:)
-;   ;   plots(case_num*4) = gsn_csm_contour_map(wks,tmp,res)
-;   ;   delete(tmp)
-;   ;   delete(res@cnLevels)
-;   ;
-;   ;   res@cnLevels      = Qh_diff_lvl
-;   ;   tmp  = Qh(case_num,:,:)
-;   ;   tmp  = tmp - Qh(0,:,:)
-;   ;   plots(case_num*4+1) = gsn_csm_contour_map(wks,tmp,res)
-;   ;   delete(tmp)
-;   ;   delete(res@cnLevels)
-;   ;
-;   ;   ; delete(cmap)
-;   ;   delete(res@cnFillPalette)
-;   ;   cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
-;   ;   res@cnFillPalette = cmap(::-1,:)
-;   ;
-;   ;   res@cnLevels      = Qle_diff_lvl
-;   ;   tmp  = Qle(case_num,:,:)
-;   ;   tmp  = tmp - Qle(0,:,:)
-;   ;   plots(case_num*4+2) = gsn_csm_contour_map(wks,tmp,res)
-;   ;   delete(tmp)
-;   ;   delete(res@cnLevels)
-;   ;
-;   ;   res@cnLevels      = Fw_diff_lvl
-;   ;   tmp  = Fwsoil(case_num,:,:)
-;   ;   tmp  = tmp - Fwsoil(0,:,:)
-;   ;   plots(case_num*4+3) = gsn_csm_contour_map(wks,tmp,res)
-;   ;   delete(tmp)
-;   ;   delete(res@cnLevels)
-;   ;
-;   ; end if
-; end do
-;
-; do cnt = 0, 15
-;   txid1   = gsn_create_text(wks, order_name(cnt), txres)
-;   annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
-; end do
 ;
 ; gsn_panel(wks,(/plots/),(/4,4/),pres)
 
