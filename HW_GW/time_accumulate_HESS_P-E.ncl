@@ -198,12 +198,12 @@ x                        = ispan(1,total,1)
 res@xyLineThicknesses    = (/ 1.5, 1.5, 1.5, 1.5/)
 res@xyDashPatterns       = (/ 0, 0, 0, 0    /)
 res@xyLineColors         = (/"blue","red", "green","orange" /)
-res@xyExplicitLegendLabels = (/"CTL MD","FD MD","CTL RD","FD RD"/)  ; create explicit labels
-
+res@xyExplicitLegendLabels = (/"GW MD","FD MD","GW RD","FD RD"/)  ; create explicit labels
+res@lgItemOrder            = (/3,2,1,0/)
 res@lgPerimOn              = False      ; No legend perimeter.
 res@lgJustification        = "TopRight"
 res@pmLegendParallelPosF   = 0.5       ; Move to right
-res@pmLegendOrthogonalPosF = 0.5     ; Move into plot
+res@pmLegendOrthogonalPosF = -0.8     ; Move into plot
 res@pmLegendWidthF         = 0.3       ; Decrease width
 res@pmLegendHeightF        = 0.1       ; Decrease height
 res@lgBoxMinorExtentF      = 0.2       ; Shorten the legend lines

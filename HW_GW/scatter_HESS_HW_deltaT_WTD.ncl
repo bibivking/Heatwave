@@ -44,7 +44,6 @@ case_name    = (/"CTL-30x3+30yr/outputs-daily"/) ;, "FREE_DRAIN/outputs-spinup30
                  ;"CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
 case_name_brf= "CTL" ;_vs_FD_vs_DR"
 var_name     = "deltaT"
-pic_name     = "HW_scatter_"+var_name+"_WTD_"+"_"+heatwave+"_"+scale+"_"+case_name_brf
 operation    = "plot"    ;"calc" ; "plot"
 
 order_name   = (/"(a)","(b)","(c)","(d)","(e)","(f)"/)
@@ -116,7 +115,7 @@ delete(f)
 ;   2000-1-1,   2001-1-1,   2010-1-1,    2017-1-1
 ts_s    = (/        0,         366,       3653,       6210/)
 ; 2019-12-31, 2009-12-31, 2011-12-31,  2019-12-31
-ts_e    = (/ day_sum-1,       3652,       4382,       7304/)
+ts_e    = (/day_sum-1,        3652,       4382,       7304/)
 periods = (/ "2000-19",  "2001-09",  "2010-11",  "2017-19"/)
 
 
@@ -267,10 +266,7 @@ if operation .eq. "calc" then
 
 else if operation .eq. "plot" then
 
-  ; ================================ Plot =====================================
-  wks = gsn_open_wks("pdf",pic_name)
-  gsn_define_colormap(wks,"rainbow")
-
+  ; ============================= setting plot ===============================
   res                        = True
   res@gsnDraw                = True  ; Don't draw plots
   res@gsnFrame               = True  ; ����ҳ
@@ -303,13 +299,14 @@ else if operation .eq. "plot" then
   ; res@trYReverse        = True
 
   res@trXMinF             = 0.
-  res@trXMaxF             = 20.
+  res@trXMaxF             = 15.
 
   res@xyMarkLineMode      = "Markers"
   res@xyMarker            = 16                     ; choose type of marker
   res@xyMarkerOpacityF    = 0.01
-  res@xyMarkerColor       = "navy"
-  res@xyMarkerSizeF       = 0.0001
+  res@xyMarkerColor       = "lightskyblue";"navy"
+  res@xyMarkerSizeF       = 0.01
+  res@xyExplicitLegendLabels = "GW"  ; create explicit labels
 
   if var_name .eq. "Qle" then
     res@trYMinF = 0.
@@ -321,8 +318,9 @@ else if operation .eq. "plot" then
     res@trYMinF = 0.
     res@trYMaxF = 1.
   else if var_name .eq. "deltaT" then
-    res@trYMinF = -3.
-    res@trYMaxF = 10.
+    print("skip")
+    ; res@trYMinF = -3.
+    ; res@trYMaxF = 6.
   else if var_name .eq. "SM64cm" then
     res@trYMinF = 0.05
     res@trYMaxF = 0.45
@@ -342,7 +340,14 @@ else if operation .eq. "plot" then
   amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
   amres@amJust            = "TopLeft"
 
-  do count = 0, dimsizes(ts_s)-1
+
+  ; ================================ Plot =====================================
+  do count = 1, dimsizes(ts_s)-1
+
+    pic_name     = "HW_scatter_"+var_name+"_WTD_"+"_"+heatwave+"_"+scale+"_"+case_name_brf+periods(count)
+    wks = gsn_open_wks("pdf",pic_name)
+    gsn_define_colormap(wks,"rainbow")
+
     ; =============================== READ IN ======================================
     txt_name = "./txt/scatter_WTD_"+var_name+"_"+case_name_brf+"_PFT-tree_"+periods(count)+".txt"
     data_tmp = asciiread(txt_name, -1,"float") ; read all data as one-D
@@ -355,6 +360,8 @@ else if operation .eq. "plot" then
     annoid1 = gsn_add_annotation(plot, txid1, amres)
     delete(data_tmp)
     delete(data)
+    delete(pic_name)
+    delete(wks)
   end do
 
 end if
