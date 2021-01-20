@@ -13,11 +13,11 @@ end setvalues
 
 begin
 ; ____________________________ OPTIONS _______________________________
-PFT        = "all" ; "tree"
+PFT        = "tree" ; "tree"
 scale      = "SE-AU"
 year_s     = 2019
 year_e     = 2019
-diff       = False
+diff       = True
 
 HW_day_s   = (/ 1 /) ;15, 22/)
 HW_day_e   = (/ 31/) ;19, 27/)
@@ -37,6 +37,7 @@ pic_name   = "HESS_"+message+"_"+scale+"_"+year_s+"-"+year_e
 
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 case_name = (/"CTL-30x3+30yr","FREE_DRAIN","CTL-30x3+30yr_2019-DeepRoot"/)
+case_name_brf = (/"GW","FD","DR"/)
 order_name  = (/"(a)","(b)","(c)","(d)",\
                 "(e)","(f)","(g)","(h)",\
                 "(i)","(j)","(k)","(l)",\
@@ -84,6 +85,10 @@ lon = f1->x({C:D})
 
 PFT_mask = where((f1->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f1->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
 default_val = f1->Qle@_FillValue
+PFT_mask_multi = new((/8,dimsizes(PFT_mask(:,0)),dimsizes(PFT_mask(0,:))/),float)
+do z = 0, 7
+  PFT_mask_multi(z,:,:) = PFT_mask
+end do
 
 delete(filename1)
 delete(f1)
@@ -103,13 +108,13 @@ do case_num = 0, case_sum -1
       do day = HW_day_s(event_num),HW_day_e(event_num)
         ts = (day-1)*8+4 ;4 - 12pm
         VegT(case_num, 0, day-1, :, :) = VegT_tmp(ts,:,:)
-        ts = (day-1)*8+5 ;5 - 12pm
+        ts = (day-1)*8+5 ;5 - 3pm
         VegT(case_num, 1, day-1, :, :) = VegT_tmp(ts,:,:) ;dim_avg_n_Wrap(VegT_tmp(ts:ts+1,:,:),0)
       end do
     end do
   end do ; year
 end do ; case_num
-delete(PFT_mask)
+; delete(PFT_mask)
 
 VegT = VegT - 273.15
 
@@ -165,7 +170,7 @@ printVarSummary(LST_Aqua_regrid)
 ; ================================== Tair ======================================
 if diff .eq. True then
 
-  Tair     = new((/2,31,dimsizes(lat),dimsizes(lon)/),float,default_val)
+  Tair     = new((/3,31,dimsizes(lat),dimsizes(lon)/),float,default_val)
   Tair     = 0.
 
   filename1 = path(0)+"/cable_out_2019_SE_Aus.nc"
@@ -177,17 +182,38 @@ if diff .eq. True then
       Tair(0,day-1,:,:) =  Tair_tmp(ts,:,:)
       ts = (day-1)*8+5 ;5 - 3pm
       Tair(1,day-1,:,:) =  Tair_tmp(ts,:,:);dim_avg_n_Wrap(Tair_tmp(ts:ts+1,:,:),0)
+      ; Max Tair
+      ts = (day-1)*8
+      Tair(2,day-1,:,:) =  dim_max_n_Wrap(Tair_tmp(ts:ts+7,:,:),0)
     end do
   end do
   delete(Tair_tmp)
   Tair = Tair - 273.15
 
-  VegT(0,:,:,:,:) = VegT(0,:,:,:,:) - Tair
-  VegT(1,:,:,:,:) = VegT(1,:,:,:,:) - Tair
-  VegT(2,:,:,:,:) = VegT(2,:,:,:,:) - Tair
+  VegT(0,:,:,:,:) = VegT(0,:,:,:,:) - Tair(0:1,:,:,:)
+  VegT(1,:,:,:,:) = VegT(1,:,:,:,:) - Tair(0:1,:,:,:)
+  VegT(2,:,:,:,:) = VegT(2,:,:,:,:) - Tair(0:1,:,:,:)
   LST_Terra_regrid= LST_Terra_regrid - Tair(0,:,:,:)
   LST_Aqua_regrid = LST_Aqua_regrid  - Tair(1,:,:,:)
 end if
+
+deltaT   = new((/case_sum,3,8/),float,default_val)
+deltaT   = 0.
+
+do case_num = 0, case_sum -1
+  print("case_num = " +case_num)
+  filename1 = path(case_num)+"/cable_out_2019_SE_Aus.nc"
+  f1 = addfile (filename1,"r")
+  ts = (15-1)*8
+  deltaT(case_num,0,:) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->VegT(ts:ts+7,{A:B},{C:D}) - f1->Tair(ts:ts+7,{A:B},{C:D}), default_val) ,(/1,2/))
+  ts = (16-1)*8
+  deltaT(case_num,1,:) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->VegT(ts:ts+7,{A:B},{C:D}) - f1->Tair(ts:ts+7,{A:B},{C:D}), default_val) ,(/1,2/))
+  ts = (25-1)*8
+  deltaT(case_num,2,:) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1, f1->VegT(ts:ts+7,{A:B},{C:D}) - f1->Tair(ts:ts+7,{A:B},{C:D}), default_val) ,(/1,2/))
+  delete(filename1)
+  delete(f1)
+end do ; case_num
+
 
 ; ================================= Plotting ===================================
 pic = "./plots/"+pic_name
@@ -200,7 +226,7 @@ res@gsnFrame                = False  ; ����ҳ
 res@gsnMaximize             = False
 
 res@vpHeightF 	            = 0.4               ; change aspect ratio of plot
-res@vpWidthF 	              = 0.8
+res@vpWidthF 	              = 0.4
 res@tiYAxisFontThicknessF   = 3.
 res@tmXBMajorThicknessF     = 3.
 res@tmXBMinorThicknessF     = 3.
@@ -235,6 +261,7 @@ res@tmXBLabelFontHeightF    = 0.015
 res@tmYLLabelFontHeightF    = 0.015
 ; res@mpDataBaseVersion       = "HighRes"
 
+res@lbLabelBarOn            = True
 res@tmYLMode                = "Explicit"
 res@tmXBMode                = "Explicit"
 res@txString                = ""
@@ -289,6 +316,53 @@ end if
 end if
 end if
 
+
+; for diurnal plot
+res1                    = True
+res1@gsnDraw            = True
+res1@gsnFrame           = True
+res1@gsnMaximize        = False
+res1@vpHeightF          = 0.4               ; change aspect ratio of plot
+res1@vpWidthF 	        = 0.4
+; res1@vpXF               = 0.08
+; res1@vpYF               = 0.7
+res1@pmLegendWidthF     = 0.10                     ; res1ize legend width
+res1@pmLegendHeightF    = 0.10                     ; and height
+res1@tiXAxisFontHeightF = 0.02
+res1@tiYAxisFontHeightF = 0.02
+res1@tmXBLabelFontHeightF = 0.02
+res1@tmYLLabelFontHeightF = 0.02
+res1@gsnPaperOrientation = "landscape";"portrait";"landscape" ;"auto"
+
+res1@xyLineThicknesses   = (/2.0, 2.0, 2.0 /)
+res1@xyDashPatterns      = (/0, 0, 0/)
+res1@xyLineColors        = (/"black","red","green"/)
+res1@xyExplicitLegendLabels = case_name_brf
+res1@tmXBMode            = "Explicit"
+x                        = ispan(1,8,1)
+res1@tmXBValues          = ispan(1,8,1)
+res1@tmXBLabels          = tostring(ispan(0,24,3))
+res1@tiXAxisString       = "hr"
+res1@pmLegendDisplayMode = "Never"
+res1@tiYAxisString       = "~F5~D ~F22~T (~S~o~N~C)"
+res1@trYMinF             = -2
+res1@trYMaxF             = 10.2
+
+res2 = res1
+res2@xyMarkLineMode         = "Markers"
+res2@xyMarkers              = (/6, 16/)
+res2@xyMarkerColors         = (/"red","red"/) ; 3 different colors
+delete(res2@xyExplicitLegendLabels)
+res2@xyExplicitLegendLabels = (/"Terra","Aqua"/)
+res2@pmLegendDisplayMode    = "Always"
+res2@lgPerimOn              = False      ; No legend perimeter.
+res2@pmLegendParallelPosF   = 0.25
+res2@pmLegendOrthogonalPosF = -1.05
+res2@lgBoxMinorExtentF      = 0.3
+res2@pmLegendWidthF         = 0.20
+res2@pmLegendHeightF        = 0.07
+res2@lgItemOrder            = (/ 1,0 /)   ; Reorder the legends
+
 ;**************** ͼ�������� *****************
 pres                    = True
 pres@wkWidth            = 2500
@@ -316,66 +390,84 @@ amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
 
-plots = new(8,graphic)
+plots = new(9,graphic)
 
 if diff .eq. True then
-  res@cnLevels      = fspan(-20,20, 41) ;deltaT_CTL_lvl
+  res@cnLevels      = fspan(-20,20, 21) ;deltaT_CTL_lvl
   res@cnFillPalette = "testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
 else
-  res@cnLevels      = fspan( 20, 60, 41) ;deltaT_CTL_lvl
+  res@cnLevels      = fspan( 20, 60, 1) ;deltaT_CTL_lvl
   res@cnFillPalette = "WhiteBlueGreenYellowRed"
 end if
-do day = 0,30
-  print("VegT")
-  plots(0) = gsn_csm_contour_map(wks,VegT(0,0,day,:,:),res)
-  plots(1) = gsn_csm_contour_map(wks,VegT(1,0,day,:,:),res)
-  plots(2) = gsn_csm_contour_map(wks,VegT(2,0,day,:,:),res)
-  print("LST")
-  plots(3) = gsn_csm_contour_map(wks,LST_Terra_regrid(day,:,:),res)
 
-  print("VegT")
-  plots(4) = gsn_csm_contour_map(wks,VegT(0,1,day,:,:),res)
-  plots(5) = gsn_csm_contour_map(wks,VegT(1,1,day,:,:),res)
-  plots(6) = gsn_csm_contour_map(wks,VegT(2,1,day,:,:),res)
-  print("LST")
-  plots(7) = gsn_csm_contour_map(wks,LST_Aqua_regrid(day,:,:),res)
+LST_tree = new((/3,2/),float,-9999.)
+LST_tree(0,0) = avg(where( PFT_mask .eq. 1, LST_Terra_regrid(14,:,:), -9999.) )
+LST_tree(1,0) = avg(where( PFT_mask .eq. 1, LST_Terra_regrid(15,:,:), -9999.) )
+LST_tree(2,0) = avg(where( PFT_mask .eq. 1, LST_Terra_regrid(24,:,:), -9999.) )
+LST_tree(0,1) = avg(where( PFT_mask .eq. 1, LST_Aqua_regrid(14,:,:), -9999.) )
+LST_tree(1,1) = avg(where( PFT_mask .eq. 1, LST_Aqua_regrid(15,:,:), -9999.) )
+LST_tree(2,1) = avg(where( PFT_mask .eq. 1, LST_Aqua_regrid(24,:,:), -9999.) )
 
-  do cnt = 0, 7
-    txid1   = gsn_create_text(wks, order_name(cnt), txres)
-    annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
-  end do
-  gsn_panel(wks,(/plots/),(/2,4/),pres)
+print("VegT")
+; 15 Jan
+res@cnLevels      = fspan( 20, 60, 41) ;deltaT_CTL_lvl
+res@cnFillPalette = "WhiteBlueGreenYellowRed"
+plots(0) = gsn_csm_contour_map(wks,Tair(2,14,:,:),res)
+; 16 Jan
+plots(1) = gsn_csm_contour_map(wks,Tair(2,15,:,:),res)
+; 25 Jan
+plots(2) = gsn_csm_contour_map(wks,Tair(2,24,:,:),res)
+delete(res@cnLevels)
 
+res@cnLevels      = fspan(1,15, 15) ;deltaT_CTL_lvl
+res@cnFillPalette = "precip3_16lev";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
+plots(3) = gsn_csm_contour_map(wks,VegT(0,0,14,:,:),res)
+plots(4) = gsn_csm_contour_map(wks,VegT(0,0,15,:,:),res)
+plots(5) = gsn_csm_contour_map(wks,VegT(0,0,24,:,:),res)
+delete(res@cnLevels)
+
+y        = (/5,6.5/)
+plots(6) = gsn_csm_xy(wks,x,deltaT(:,0,:),res1)
+plot1    = gsn_csm_xy(wks,y,LST_tree(0,:),res2)
+overlay(plots(6),plot1)
+plots(7) = gsn_csm_xy(wks,x,deltaT(:,1,:),res1)
+plot2    = gsn_csm_xy(wks,y,LST_tree(1,:),res2)
+overlay(plots(7),plot2)
+plots(8) = gsn_csm_xy(wks,x,deltaT(:,2,:),res1)
+plot3    = gsn_csm_xy(wks,y,LST_tree(2,:),res2)
+overlay(plots(8),plot3)
+
+do cnt = 0, 8
+  txid1   = gsn_create_text(wks, order_name(cnt), txres)
+  annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
 end do
+gsn_panel(wks,(/plots/),(/3,3/),pres)
+
+
+; do day = 0,30
+;   print("VegT")
+;   plots(0) = gsn_csm_contour_map(wks,VegT(0,0,day,:,:),res)
+;   plots(1) = gsn_csm_contour_map(wks,VegT(1,0,day,:,:),res)
+;   plots(2) = gsn_csm_contour_map(wks,VegT(2,0,day,:,:),res)
+;   print("LST")
+;   plots(3) = gsn_csm_contour_map(wks,LST_Terra_regrid(day,:,:),res)
+;
+;   print("VegT")
+;   plots(4) = gsn_csm_contour_map(wks,VegT(0,1,day,:,:),res)
+;   plots(5) = gsn_csm_contour_map(wks,VegT(1,1,day,:,:),res)
+;   plots(6) = gsn_csm_contour_map(wks,VegT(2,1,day,:,:),res)
+;   print("LST")
+;   plots(7) = gsn_csm_contour_map(wks,LST_Aqua_regrid(day,:,:),res)
+;
+;   do cnt = 0, 7
+;     txid1   = gsn_create_text(wks, order_name(cnt), txres)
+;     annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
+;   end do
+;   gsn_panel(wks,(/plots/),(/2,4/),pres)
+;
+; end do
 
 ;
 ; gsn_panel(wks,(/plots/),(/4,4/),pres)
 
 end
-
-
-; ; 3: TVeg
-; res@cnLevels      = fspan(0,2,21)
-; res@cnFillPalette = "WhiteBlueGreenYellowRed";"MPL_RdBu";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-; plots(0+count) = gsn_csm_contour_map(wks,TVeg(0,:,:),res)
-; delete(res@cnLevels)
-;
-; res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"ViBlGrWhYeOrRe"
-; res@cnLevels      = fspan(-1.,1.,21)
-; tmp  = TVeg(1,:,:)
-; tmp  = tmp - TVeg(0,:,:)
-; plots(1+count) = gsn_csm_contour_map(wks,tmp,res)
-; delete(tmp)
-;
-; tmp  = TVeg(2,:,:)
-; tmp  = tmp - TVeg(0,:,:)
-; plots(2+count) = gsn_csm_contour_map(wks,tmp,res)
-; delete(tmp)
-;
-; tmp  = TVeg(3,:,:)
-; tmp  = tmp - TVeg(0,:,:)
-; plots(3+count) = gsn_csm_contour_map(wks,tmp,res)
-; delete(tmp)
-; delete(res@cnLevels)
-;
-; count = 12
