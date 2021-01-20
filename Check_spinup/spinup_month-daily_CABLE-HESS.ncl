@@ -15,24 +15,21 @@ begin
 
 ; ____________________________ OPTIONS _______________________________
 hydr_param = True
-time_scale = "monthly" ;"monthly" ; "daily"
-PFT        = "all" ; "tree"
+time_scale = "daily" ;"monthly" ; "daily"
+PFT        = "tree" ; "tree"
 scale      = "SE-AU"
-year_s     = 1970
-year_e     = 1999
+year_s     = 2000
+year_e     = 2019
 year_sum   = year_e-year_s+1
-pic_name   = "CABLE-HESS_30yrx3_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
+message    = "FD_DR_FD+DR"
+pic_name   = "CABLE-HESS_"+message+"_PFT-"+PFT+"_"+time_scale+"_"+scale+"_"+year_s+"-"+year_e
 
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 
-case_name = (/"SPINUP_30yrx2/outputs-first","SPINUP_30yrx2/outputs-second",\
-              "CTL-30+30yr/outputs","CTL-30x2+30yr/outputs","CTL-30x3+30yr/outputs"/);,"outputs-without-spinup"/)
-;case_name = (/"CTL","FREE_DRAIN","PUMPx10","PUMPx100"/)
-;(/"outputs","outputs-without-spinup"/)
-;"SPINUP"
-;"PUMP_IRRG","PUMP_IRRGx10","PUMP_IRRGx100"/)
+case_name = (/"FREE_DRAIN/outputs-spinup30x3yr", \
+              "CTL-30x3+30yr-DeepRoot/outputs-daily"/);,"FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
+              ;"CTL-30x3+30yr/outputs-daily",
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
-
 
 if PFT .eq. "all" then
   iveg_s = 0
@@ -48,7 +45,14 @@ if time_scale .eq. "monthly" then
   time_tot = year_sum*12
 else if time_scale .eq. "daily" then
   print("daily")
-  time_tot = year_sum*365 + 1
+  time_tot = 0
+  do year = year_s,year_e
+    if ( mod(year,4) .eq. 0) then
+       time_tot = time_tot + 366
+    else
+       time_tot = time_tot + 365
+    end if
+  end do
   print(time_tot)
 end if
 end if

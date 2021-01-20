@@ -14,7 +14,7 @@ end setvalues
 begin
 
 ; =============================== Pre-define ===================================
-case_name   = (/"CTL","FREE_DRAIN","DEEP_ROOT","FD+DR"/) ;,"DEEP_ROOT"/)
+case_name   = (/"CTL","FD","DR","FD+DR"/) ;,"DEEP_ROOT"/)
 path        = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 pic_message = "CTL-FD-DR-FD+DR"
 
@@ -30,7 +30,7 @@ Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
 order_name     = (/"(a)","(b)","(c)","(d)","(e)","(f)"/)
 
 ; ================================ Set Regrid ==================================
-PFT           = "all" ; "tree" ;"all"
+PFT           = "tree" ; "tree" ;"all"
 scale         = "SE-AU"
 time_scale    = "monthly" ; "annual"; "monthly"
 cable_version = "CABLE-HESS" ;"LIS-CABLE" ; "CABLE-HESS"
@@ -50,23 +50,22 @@ gsn_define_colormap(wks,"WhiteBlueGreenYellowRed")
 res                        = True              ; plot mods desired
 res@gsnDraw                = False             ; don't draw yet
 res@gsnFrame               = False             ; don't advance frame yet
-res@gsnMaximize            = True
+res@gsnMaximize            = False
 res@vpHeightF 	           = 0.4               ; change aspect ratio of plot
 res@vpWidthF 	             = 0.8
 res@txFontHeightF          = 0.015            ; change title font heights
-res@tiYAxisFontThicknessF  = 3.
-res@tmXBMajorThicknessF    = 3.
-res@tmXBMinorThicknessF    = 3.
-res@tmYLMajorThicknessF    = 3.
-res@tmYLMinorThicknessF    = 3.
-res@tmYLLabelFontThicknessF= 3.
-res@tmBorderThicknessF     = 3.
+res@tiYAxisFontThicknessF  = 2.
+res@tmXBMajorThicknessF    = 2.
+res@tmXBMinorThicknessF    = 2.
+res@tmYLMajorThicknessF    = 2.
+res@tmYLMinorThicknessF    = 2.
+res@tmYLLabelFontThicknessF= 2.
+res@tmBorderThicknessF     = 2.
 
 res@txFont                 = "times-bold"
 res@xyMonoLineColor        = False             ; want colored lines
 res@tmXBMode               = "Explicit"
 ; res@tiXAxisString          = "Year"
-res@tiYAxisString          = "TWSA (mm)"
 res@tfPolyDrawOrder        = "PreDraw"
 
 res@lgPerimOn              = False      ; No legend perimeter.
@@ -77,8 +76,9 @@ res@pmLegendOrthogonalPosF = -0.6     ; Move into plot
 res@pmLegendWidthF         = 0.15       ; Decrease width
 res@pmLegendHeightF        = 0.15       ; Decrease height
 res@lgBoxMinorExtentF      = 0.3       ; Shorten the legend lines
-res@lgItemOrder            = (/ 2,1,0 /)   ; Reorder the legends
+; res@lgItemOrder            = (/ 2,1,0 /)   ; Reorder the legends
 
+res@lgItemOrder            = (/ 5,4,3,2,1,0 /)   ; Reorder the legends
 LineColors       = (/ "black","darkgreen","cornflowerblue","peru","darkolivegreen1","orchid"/) ; "navy",colors chosen
 LineThicknesses	 = (/2.5,2.5,1.5,1.5,1.5,1.5/)      ; line thicknesses
 DashPatterns	   = (/0.,0.,0.,0.,0.,0./)      ; make all lines solid
@@ -104,7 +104,9 @@ gres@gsFillColor = "cornsilk" ;"rosybrown" ;"azure"
 pres              = True
 pres@wkWidth      = 2500
 pres@wkHeight     = 2500
-pres@gsnMaximize  = True
+pres@gsnMaximize  = False
+pres@gsnPanelYWhiteSpacePercent = 0.1
+pres@gsnPanelXWhiteSpacePercent = 0.1
 
 txres               = True
 txres@txPerimOn     = False
@@ -118,22 +120,49 @@ poly  = new(case_sum*2,graphic)
 
 do case_num = 0,case_sum-1
   ; add legend
-  if case_num .eq. 0 then
-    res@pmLegendDisplayMode    = "Always"
+
+  if mod(case_num,2) .eq. 0 then
+    res@tiYAxisString          = "TWSA (mm)"
   else
-    res@pmLegendDisplayMode    = "Never"
+    delete(res@tiYAxisString)
   end if
 
   ; read ascii
-  txt_name = case_name(case_num)+"_GRACE_"+year_s+"-"+year_e+".txt"
+  txt_name = case_name(case_num)+"_GRACE_PFT-"+PFT+"_"+year_s+"-"+year_e+".txt"
   tmp      = asciiread(txt_name,(/6,total/),"float")
   tmp@_FillValue = default_value
   r        = escorc(tmp(1,:), tmp(0,:))   ; Pearson’s correlation coefficient (r)
   MBE      = avg(tmp(1,:) - tmp(0,:))     ; Mean Bias Error (MBE)
-  plots(case_num) = gsn_csm_xy (wks,x,tmp(0:2,:),res)  ; Create another filled XY plot.
+  SD_GRACE = stddev(tmp(0,:))
+  ; tmp2     = where(.not. ismissing(tmp(0,:)), tmp(1,:), default_value)
+  ; tmp2@_FillValue = default_value
+  SD_CABLE = stddev(tmp(1,:))
+  ; delete(tmp2)
+
+  r_SM     = escorc(tmp(3,:), tmp(0,:))   ; Pearson’s correlation coefficient (r)
+  SD_SM    = stddev(tmp(3,:))
 
 
 
+  if case_num .eq. 0 then
+    res@pmLegendDisplayMode    = "Always"
+    context = "r                   =  "+sprintf("%4.2f",r) +" ("+sprintf("%4.2f",r_SM)+")"\
+            + "~C~GRACE SD = "+sprintf("%4.2f",SD_GRACE)       \
+            + "~C~CABLE  SD = "+sprintf("%4.2f",SD_CABLE) +" ("+ sprintf("%4.2f",SD_SM)+")"
+            ; ~C~ change line
+  else
+    res@pmLegendDisplayMode    = "Never"
+    context = "r                   =  "+sprintf("%4.2f",r) +" ("+sprintf("%4.2f",r_SM)+")"\
+            + "~C~GRACE SD = "+sprintf("%4.2f",SD_GRACE)       \
+            + "~C~CABLE  SD = "+sprintf("%4.2f",SD_CABLE) +" ("+ sprintf("%4.2f",SD_SM)+")"
+    ; context = "r                   =  "+sprintf("%4.2f",r) \
+    ;         + "~C~GRACE SD = "+sprintf("%4.2f",SD_GRACE)   \
+    ;         + "~C~CABLE  SD = "+sprintf("%4.2f",SD_CABLE)
+            ; ~C~ change line
+  end if
+
+  ; plots(case_num) = gsn_csm_xy (wks,x,tmp(0:2,:),res)  ; Create another filled XY plot.
+  plots(case_num) = gsn_csm_xy (wks,x,tmp(:,:),res)  ; Create another filled XY plot.
   amres@amParallelPosF        = -0.485    ; This is the right edge of the plot.
   amres@amOrthogonalPosF      = -0.46    ; This is the bottom edge of the plot.
   amres@amJust                = "TopLeft"
@@ -142,9 +171,8 @@ do case_num = 0,case_sum-1
   delete(amres@amJust)
 
   ; add r & MBE
-  context = "r        =  "+sprintf("%4.2f",r) + "~C~MBE = "+sprintf("%4.2f",MBE); ~C~ change line
   txid2 = gsn_create_text(wks, context, txres)
-  amres@amParallelPosF        = -0.3    ; This is the right edge of the plot.
+  amres@amParallelPosF        = -0.4    ; This is the right edge of the plot.
   amres@amOrthogonalPosF      = -0.46     ; This is the bottom edge of the plot.
   amres@amJust                = "TopLeft"
   annoid2 = gsn_add_annotation(plots(case_num), txid2, amres)

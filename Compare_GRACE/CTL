@@ -1,0 +1,207 @@
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+
+Variable: GRACE
+Type: float
+Total Size: 248832000 bytes
+            62208000 values
+Number of Dimensions: 3
+Dimensions and sizes:	[240] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-99999
+
+Variable: uncertainty
+Type: float
+Total Size: 248832000 bytes
+            62208000 values
+Number of Dimensions: 3
+Dimensions and sizes:	[240] x [360] x [720]
+Coordinates: 
+Number Of Attributes: 1
+  _FillValue :	-99999
+
+Variable: landmask
+Type: integer
+Total Size: 1036800 bytes
+            259200 values
+Number of Dimensions: 2
+Dimensions and sizes:	[360] x [720]
+Coordinates: 
+
+Variable: GRACE
+Type: float
+Total Size: 248832000 bytes
+            62208000 values
+Number of Dimensions: 3
+Dimensions and sizes:	[time | 240] x [lat | 360] x [lon | 720]
+Coordinates: 
+            lat: [-89.75..89.75]
+            lon: [0.25..359.75]
+Number Of Attributes: 1
+  _FillValue :	-99999
+
+Variable: uncertainty
+Type: float
+Total Size: 248832000 bytes
+            62208000 values
+Number of Dimensions: 3
+Dimensions and sizes:	[time | 240] x [lat | 360] x [lon | 720]
+Coordinates: 
+            lat: [-89.75..89.75]
+            lon: [0.25..359.75]
+Number Of Attributes: 1
+  _FillValue :	-99999
+
+Variable: GRACE_lat
+Type: float
+Total Size: 1440 bytes
+            360 values
+Number of Dimensions: 1
+Dimensions and sizes:	[latitude | 360]
+Coordinates: 
+            latitude: [-89.75..89.75]
+Number Of Attributes: 6
+  _FillValue :	9.96921e+36
+  units :	degrees north
+  long_name :	latitude
+  standard_name :	latitude
+  axis :	Y
+  typeConversion_op_ncl :	double converted to float
+
+Variable: GRACE_lon
+Type: float
+Total Size: 2880 bytes
+            720 values
+Number of Dimensions: 1
+Dimensions and sizes:	[longitude | 720]
+Coordinates: 
+            longitude: [0.25..359.75]
+Number Of Attributes: 6
+  _FillValue :	9.96921e+36
+  units :	degrees east
+  long_name :	longitude
+  standard_name :	longitude
+  axis :	X
+  typeConversion_op_ncl :	double converted to float
+
+Variable: GRACE_regrid
+Type: float
+Total Size: 65012160 bytes
+            16253040 values
+Number of Dimensions: 3
+Dimensions and sizes:	[time | 240] x [y | 241] x [x | 281]
+Coordinates: 
+            y: [-40..-28]
+            x: [140..154]
+Number Of Attributes: 1
+  _FillValue :	-99999
+
+Variable: uncertainty_regrid
+Type: float
+Total Size: 65012160 bytes
+            16253040 values
+Number of Dimensions: 3
+Dimensions and sizes:	[time | 240] x [y | 241] x [x | 281]
+Coordinates: 
+            y: [-40..-28]
+            x: [140..154]
+Number Of Attributes: 1
+  _FillValue :	-99999
+
+
+Variable: case_name (subsection)
+Type: string
+Total Size: 8 bytes
+            1 values
+Number of Dimensions: 1
+Dimensions and sizes:	[1]
+Coordinates: 
+(0)	CTL-30x3+30yr/outputs-daily
+(0)	year = 2000
+(0)	year = 2001
+(0)	year = 2002
+(0)	year = 2003
+(0)	year = 2004
+(0)	year = 2005
+(0)	year = 2006
+(0)	year = 2007
+(0)	year = 2008
+(0)	year = 2009
+(0)	year = 2010
+(0)	year = 2011
+(0)	year = 2012
+(0)	year = 2013
+(0)	year = 2014
+(0)	year = 2015
+(0)	year = 2016
+(0)	year = 2017
+(0)	year = 2018
+(0)	year = 2019
+(0)	global average
+(0)	Correlation between Rain and GRACE : 0.24751
+(0)	Correlation between GRACE and TWS in CTL-30x3+30yr/outputs-daily: 0.916789
+(0)	Correlation between Rain and TWS in CTL-30x3+30yr/outputs-daily: 0.260191
+
+
+Variable: tmp (subsection)
+Type: float
+Total Size: 48 bytes
+            12 values
+Number of Dimensions: 1
+Dimensions and sizes:	[12]
+Coordinates: 
+Number Of Attributes: 2
+  _FillValue :	-1e+33
+  average_op_ncl :	dim_avg_n function was applied
+(0)	-1e+33
+(1)	-1e+33
+(2)	-1e+33
+(3)	-1e+33
+(4)	-1e+33
+(5)	-1e+33
+(6)	-1e+33
+(7)	-1e+33
+(8)	-1e+33
+(9)	-1e+33
+(10)	-1e+33
+(11)	-1e+33
+
+Variable: tmp
+Type: float
+Total Size: 5760 bytes
+            1440 values
+Number of Dimensions: 2
+Dimensions and sizes:	[6] x [240]
+Coordinates: 
+Number Of Attributes: 2
+  average_op_ncl :	dim_avg_n function was applied
+  _FillValue :	-1e+33
+
+
+Variable: tmp (subsection)
+Type: float
+Total Size: 48 bytes
+            12 values
+Number of Dimensions: 1
+Dimensions and sizes:	[12]
+Coordinates: 
+Number Of Attributes: 2
+  _FillValue :	-99999
+  average_op_ncl :	dim_avg_n function was applied
+(0)	-99999
+(1)	-99999
+(2)	-99999
+(3)	-99999
+(4)	-99999
+(5)	-99999
+(6)	-99999
+(7)	-99999
+(8)	-99999
+(9)	-99999
+(10)	-99999
+(11)	-99999
+input in flex scanner failed
