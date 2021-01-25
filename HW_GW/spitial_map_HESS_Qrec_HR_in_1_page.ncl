@@ -21,12 +21,10 @@ case_sum    = dimsizes(case_name)
 path        = new(case_sum,"string")
 pic_message = "CTL_vs_FD"
 order_name  = (/"(a)","(b)","(c)","(d)","(e)","(f)","(g)","(h)"/) ;
-
-GLEAM_plot  = True
-ET_plot_type= "Diff_Evap_Trans_Fwsoil" ; "CTL_SEN_Diff"
+GLEAM_plot  = False
 
 do case_num = 0, case_sum -1
-   path(case_num) = path_mum+case_name(case_num);+"/outputs"
+   path(case_num) = path_mum+case_name(case_num)
 end do
 
 ; ================================= Predefine ==================================
@@ -34,7 +32,7 @@ year_s   = 2000
 year_e   = 2019
 year_sum = year_e-year_s+1
 row_sum  = 2
-col_sum  = 4
+col_sum  = 3
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 
@@ -104,7 +102,7 @@ do case_num = 0, case_sum -1
       Evap(case_num,year-year_s,:,:)     = dim_sum_n_Wrap(f->Evap(:,{A:B},{C:D}),0)
       Trans(case_num,year-year_s,:,:)    = dim_sum_n_Wrap(f->TVeg(:,{A:B},{C:D}),0)
       Esoil(case_num,year-year_s,:,:)    = dim_sum_n_Wrap(f->ESoil(:,{A:B},{C:D}),0)
-      Fwsoil(case_num,year-year_s,:,:)   = dim_avg_n_Wrap(f->WatTable(:,{A:B},{C:D}),0)
+      Fwsoil(case_num,year-year_s,:,:)   = dim_avg_n_Wrap(f->Fwsoil(:,{A:B},{C:D}),0)
 
       Qrec_tmp = f->Qrecharge(:,{A:B},{C:D})
       Q2botsoil(case_num,year-year_s,:,:) = dim_sum_n_Wrap(where(Qrec_tmp .le. 0, Qrec_tmp, 0),0)
@@ -377,265 +375,90 @@ amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
 ; =========================== plot Evaptranspiration ===========================
-pic = "./plots/HESS_Qrec_HR_"+pic_message
+pic = "./plots/HESS_E_Qrec_Fwmax_"+pic_message
 
 ; higher resolution
 wks_type          = "pdf"
 wks_type@wkWidth  = 2500
 wks_type@wkHeight = 2500
-
-wks = gsn_open_wks(wks_type,pic)
+wks               = gsn_open_wks(wks_type,pic)
 gsn_define_colormap(wks,"rainbow") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
-; =========== Plotting ET ==============
-if ET_plot_type .eq. "CTL_SEN_Diff" then
+ts_s              = 17
+ts_e              = 19
+plots             = new(6,graphic)
 
-  plots = new((case_sum+1)*2,graphic)
+cmap              = read_colormap_file("testcmap")
+res@cnFillPalette = cmap(::-1,:)
+res@cnLevels      = (/\
+                      -600,-500,-400,-300,-200,-180,-160,-140,-120,-100,-80,-60,-40,-20,-10, \
+                      0,10,20,40,60,80,100,120,140,160,180,200,300,400,500,600              \
+                      /)
+; (/-180,-160,-140,-120,-100,-80,-60,-40,-20,0,20,40,60,80,100,120,140,160,180/) ;
 
-  res@lbLabelBarOn = True
+res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
+tmp               = dim_avg_n_Wrap(Evap(0,ts_s:ts_e,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(Evap(1,ts_s:ts_e,:,:),0)
+plots(0)          = gsn_csm_contour_map(wks,tmp,res)
+delete(tmp)
 
-  ; 2001-2009
-  res@cnLevels      = fspan(0,1000,21)
-  res@cnFillPalette = "vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-  res@lbTitleString = "E (mm yr~S~-1~N~)"
+res@lbTitleString = "~F5~D"+"~F25~Et (mm yr~S~-1~N~)"
+tmp               = dim_avg_n_Wrap(Trans(0,ts_s:ts_e,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(Trans(1,ts_s:ts_e,:,:),0)
+plots(1)          = gsn_csm_contour_map(wks,tmp,res)
+delete(tmp)
 
-  plots(0) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap(0,1:9,:,:),0),res)
-  plots(1) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap(1,1:9,:,:),0),res)
-
-  delete(res@cnLevels)
-  delete(res@cnFillPalette)
-
-  res@cnLevels  = (/-400,-350,-300,-250,-200,-150,-100,-50,0,50,100,150,200,250,300,350,400/)
-  cmap = read_colormap_file("BlAqGrWh2YeOrReVi22")
-  res@cnFillPalette = cmap(::-1,:)
-  res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
-
-  tmp      = dim_avg_n_Wrap(Evap(1,1:9,:,:),0)
-  tmp      = tmp - dim_avg_n_Wrap(Evap(0,1:9,:,:),0)
-  plots(2) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-  delete(res@cnLevels)
-  delete(res@cnFillPalette)
-  delete(cmap)
-
-  ; 2017-2019
-  res@cnLevels      = fspan(0,1000,21)
-  res@cnFillPalette = "vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-  res@lbTitleString = "E (mm yr~S~-1~N~)"
-
-  plots(3) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap(0,17:19,:,:),0),res)
-  plots(4) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap(1,17:19,:,:),0),res)
-
-  delete(res@cnLevels)
-  delete(res@cnFillPalette)
-
-  res@cnLevels  = (/-400,-350,-300,-250,-200,-150,-100,-50,0,50,100,150,200,250,300,350,400/)
-  cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
-  res@cnFillPalette = cmap(::-1,:)
-  res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
-
-  tmp      = dim_avg_n_Wrap(Evap(1,17:19,:,:),0)
-  tmp      = tmp - dim_avg_n_Wrap(Evap(0,17:19,:,:),0)
-  plots(5) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-  delete(res@cnLevels)
-  delete(res@cnFillPalette)
-  delete(cmap)
-
-else if ET_plot_type .eq. "Diff_Evap_Trans_Fwsoil" then
-
-  plots = new((case_sum+1)*2,graphic)
-  res@lbLabelBarOn = False
-
-  ; 2001-2009
-  cmap = read_colormap_file("testcmap");("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
-  res@cnFillPalette = cmap(::-1,:)
-
-  res@cnLevels      = (/-180,-160,-140,-120,-100,-80,-60,-40,-20,0,20,40,60,80,100,120,140,160,180/) ;
-
-  res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
-  tmp = dim_avg_n_Wrap(Evap(0,1:9,:,:),0)
-  tmp = tmp - dim_avg_n_Wrap(Evap(1,1:9,:,:),0)
-  plots(0) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-
-  res@lbTitleString = "~F5~D"+"~F25~Et (mm yr~S~-1~N~)"
-  tmp = dim_avg_n_Wrap(Trans(0,1:9,:,:),0)
-  tmp = tmp - dim_avg_n_Wrap(Trans(1,1:9,:,:),0)
-  plots(1) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-  delete(res@cnLevels)
-
-  res@cnLevels      = fspan(1,15,15)
-  res@gsnDraw       = True  ; Don't draw plots
-  res@gsnFrame      = True  ; ����ҳ
-  res@lbLabelBarOn  = True
-  plot = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Fwsoil(0,1:9,:,:),0),res)
-  plot = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Fwsoil(1,1:9,:,:),0),res)
-  plot = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Fwsoil(0,17:19,:,:),0),res)
-  plot = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Fwsoil(1,17:19,:,:),0),res)
-  delete(res@cnLevels)
-
-  res@lbLabelBarOn  = False
-  res@gsnDraw       = False  ; Don't draw plots
-  res@gsnFrame      = False  ; ����ҳ
-  res@cnLevels      = fspan(-0.3,0.3,13)
-  res@lbTitleString = "~F5~Db"
-  tmp = dim_avg_n_Wrap(Fwsoil(0,1:9,:,:),0)
-  tmp = tmp - dim_avg_n_Wrap(Fwsoil(1,1:9,:,:),0)
-  plots(2) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-  delete(res@cnLevels)
-
-  ; res@lbTitleString = "~F5~D"+"~F25~Es (mm yr~S~-1~N~)"
-  ; tmp = dim_avg_n_Wrap(Esoil(0,1:9,:,:),0)
-  ; tmp = tmp - dim_avg_n_Wrap(Esoil(1,1:9,:,:),0)
-  ; plots(2) = gsn_csm_contour_map(wks,tmp,res)
-  ; delete(tmp)
-
-  ; 2017-2019
-  res@lbLabelBarOn  = True
-
-  res@cnLevels      = (/-180,-160,-140,-120,-100,-80,-60,-40,-20,0,20,40,60,80,100,120,140,160,180/) ;
-
-  res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
-  tmp = dim_avg_n_Wrap(Evap(0,17:19,:,:),0)
-  tmp = tmp - dim_avg_n_Wrap(Evap(1,17:19,:,:),0)
-  plots(3) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-
-  res@lbTitleString = "~F5~D"+"~F25~Et (mm yr~S~-1~N~)"
-  tmp = dim_avg_n_Wrap(Trans(0,17:19,:,:),0)
-  tmp = tmp - dim_avg_n_Wrap(Trans(1,17:19,:,:),0)
-  plots(4) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-  delete(res@cnLevels)
-
-  res@cnLevels      = fspan(-0.5,0.5,21)
-
-  res@lbTitleString = "~F5~Db"
-  tmp = dim_avg_n_Wrap(Fwsoil(0,17:19,:,:),0)
-  tmp = tmp - dim_avg_n_Wrap(Fwsoil(1,17:19,:,:),0)
-  plots(5) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-
-  ; res@lbTitleString = "~F5~D"+"~F25~Es (mm yr~S~-1~N~)"
-  ; tmp = dim_avg_n_Wrap(Esoil(0,17:19,:,:),0)
-  ; tmp = tmp - dim_avg_n_Wrap(Esoil(1,17:19,:,:),0)
-  ; plots(5) = gsn_csm_contour_map(wks,tmp,res)
-  ; delete(tmp)
-
-
-  do counter = 0, 5
-    txid1   = gsn_create_text(wks, order_name(counter), txres)
-    annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
-  end do
-
-  gsn_panel(wks,(/plots/),(/2,3/),pres)
-  delete(plots)
-
-  delete(res@cnLevels)
-  delete(res@cnFillPalette)
-  delete(cmap)
-end if
-end if
+; res@lbLabelBarOn  = False
+; res@gsnDraw       = False  ; Don't draw plots
+; res@gsnFrame      = False  ; ����ҳ
+; res@cnLevels      = fspan(-0.3,0.3,13)
+; res@lbTitleString = "~F5~Db"
+; tmp = dim_avg_n_Wrap(Fwsoil(0,1:9,:,:),0)
+; tmp = tmp - dim_avg_n_Wrap(Fwsoil(1,1:9,:,:),0)
+; plots(2) = gsn_csm_contour_map(wks,tmp,res)
+; delete(tmp)
+; delete(res@cnLevels)
 
 ; =============================== Plot Qrec Dr  ================================
-plots = new((case_sum)*2,graphic)
-
 ; Q2botsoil
 print("plot Q2botsoil")
 
-cmap = read_colormap_file("testcmap");("spread_15lev")
-printVarSummary(cmap)
-res@cnFillPalette = cmap(::-1,:)
 ; res@cnLevels      = (/\
 ;                       -600,-500,-400,-300,-200,-100,-50,-40,-30,-20,-10, \
 ;                       0,10,20,30,40,50,100,200,300,400,500,600          \
 ;                       /)
 
-res@cnLevels      = fspan(-40,40,17)
 res@lbTitleString = "~F5~D"+"~F25~Qrec (mm yr~S~-1~N~)"
-
-res@lbLabelBarOn = False
-tmp = dim_avg_n_Wrap(Q2botsoil(0,1:9,:,:),0)
-tmp = tmp - dim_avg_n_Wrap(Q2botsoil(1,1:9,:,:),0)
-plots(0) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-
-
-res@lbLabelBarOn = True
-tmp = dim_avg_n_Wrap(Q2botsoil(0,17:19,:,:),0)
-tmp = tmp - dim_avg_n_Wrap(Q2botsoil(1,17:19,:,:),0)
-plots(2) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-delete(res@cnFillPalette)
-delete(res@cnLevels)
-
-; Q2aquifer
-print("plot Q2aquifer")
-; res@cnFillPalette = "testcmap"
-cmap = read_colormap_file("testcmap");("spread_15lev")
-res@cnFillPalette = cmap(0:99,:)
-
-; res@cnLevels      = (/\
-;                       -600,-500,-400,-300,-200,-100,-50,-40,-30,-20,-10, \
-;                       0,10,20,30,40,50,100,200,300,400,500,600          \
-;                       /)
-res@cnLevels      = (/-400,-380,-340,-320,-300,-280,-260,-240,-220,-200,-180,-160,-140,-120,-100,-80,-60,-40,-20,0/)
-;(/-500,-450,-400,-350,-300,-250,-200,-150,-100,-50,0/)
-res@lbTitleString = "~F5~D"+"~F25~Dr (mm yr~S~-1~N~)"
-
-res@lbLabelBarOn = False
-tmp = dim_avg_n_Wrap(Q2aquifer(0,1:9,:,:),0)
-tmp = tmp - dim_avg_n_Wrap(Q2aquifer(1,1:9,:,:),0)
-plots(1) = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
-
-res@lbLabelBarOn = True
-tmp = dim_avg_n_Wrap(Q2aquifer(0,17:19,:,:),0)
-tmp = tmp - dim_avg_n_Wrap(Q2aquifer(1,17:19,:,:),0)
-plots(3) = gsn_csm_contour_map(wks,tmp,res)
-
+tmp               = dim_avg_n_Wrap(Q2botsoil(0,ts_s:ts_e,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(Q2botsoil(1,ts_s:ts_e,:,:),0)
+plots(2)          = gsn_csm_contour_map(wks,tmp,res)
 delete(tmp)
 delete(res@cnFillPalette)
 delete(cmap)
+; Q2aquifer
+print("plot Q2aquifer")
+res@cnFillPalette = "testcmap"
+res@lbTitleString = "~F5~D"+"~F25~Dr (mm yr~S~-1~N~)"
+tmp               = dim_avg_n_Wrap(Q2aquifer(0,ts_s:ts_e,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(Q2aquifer(1,ts_s:ts_e,:,:),0)
+plots(3)          = gsn_csm_contour_map(wks,tmp,res)
+delete(tmp)
+delete(res@cnFillPalette)
 delete(res@cnLevels)
-;
-; ; plots(1) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Q2aquifer(0,1:9,:,:),0),res)
-; ; plots(4) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Q2aquifer(0,17:19,:,:),0),res)
-
-do counter = 0, 3
-  txid1   = gsn_create_text(wks, order_name(counter), txres)
-  annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
-end do
-
-gsn_panel(wks,(/plots/),(/2,2/),pres)
-delete(plots)
-
 
 ; ============================ Plot Fwsoil_diff_max ============================
-plots = new(case_sum,graphic)
-
 ; Fwsoil
 print("plot Fwsoil_diff_max")
-; res@cnFillPalette = "spread_15lev"
 res@lbTitleString = "~F5~Db"
-;
-cmap = read_colormap_file("testcmap")
+cmap              = read_colormap_file("testcmap")
 res@cnFillPalette = cmap(0:99:-1,:)
 res@cnLevels      = fspan(0.,0.045,10)
+plots(4) = gsn_csm_contour_map(wks,Fwsoil_diff_max(0,:,:),res)
 
-res@lbLabelBarOn = True
-plots(0) = gsn_csm_contour_map(wks,Fwsoil_diff_max(0,:,:),res)
-
-res@lbLabelBarOn = True
-plots(1) = gsn_csm_contour_map(wks,Fwsoil_diff_max(1,:,:),res)
-
-do counter = 0, 1
+do counter = 0, 4
   txid1   = gsn_create_text(wks, order_name(counter), txres)
   annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
 end do
 
-gsn_panel(wks,(/plots/),(/1,2/),pres)
+gsn_panel(wks,(/plots/),(/2,3/),pres)
 end

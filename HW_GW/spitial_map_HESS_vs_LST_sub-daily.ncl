@@ -11,16 +11,23 @@ setvalues NhlGetWorkspaceObjectId()
 end setvalues
 ;_____________________________________
 
+; =========================== Notes for time step data =========================
+; model time step : 0, 1, 2, 3 , 4 , 5,  6,  7
+; real world time : 0, 3, 6, 9, 12, 15, 18, 21
+; ==============================================================================
+
 begin
-; ____________________________ OPTIONS _______________________________
+
+; =========================== OPTIONS ===========================
 PFT        = "tree" ; "tree"
 scale      = "SE-AU"
 year_s     = 2019
 year_e     = 2019
-diff       = True
+diff       = "diff"
+vpd_fwsoil = True
 
-HW_day_s   = (/ 1 /) ;15, 22/)
-HW_day_e   = (/ 31/) ;19, 27/)
+HW_day_s   = (/ 15, 25 /) ; 16,
+HW_day_e   = (/ 15, 25 /) ; 16,
 event_sum  = dimsizes(HW_day_s)
 
 day_tot    = 0
@@ -28,28 +35,17 @@ do event_num = 0, event_sum-1
   day_tot = day_tot + (HW_day_e(event_num)-HW_day_s(event_num)+1)
 end do
 
-if diff .eq. True then
-  message    = "LST_subday_diff"
-else
-  message    = "LST_subday"
-end if
-pic_name   = "HESS_"+message+"_"+scale+"_"+year_s+"-"+year_e
+message    = "LST_subday_"+diff
+
+pic_name  = "HESS_"+message+"_"+scale+"_"+year_s+"-"+year_e
 
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 
 case_name = (/"CTL-30x3+30yr","FREE_DRAIN","CTL-30x3+30yr_2019-DeepRoot"/)
-
+case_sum  = dimsizes(case_name)
 case_name_brf = (/"GW","FD","DR"/)
 
-order_name  = (/"(a)","(b)","(c)","(d)",\
-                "(e)","(f)","(g)","(h)",\
-                "(i)","(j)","(k)","(l)",\
-                "(m)","(n)","(o)","(p)",\
-                "(q)","(r)","(s)","(t)"/)
-
-; 0, 1, 2, 3 , 4 , 5,  6,  7
-; 0, 3, 6, 9, 12, 15, 18, 21, 24
-
+; =========================== Pre-define ===========================
 if PFT .eq. "all" then
   iveg_s = 0
   iveg_e = 20
@@ -73,15 +69,41 @@ else if scale .eq. "SE-AU" then
 end if
 end if
 
+; sub region 1
+A_rgn_1 = -37
+B_rgn_1 = -36
+C_rgn_1 = 147
+D_rgn_1 = 148
 
-;______________________________ Data _________________________________
-case_sum  = dimsizes(case_name)
+
+; sub region 2
+A_rgn_2 = -38
+B_rgn_2 = -36
+C_rgn_2 = 148.5
+D_rgn_2 = 150
+
+; ______ load path ______
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
   path(case_num) = path_mum+case_name(case_num)+"/outputs-subday"
 end do
+filename1 = path(0)+"/cable_out_2019_SE_Aus.nc"
+f1        = addfile (filename1,"r")
+lat       = f1->y({A:B})
+lon       = f1->x({C:D})
+latitude  = f1->latitude({A:B},{C:D})
+longitude = f1->longitude({A:B},{C:D})
+lat_sum   = dimsizes(lat)
+lon_sum   = dimsizes(lon)
+default_val = f1->Qle@_FillValue
+delete(f1)
+delete(filename1)
 
-; ============================= testing plot ====================================
+order_name  = (/"(a)","(b)","(c)","(d)",  "(e)","(f)","(g)","(h)",\
+                "(i)","(j)","(k)","(l)",  "(m)","(n)","(o)","(p)",\
+                "(q)","(r)","(s)","(t)"/)
+
+; ============================= testing plot ===================================
 wks1 = gsn_open_wks("pdf","Check_LST")
 gsn_define_colormap(wks1,"rainbow")
 
@@ -90,26 +112,162 @@ res9@gsnDraw                 = True  ; Don't draw plots
 res9@gsnFrame                = True  ; ����ҳ
 res9@gsnMaximize             = False
 res9@cnFillMode              = "RasterFill"            ; Raster Mode
+res9@cnFillOn                = True                            ;��ɫ
+res9@cnLinesOn               = False
 
-; ================================= TREE Mask ==================================
+; ================================== VegT ======================================
+VegT     = new((/case_sum,2,31,lat_sum,lon_sum/),float,default_val)
+VegT     = 0.
+do case_num = 0, case_sum -1
+  print("case_num = " +case_num)
+  do year = year_s,year_e
+    filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc" ; outputs/
+    f1 = addfile (filename1,"r")
+
+    VegT_tmp   = f1->VegT(0:60*8,{A:B},{C:D})
+    do event_num = 0,event_sum-1
+      do day = HW_day_s(event_num),HW_day_e(event_num)
+        ts = (day-1)*8 ;0 am
+        ; to compare with Terra - 10am
+        VegT(case_num, 0, day-1, :, :) = VegT_tmp(ts+3,:,:) + (VegT_tmp(ts+4,:,:) - VegT_tmp(ts+3,:,:))/3
+        ; to compare with Aqua  - 2pm
+        VegT(case_num, 1, day-1, :, :) = VegT_tmp(ts+4,:,:) + (VegT_tmp(ts+5,:,:) - VegT_tmp(ts+4,:,:))*(2/3)
+      end do
+    end do
+  end do ; year
+end do ; case_num
+; delete(PFT_mask)
+
+VegT        = VegT - 273.15
+
+VegT!0      = "case"
+VegT!1      = "time_step"
+VegT!2      = "time"
+VegT!3      = "lat"
+VegT!4      = "lon"
+VegT&lat    = lat
+VegT&lon    = lon
+
+plot = gsn_csm_contour(wks1,VegT(0,0,14,:,:),res9)
+plot = gsn_csm_contour(wks1,VegT(0,1,14,:,:),res9)
+
+; ================================== LST =======================================
+path_LST = "/g/data/w35/mm3972/data/MODIS_LST/";
+Terra    = "MOD11A1.006_1km_aid0001.nc"
+Aqua     = "MYD11A1.006_1km_aid0001.nc"
+
+filename2 = path_LST+Terra
+f2  = addfile (filename2,"r")
+
+filename3 = path_LST+Aqua
+f3  = addfile (filename3,"r")
+
+; ______________________ Terra _______________________
+; Terra passes over Aus ~ 10 am
+LST_Terra_QC = f2->QC_Day(:,{A:B},{C:D})
+printVarSummary(LST_Terra_QC)
+
+LST_Terra = tofloat(f2->LST_Day_1km(:,{A:B},{C:D}))
+LST_Terra = where((LST_Terra .ne. 0) \
+                 .and. ((LST_Terra_QC .eq. 0) .or. (LST_Terra_QC .eq. 16) .or. (LST_Terra_QC .eq. 64) .or. (LST_Terra_QC .eq. 64)),\
+                 LST_Terra*0.02-273.15,-9999.)
+LST_Terra@_FillValue = -9999.
+
+LST_Terra_regrid = linint2_Wrap(doubletofloat(f2->lon({C:D})),doubletofloat(f2->lat({A:B})),LST_Terra,False,lon,lat,0)
+LST_Terra_regrid!0 = "time"
+LST_Terra_regrid!1 = "lat"
+LST_Terra_regrid!2 = "lon"
+LST_Terra_regrid&lat = lat
+LST_Terra_regrid&lon = lon
+LST_Terra_regrid@_FillValue = -9999.
+printVarSummary(LST_Terra_regrid)
+
+plot = gsn_csm_contour(wks1,LST_Terra_regrid(14,:,:),res9)
+plot = gsn_csm_contour(wks1,LST_Terra_regrid(15,:,:),res9)
+plot = gsn_csm_contour(wks1,LST_Terra_regrid(24,:,:),res9)
+
+; ______________________ Aqua _______________________
+; Aqua passes over Aus ~ 2 pm
+LST_Aqua_QC = f3->QC_Day(:,{A:B},{C:D})
+printVarSummary(LST_Aqua_QC)
+
+LST_Aqua = tofloat(f3->LST_Day_1km(:,{A:B},{C:D}))
+LST_Aqua = where((LST_Aqua .ne. 0) \
+                .and. ((LST_Aqua_QC .eq. 0) .or. (LST_Aqua_QC .eq. 16) .or. (LST_Aqua_QC .eq. 64) .or. (LST_Aqua_QC .eq. 64)) ,\
+                LST_Aqua*0.02-273.15,-9999.)
+LST_Aqua@_FillValue = -9999.
+
+LST_Aqua_regrid = linint2_Wrap(doubletofloat(f3->lon({C:D})),doubletofloat(f3->lat({A:B})),LST_Aqua,False,lon,lat,0)
+LST_Aqua_regrid!0 = "time"
+LST_Aqua_regrid!1 = "lat"
+LST_Aqua_regrid!2 = "lon"
+LST_Aqua_regrid&lat = lat
+LST_Aqua_regrid&lon = lon
+LST_Aqua_regrid@_FillValue = -9999.
+printVarSummary(LST_Aqua_regrid)
+
+plot = gsn_csm_contour(wks1,LST_Aqua_regrid(14,:,:),res9)
+plot = gsn_csm_contour(wks1,LST_Aqua_regrid(15,:,:),res9)
+plot = gsn_csm_contour(wks1,LST_Aqua_regrid(24,:,:),res9)
+
+; ================================== Tair ======================================
+if diff .eq. "diff" then
+
+  Tair     = new((/3,31,lat_sum,lon_sum/),float,default_val)
+  Tair     = 0.
+
+  filename1 = path(0)+"/cable_out_2019_SE_Aus.nc"
+  f1 = addfile (filename1,"r")
+  Tair_tmp   = f1->Tair(0:60*8,{A:B},{C:D})
+  do event_num = 0,event_sum-1
+    do day = HW_day_s(event_num),HW_day_e(event_num)
+      ts = (day-1)*8
+      ; to compare with Terra - 10am
+      Tair(0,day-1,:,:) =  Tair_tmp(ts+3,:,:) + (Tair_tmp(ts+4,:,:) - Tair_tmp(ts+3,:,:))/3
+      ; to compare with Aqua  - 2pm
+      Tair(1,day-1,:,:) =  Tair_tmp(ts+4,:,:) + (Tair_tmp(ts+5,:,:) - Tair_tmp(ts+4,:,:))*(2/3)
+      ; Max Tair
+      Tair(2,day-1,:,:) =  dim_max_n_Wrap(Tair_tmp(ts:ts+7,:,:),0)
+    end do
+  end do
+  delete(Tair_tmp)
+  Tair = Tair - 273.15
+
+  VegT(0,:,:,:,:) = VegT(0,:,:,:,:) - Tair(0:1,:,:,:)
+  VegT(1,:,:,:,:) = VegT(1,:,:,:,:) - Tair(0:1,:,:,:)
+  VegT(2,:,:,:,:) = VegT(2,:,:,:,:) - Tair(0:1,:,:,:)
+  LST_Terra_regrid= LST_Terra_regrid - Tair(0,:,:,:)
+  LST_Aqua_regrid = LST_Aqua_regrid  - Tair(1,:,:,:)
+end if
+
+; =============================== Diurnal Cycle ================================
+
+; ---------------- Mask ----------------
+; Tree
 filename1 = path(0)+"/cable_out_2019_SE_Aus.nc"
-f1  = addfile (filename1,"r")
-lat = f1->y({A:B})
-lon = f1->x({C:D})
-lat_sum = dimsizes(lat)
-lon_sum = dimsizes(lon)
+f1        = addfile (filename1,"r")
 
-PFT_mask = where((f1->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f1->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
-default_val = f1->Qle@_FillValue
-PFT_mask_multi = new((/9,lat_sum,lon_sum/),float)
+; mask trees
+PFT_mask        = new((/3,lat_sum,lon_sum/),float)
+PFT_mask(0,:,:) = where((f1->iveg({A:B},{C:D}) .ge. iveg_s) .and. (f1->iveg({A:B},{C:D}) .le. iveg_e), 1, 0)
+PFT_mask(1,:,:) = where(  \
+                        (f1->latitude({A:B},{C:D}) .ge. A_rgn_1)  .and. (f1->latitude({A:B},{C:D}) .le. B_rgn_1)   \
+                  .and. (f1->longitude({A:B},{C:D}) .ge. C_rgn_1) .and. (f1->longitude({A:B},{C:D}) .le. D_rgn_1), \
+                  PFT_mask(0,:,:), 0)
+PFT_mask(2,:,:) = where(  \
+                        (f1->latitude({A:B},{C:D}) .ge. A_rgn_2)  .and. (f1->latitude({A:B},{C:D}) .le. B_rgn_2)   \
+                  .and. (f1->longitude({A:B},{C:D}) .ge. C_rgn_2) .and. (f1->longitude({A:B},{C:D}) .le. D_rgn_2),  \
+                  PFT_mask(0,:,:), 0)
+
+PFT_mask_multi = new((/9,3,lat_sum,lon_sum/),float)
 do z = 0, 8
-  PFT_mask_multi(z,:,:) = PFT_mask
+  PFT_mask_multi(z,:,:,:) = PFT_mask
 end do
 
 delete(filename1)
 delete(f1)
 
-; ================================= HW mask ====================================
+; HW mask
 filename_hw = "/g/data/w35/mm3972/scripts/ehfheatwaves/HW_Event_Indicator_1970-2019.nc" ; summer HW only
 fhw         = addfile(filename_hw,"r")
 
@@ -141,194 +299,96 @@ plot = gsn_csm_contour(wks1,HW_mask_multi(0,0,:,:),res9)
 plot = gsn_csm_contour(wks1,HW_mask_multi(1,2,:,:),res9)
 plot = gsn_csm_contour(wks1,HW_mask_multi(2,4,:,:),res9)
 
-; ================================== VegT ======================================
-VegT     = new((/case_sum,2,31,lat_sum,lon_sum/),float,default_val)
-VegT     = 0.
-do case_num = 0, case_sum -1
-  print("case_num = " +case_num)
-  do year = year_s,year_e
-    filename1 = path(case_num)+"/cable_out_"+year+"_SE_Aus.nc" ; outputs/
-    f1 = addfile (filename1,"r")
-
-    VegT_tmp   = f1->VegT(0:60*8,{A:B},{C:D})
-    do event_num = 0,event_sum-1
-      do day = HW_day_s(event_num),HW_day_e(event_num)
-        ts = (day-1)*8 ;0 am
-        ; to compare with Terra - 10am
-        VegT(case_num, 0, day-1, :, :) = VegT_tmp(ts+3,:,:) + (VegT_tmp(ts+4,:,:) - VegT_tmp(ts+3,:,:))/3
-        ; to compare with Aqua  - 2pm
-        VegT(case_num, 1, day-1, :, :) = VegT_tmp(ts+4,:,:) + (VegT_tmp(ts+5,:,:) - VegT_tmp(ts+4,:,:))*(2/3)
-      end do
-    end do
-  end do ; year
-end do ; case_num
-; delete(PFT_mask)
-
-VegT = VegT - 273.15
-
-VegT!0      = "case"
-VegT!1      = "time_step"
-VegT!2      = "time"
-VegT!3      = "lat"
-VegT!4      = "lon"
-VegT&lat    = lat
-VegT&lon    = lon
-
-plot = gsn_csm_contour(wks1,VegT(0,0,14,:,:),res9)
-plot = gsn_csm_contour(wks1,VegT(0,1,14,:,:),res9)
-
-; ================================== LST =======================================
-path_LST = "/g/data/w35/mm3972/data/MODIS_LST/";
-Terra    = "MOD11A1.006_1km_aid0001.nc"
-Aqua     = "MYD11A1.006_1km_aid0001.nc"
-
-filename2 = path_LST+Terra
-f2  = addfile (filename2,"r")
-
-filename3 = path_LST+Aqua
-f3  = addfile (filename3,"r")
-
-; ______________________ Terra _______________________
-; Terra passes over Aus ~ 10 am
-LST_Terra_QC = f2->QC_Day(:,{A:B},{C:D})
-printVarSummary(LST_Terra_QC)
-
-LST_Terra = tofloat(f2->LST_Day_1km(:,{A:B},{C:D}))
-LST_Terra = where(LST_Terra .ne. 0 .and. LST_Terra_QC .eq. 0, LST_Terra*0.02-273.15,-9999.)
-LST_Terra@_FillValue = -9999.
-
-LST_Terra_regrid = linint2_Wrap(doubletofloat(f2->lon({C:D})),doubletofloat(f2->lat({A:B})),LST_Terra,False,lon,lat,0)
-LST_Terra_regrid!0 = "time"
-LST_Terra_regrid!1 = "lat"
-LST_Terra_regrid!2 = "lon"
-LST_Terra_regrid&lat = lat
-LST_Terra_regrid&lon = lon
-LST_Terra_regrid@_FillValue = -9999.
-printVarSummary(LST_Terra_regrid)
-
-plot = gsn_csm_contour(wks1,LST_Terra_regrid(14,:,:),res9)
-plot = gsn_csm_contour(wks1,LST_Terra_regrid(15,:,:),res9)
-plot = gsn_csm_contour(wks1,LST_Terra_regrid(24,:,:),res9)
-
-; ______________________ Aqua _______________________
-; Aqua passes over Aus ~ 2 pm
-LST_Aqua_QC = f3->QC_Day(:,{A:B},{C:D})
-printVarSummary(LST_Aqua_QC)
-
-LST_Aqua = tofloat(f3->LST_Day_1km(:,{A:B},{C:D}))
-LST_Aqua = where(LST_Aqua .ne. 0 .and. LST_Aqua_QC .eq. 0, LST_Aqua*0.02-273.15,-9999.)
-LST_Aqua@_FillValue = -9999.
-
-LST_Aqua_regrid = linint2_Wrap(doubletofloat(f3->lon({C:D})),doubletofloat(f3->lat({A:B})),LST_Aqua,False,lon,lat,0)
-LST_Aqua_regrid!0 = "time"
-LST_Aqua_regrid!1 = "lat"
-LST_Aqua_regrid!2 = "lon"
-LST_Aqua_regrid&lat = lat
-LST_Aqua_regrid&lon = lon
-LST_Aqua_regrid@_FillValue = -9999.
-printVarSummary(LST_Aqua_regrid)
-
-plot = gsn_csm_contour(wks1,LST_Aqua_regrid(14,:,:),res9)
-plot = gsn_csm_contour(wks1,LST_Aqua_regrid(15,:,:),res9)
-plot = gsn_csm_contour(wks1,LST_Aqua_regrid(24,:,:),res9)
-
-
-; ================================== Tair ======================================
-if diff .eq. True then
-
-  Tair     = new((/3,31,lat_sum,lon_sum/),float,default_val)
-  Tair     = 0.
-
-  filename1 = path(0)+"/cable_out_2019_SE_Aus.nc"
-  f1 = addfile (filename1,"r")
-  Tair_tmp   = f1->Tair(0:60*8,{A:B},{C:D})
-  do event_num = 0,event_sum-1
-    do day = HW_day_s(event_num),HW_day_e(event_num)
-      ts = (day-1)*8+4 ;4 - 12pm
-      Tair(0,day-1,:,:) =  Tair_tmp(ts,:,:)
-      ts = (day-1)*8+5 ;5 - 3pm
-      Tair(1,day-1,:,:) =  Tair_tmp(ts,:,:);dim_avg_n_Wrap(Tair_tmp(ts:ts+1,:,:),0)
-      ; Max Tair
-      ts = (day-1)*8
-      Tair(2,day-1,:,:) =  dim_max_n_Wrap(Tair_tmp(ts:ts+7,:,:),0)
-    end do
-  end do
-  delete(Tair_tmp)
-  Tair = Tair - 273.15
-
-  VegT(0,:,:,:,:) = VegT(0,:,:,:,:) - Tair(0:1,:,:,:)
-  VegT(1,:,:,:,:) = VegT(1,:,:,:,:) - Tair(0:1,:,:,:)
-  VegT(2,:,:,:,:) = VegT(2,:,:,:,:) - Tair(0:1,:,:,:)
-  LST_Terra_regrid= LST_Terra_regrid - Tair(0,:,:,:)
-  LST_Aqua_regrid = LST_Aqua_regrid  - Tair(1,:,:,:)
-end if
-
-; =============================== Diurnal Cycle ================================
-; ___________ LST mask ___________
-LST_Terra_mask = new((/31,9,lat_sum,lon_sum/),float,-9999.)
-LST_Aqua_mask  = new((/31,9,lat_sum,lon_sum/),float,-9999.)
-do z = 0,8
-  LST_Terra_mask(:,z,:,:) = LST_Terra_regrid(:,:,:)
-  LST_Aqua_mask(:,z,:,:)  = LST_Aqua_regrid(:,:,:)
+; LST
+LST_mask = new((/31,9,lat_sum,lon_sum/),float,-9999.)
+LST_mask = 0.
+do z = 0, 8
+  LST_mask(:,z,:,:) = where(LST_Terra_regrid .ne. -9999. .and. LST_Aqua_regrid .ne. -9999., 1., 0.)
 end do
 
-; ____________ Diurnal Cycle ______________
-deltaT   = new((/case_sum,3,9/),float,default_val)
+; ---------------- Diurnal Cycle ----------------
+Fwsoil   = new((/case_sum,3,3,9/), float, default_val) ; case x day x region x time steps
+deltaT   = new((/case_sum,3,3,9/), float, default_val)
+Tair_ts  = new((/case_sum,3,3,9/), float, default_val)
+Qair_ts  = new((/case_sum,3,3,9/), float, default_val)
+VPD      = new((/case_sum,3,3,9/), float, default_val)
+Fwsoil   = 0.
 deltaT   = 0.
-do case_num = 0, case_sum -1
+Tair_ts  = 0.
+Qair_ts  = 0.
+VPD      = 0.
+
+do case_num = 0, case_sum-1
   print("case_num = " +case_num)
   filename1 = path(case_num)+"/cable_out_2019_SE_Aus.nc"
   f1 = addfile (filename1,"r")
-  ts = (15-1)*8
-  ; print(LST_Terra_mask(14,:,:,:))
-  deltaT(case_num,0,:) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1 .and. HW_mask_multi(0,:,:,:) .eq. 1 \
-                             .and. LST_Terra_mask(14,:,:,:) .ne. -9999. \
-                             .and. LST_Aqua_mask(14,:,:,:)  .ne. -9999., \
-                             f1->VegT(ts:ts+8,{A:B},{C:D}) - f1->Tair(ts:ts+8,{A:B},{C:D}), default_val) ,(/1,2/))
-  ts = (16-1)*8
-  deltaT(case_num,1,:) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1 .and. HW_mask_multi(1,:,:,:) .eq. 1 \
-                             .and. LST_Terra_mask(15,:,:,:) .ne. -9999. \
-                             .and. LST_Aqua_mask(15,:,:,:)  .ne. -9999., \
-                             f1->VegT(ts:ts+8,{A:B},{C:D}) - f1->Tair(ts:ts+8,{A:B},{C:D}), default_val) ,(/1,2/))
-  ts = (25-1)*8
-  deltaT(case_num,2,:) = dim_avg_n_Wrap(where(PFT_mask_multi .eq. 1 .and. HW_mask_multi(2,:,:,:) .eq. 1 \
-                             .and. LST_Terra_mask(24,:,:,:) .ne. -9999. \
-                             .and. LST_Aqua_mask(24,:,:,:)  .ne. -9999., \
-                             f1->VegT(ts:ts+8,{A:B},{C:D}) - f1->Tair(ts:ts+8,{A:B},{C:D}), default_val) ,(/1,2/))
 
-  tmp = where(PFT_mask_multi .eq. 1 .and. HW_mask_multi(2,:,:,:) .eq. 1 \
-                             .and. LST_Terra_mask(24,:,:,:) .ne. -9999. \
-                             .and. LST_Aqua_mask(24,:,:,:)  .ne. -9999., \
-                             f1->VegT(ts:ts+8,{A:B},{C:D}) - f1->Tair(ts:ts+8,{A:B},{C:D}), default_val)
-  plot = gsn_csm_contour(wks1,tmp(0,:,:),res9)
+  Tair_tmp   = f1->Tair(0:60*8,{A:B},{C:D})
+  VegT_tmp   = f1->VegT(0:60*8,{A:B},{C:D})
+  Qair_tmp   = f1->Qair(0:60*8,{A:B},{C:D})
+  Fwsoil_tmp = f1->Fwsoil(0:60*8,{A:B},{C:D})
 
+  do day = 0, dimsizes(HW_day_s) - 1
+    ts = (HW_day_s(day)-1)*8
+    do region = 0,2
+      deltaT(case_num,day,region,:) = dim_avg_n_Wrap(where(\
+                                              LST_mask(day,:,:,:) .ne. -9999. \
+                                              .and. PFT_mask_multi(:,region,:,:) .eq. 1 \
+                                              .and. HW_mask_multi(day,:,:,:) .eq. 1, \
+                                              VegT_tmp(ts:ts+8,:,:) - Tair_tmp(ts:ts+8,:,:), default_val) ,(/1,2/))
+      Fwsoil(case_num,day,region,:) = dim_avg_n_Wrap(where(\
+                                              LST_mask(day,:,:,:) .ne. -9999. \
+                                              .and. PFT_mask_multi(:,region,:,:) .eq. 1 \
+                                              .and. HW_mask_multi(day,:,:,:) .eq. 1, \
+                                              Fwsoil_tmp(ts:ts+8,:,:), default_val) ,(/1,2/))
+      Tair_ts(case_num,day,region,:)= dim_avg_n_Wrap(where(\
+                                              LST_mask(day,:,:,:) .ne. -9999. \
+                                              .and. PFT_mask_multi(:,region,:,:) .eq. 1 \
+                                              .and. HW_mask_multi(day,:,:,:) .eq. 1, \
+                                              Tair_tmp(ts:ts+8,:,:), default_val) ,(/1,2/))
+      Qair_ts(case_num,day,region,:)= dim_avg_n_Wrap(where(\
+                                              LST_mask(day,:,:,:) .ne. -9999. \
+                                              .and. PFT_mask_multi(:,region,:,:) .eq. 1 \
+                                              .and. HW_mask_multi(day,:,:,:) .eq. 1, \
+                                              Qair_tmp(ts:ts+8,:,:), default_val) ,(/1,2/))
+    end do
+  end do
   delete(filename1)
   delete(f1)
 end do ; case_num
 
-LST_tree = new((/3,2/),float,-9999.)
-LST_tree(0,0) = avg(where( PFT_mask .eq. 1 .and. HW(14,:,:) .eq. 1\
-                           .and. LST_Aqua_regrid(14,:,:) .ne. -9999., LST_Terra_regrid(14,:,:), -9999.) )
-LST_tree(1,0) = avg(where( PFT_mask .eq. 1 .and. HW(15,:,:) .eq. 1\
-                           .and. LST_Aqua_regrid(15,:,:) .ne. -9999., LST_Terra_regrid(15,:,:), -9999.) )
-LST_tree(2,0) = avg(where( PFT_mask .eq. 1 .and. HW(24,:,:) .eq. 1\
-                           .and. LST_Aqua_regrid(24,:,:) .ne. -9999., LST_Terra_regrid(24,:,:), -9999.) )
-LST_tree(0,1) = avg(where( PFT_mask .eq. 1 .and. HW(14,:,:) .eq. 1\
-                           .and. LST_Terra_regrid(14,:,:) .ne. -9999., LST_Aqua_regrid(14,:,:), -9999.) )
-LST_tree(1,1) = avg(where( PFT_mask .eq. 1 .and. HW(15,:,:) .eq. 1\
-                           .and. LST_Terra_regrid(15,:,:) .ne. -9999., LST_Aqua_regrid(15,:,:), -9999.) )
-LST_tree(2,1) = avg(where( PFT_mask .eq. 1 .and. HW(24,:,:) .eq. 1\
-                           .and. LST_Terra_regrid(24,:,:) .ne. -9999., LST_Aqua_regrid(24,:,:), -9999.) )
+; ---------------- unit convert -----------------
+Tair_ts  = Tair_ts -  273.15
 
-; tmp = where( PFT_mask .eq. 1 .and. HW(14,:,:) .eq. 1\
-;              .and. LST_Aqua_regrid(14,:,:) .ne. -9999., LST_Terra_regrid(14,:,:), -9999.)
-; plot = gsn_csm_contour(wks1,tmp,res9)
-; delete(tmp)
-;
-; tmp = where( PFT_mask .eq. 1 .and. HW(14,:,:) .eq. 1\
-;              .and. LST_Terra_regrid(14,:,:) .ne. -9999., LST_Aqua_regrid(14,:,:), -9999.)
-; plot = gsn_csm_contour(wks1,tmp,res9)
-; delete(tmp)
+; ---------------- Calculate VPD ----------------
+Purf     = 1000.*100.
+
+; saturation vapor pressure
+Es = 100.0 * 6.112 * exp((17.67 * Tair_ts) / (243.5 + Tair_ts))
+
+; vapor pressure
+Ea = (Qair_ts * Purf) / (0.622 + (1.0 - 0.622) * Qair_ts)
+
+VPD = (Es - Ea) * 0.001 ; in kPa
+VPD = where(VPD .lt. 0.05, 0.05, VPD)
+
+
+; ----------------- LST dots ------------------
+LST_tree = new((/3,3,2/),float,-9999.) ; events x regions x 2 time steps
+do region = 0,2
+  LST_tree(0,region,0) = avg(where( PFT_mask(region,:,:) .eq. 1 .and. HW(14,:,:) .eq. 1\
+                             .and. LST_Aqua_regrid(14,:,:) .ne. -9999., LST_Terra_regrid(14,:,:), -9999.) )
+  LST_tree(1,region,0) = avg(where( PFT_mask(region,:,:) .eq. 1 .and. HW(15,:,:) .eq. 1\
+                             .and. LST_Aqua_regrid(15,:,:) .ne. -9999., LST_Terra_regrid(15,:,:), -9999.) )
+  LST_tree(2,region,0) = avg(where( PFT_mask(region,:,:) .eq. 1 .and. HW(24,:,:) .eq. 1\
+                             .and. LST_Aqua_regrid(24,:,:) .ne. -9999., LST_Terra_regrid(24,:,:), -9999.) )
+  LST_tree(0,region,1) = avg(where( PFT_mask(region,:,:) .eq. 1 .and. HW(14,:,:) .eq. 1\
+                             .and. LST_Terra_regrid(14,:,:) .ne. -9999., LST_Aqua_regrid(14,:,:), -9999.) )
+  LST_tree(1,region,1) = avg(where( PFT_mask(region,:,:) .eq. 1 .and. HW(15,:,:) .eq. 1\
+                             .and. LST_Terra_regrid(15,:,:) .ne. -9999., LST_Aqua_regrid(15,:,:), -9999.) )
+  LST_tree(2,region,1) = avg(where( PFT_mask(region,:,:) .eq. 1 .and. HW(24,:,:) .eq. 1\
+                             .and. LST_Terra_regrid(24,:,:) .ne. -9999., LST_Aqua_regrid(24,:,:), -9999.) )
+end do
 ; delete(res9)
 
 ; ================================= Plotting ===================================
@@ -363,7 +423,7 @@ res@cnLevelSelectionMode   = "ExplicitLevels"
 
 res@lbLabelBarOn           = True
 res@lbBoxLinesOn           = True                       ;�ر�lbar box ����
-; res@lbOrientation          = "vertical"
+res@lbOrientation          = "vertical"
 res@lbTitleFont            = 25
 res@lbLabelFont            = 25
 res@lbTitleFontHeightF     = 0.013
@@ -432,55 +492,6 @@ end if
 end if
 end if
 
-
-; for diurnal plot
-res1                    = True
-res1@gsnDraw            = True
-res1@gsnFrame           = True
-res1@gsnMaximize        = False
-res1@vpHeightF          = 0.4               ; change aspect ratio of plot
-res1@vpWidthF 	        = 0.4
-; res1@vpXF               = 0.08
-; res1@vpYF               = 0.7
-res1@pmLegendWidthF     = 0.10                     ; res1ize legend width
-res1@pmLegendHeightF    = 0.10                     ; and height
-res1@tiXAxisFontHeightF = 0.02
-res1@tiYAxisFontHeightF = 0.02
-res1@tmXBLabelFontHeightF = 0.02
-res1@tmYLLabelFontHeightF = 0.02
-res1@gsnPaperOrientation = "landscape";"portrait";"landscape" ;"auto"
-
-res1@pmLegendDisplayMode = "Always"
-res1@xyLineThicknesses   = (/2.0, 2.0, 2.0 /)
-res1@xyDashPatterns      = (/0, 0, 0/)
-res1@xyLineColors        = (/"blue","red","green"/)
-res1@xyExplicitLegendLabels = case_name_brf
-res1@tmXBMode            = "Explicit"
-x                        = ispan(1,9,1)
-res1@tmXBValues          = ispan(1,9,1)
-res1@tmXBLabels          = tostring(ispan(0,24,3))
-res1@tiXAxisString       = "hr"
-res1@pmLegendDisplayMode = "Never"
-res1@tiYAxisString       = "~F5~D ~F22~T (~S~o~N~C)"
-res1@trYMinF             = -3
-res1@trYMaxF             = 10.2
-res1@trXMinF             = 1
-res1@trXMaxF             = 9
-res2 = res1
-res2@xyMarkLineMode         = "Markers"
-res2@xyMarkers              = (/6, 16/)
-res2@xyMarkerColors         = (/"red","red"/) ; 3 different colors
-delete(res2@xyExplicitLegendLabels)
-res2@xyExplicitLegendLabels = (/"Terra","Aqua"/)
-res2@pmLegendDisplayMode    = "Never"
-res2@lgPerimOn              = False      ; No legend perimeter.
-res2@pmLegendParallelPosF   = 0.25
-res2@pmLegendOrthogonalPosF = -1.05
-res2@lgBoxMinorExtentF      = 0.3
-res2@pmLegendWidthF         = 0.20
-res2@pmLegendHeightF        = 0.07
-res2@lgItemOrder            = (/ 1,0 /)   ; Reorder the legends
-
 ;**************** ͼ�������� *****************
 pres                    = True
 pres@wkWidth            = 2500
@@ -497,6 +508,70 @@ pres@lbLabelFontHeightF = 0.01
 pres@gsnPanelYWhiteSpacePercent = 0.5
 pres@gsnPanelXWhiteSpacePercent = 0.5
 
+
+; --------- lines in diurnal cycle ---------
+res1                    = True
+res1@gsnDraw            = False
+res1@gsnFrame           = False
+res1@gsnMaximize        = False
+res1@vpHeightF          = 0.4               ; change aspect ratio of plot
+res1@vpWidthF 	        = 0.4
+; res1@vpXF               = 0.08
+; res1@vpYF               = 0.7
+res1@pmLegendWidthF     = 0.10                     ; res1ize legend width
+res1@pmLegendHeightF    = 0.10                     ; and height
+res1@tiXAxisFontHeightF = 0.02
+res1@tiYAxisFontHeightF = 0.02
+res1@tmXBLabelFontHeightF = 0.02
+res1@tmYLLabelFontHeightF = 0.02
+res1@gsnPaperOrientation = "landscape";"portrait";"landscape" ;"auto"
+
+res1@xyLineThicknesses   = (/2.0, 2.0, 2.0 /)
+res1@xyDashPatterns      = (/0, 0, 0/)
+res1@xyLineColors        = (/"darkgreen","orange","blue"/)
+res1@xyExplicitLegendLabels = case_name_brf
+res1@tmXBMode            = "Explicit"
+x                        = ispan(1,9,1)
+res1@tmXBValues          = ispan(1,9,1)
+res1@tmXBLabels          = tostring(ispan(0,24,3))
+res1@tiXAxisString       = "hr"
+res1@trXMinF             = 1
+res1@trXMaxF             = 9
+
+
+; --------- dots in diurnal cycle ---------
+res2 = res1
+res2@xyMarkLineMode         = "Markers"
+res2@xyMarkers              = (/6, 16/)
+res2@xyMarkerColors         = (/"red","red"/) ; 3 different colors
+delete(res2@xyExplicitLegendLabels)
+res2@xyExplicitLegendLabels = (/"Terra","Aqua"/)
+res2@pmLegendDisplayMode    = "Never"
+res2@lgPerimOn              = False      ; No legend perimeter.
+res2@pmLegendParallelPosF   = 0.25
+res2@pmLegendOrthogonalPosF = -1.05
+res2@lgBoxMinorExtentF      = 0.3
+res2@pmLegendWidthF         = 0.20
+res2@pmLegendHeightF        = 0.07
+res2@lgItemOrder            = (/ 1,0 /)   ; Reorder the legends
+
+; -------------- gsn_panel ----------------
+pres                    = True
+pres@wkWidth            = 2500
+pres@wkHeight           = 2500
+
+pres@gsnMaximize        = True
+pres@gsnPanelLabelBar   = False
+pres@cnLevelSelectionMode = "ExplicitLevels"
+pres@lbBoxLinesOn       = True
+pres@lbTitleFont        = 25
+pres@lbLabelFont        = 25
+pres@lbTitleFontHeightF = 0.01
+pres@lbLabelFontHeightF = 0.01
+pres@gsnPanelYWhiteSpacePercent = 0.5
+pres@gsnPanelXWhiteSpacePercent = 0.5
+
+; -------------- plot order ----------------
 txres                   = True
 txres@txPerimOn         = False
 txres@txFont            = 25
@@ -507,17 +582,10 @@ amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
 amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
+; -------------- start to plot ----------------
+plots = new(8,graphic)
 
-plots = new(12,graphic)
-
-; if diff .eq. True then
-;   res@cnLevels      = fspan(-20,20, 21) ;deltaT_CTL_lvl
-;   res@cnFillPalette = "testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
-; else
-;   res@cnLevels      = fspan( 20, 60, 1) ;deltaT_CTL_lvl
-;   res@cnFillPalette = "WhiteBlueGreenYellowRed"
-; end if
-
+; Tmax
 ; 15 Jan
 ; res@cnLevels      = fspan( 20, 60, 41) ;deltaT_CTL_lvl
 ; res@cnFillPalette = "WhiteBlueGreenYellowRed"
@@ -531,49 +599,150 @@ plots = new(12,graphic)
 ; LST
 res@cnFillPalette = "precip3_16lev";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
 res@cnLevels      = fspan(0,15, 16) ;deltaT_CTL_lvl
-plots(0) = gsn_csm_contour_map(wks,LST_Terra_regrid(14,:,:),res)
-plots(1) = gsn_csm_contour_map(wks,LST_Terra_regrid(15,:,:),res)
-plots(2) = gsn_csm_contour_map(wks,LST_Terra_regrid(24,:,:),res)
+
+res@lbLabelBarOn = False ; "Always"
+plots(0) = gsn_csm_contour_map(wks,LST_Aqua_regrid(14,:,:),res)
+; plots(1) = gsn_csm_contour_map(wks,LST_Aqua_regrid(15,:,:),res)
+
+res@lbLabelBarOn = True
+plots(1) = gsn_csm_contour_map(wks,LST_Aqua_regrid(24,:,:),res)
 ; delete(res@cnLevels)
 
 
-; res@cnLevels      = fspan(0,15, 16) ;deltaT_CTL_lvl
-plots(3) = gsn_csm_contour_map(wks,VegT(0,0,14,:,:),res)
-plots(4) = gsn_csm_contour_map(wks,VegT(0,0,15,:,:),res)
-plots(5) = gsn_csm_contour_map(wks,VegT(0,0,24,:,:),res)
+; notes :
+; VegT: case x 2 time steps x days x lat x lon
+
+; deltaT
+res@lbLabelBarOn = False ; "Always"
+tmp = VegT(0,1,14,:,:)
+
+tmp = where(PFT_mask(1,:,:) .eq. 1 .and. HW(14,:,:) .eq. 1 .and. LST_mask(14,0,:,:) .eq. 1,\
+      tmp, tmp@_FillValue)
+plots(2) = gsn_csm_contour_map(wks,tmp,res) ;VegT(0,1,14,:,:),res)
+; plots(4) = gsn_csm_contour_map(wks,VegT(0,1,15,:,:),res)
+delete(tmp)
+
+res@lbLabelBarOn = True ; "Always"
+tmp = VegT(0,1,24,:,:)
+tmp = where(PFT_mask(2,:,:) .eq. 1 .and. HW(24,:,:) .eq. 1 .and. LST_mask(24,0,:,:) .eq. 1,\
+      tmp, tmp@_FillValue)
+plots(3) = gsn_csm_contour_map(wks,tmp,res) ;VegT(0,1,24,:,:),res)
+delete(tmp)
 delete(res@cnLevels)
 
-res@cnFillPalette = "testcmap";"BlAqGrWh2YeOrReVi22";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
-res@cnLevels      = fspan(-5,5, 21) ;deltaT_CTL_lvl
-VegT(0,0,:,:,:) = VegT(0,0,:,:,:) - VegT(1,0,:,:,:)
-plots(6) = gsn_csm_contour_map(wks,VegT(0,0,14,:,:),res)
-plots(7) = gsn_csm_contour_map(wks,VegT(0,0,15,:,:),res)
-plots(8) = gsn_csm_contour_map(wks,VegT(0,0,24,:,:),res)
+; deltaT GW - FD
+res@cnLevels      = fspan(-4,4, 17) ;deltaT_CTL_lvl
+res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
+tmp               = VegT(0,1,:,:,:)
+tmp               = tmp - VegT(1,1,:,:,:)
+res@lbLabelBarOn = False ; "Always"
+plots(4) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
+; plots(7) = gsn_csm_contour_map(wks,VegT(0,1,15,:,:),res)
+res@lbLabelBarOn = True ; "Always"
+plots(5) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
+; delete(res@cnLevels)
+delete(tmp)
+
+; deltaT DR - GW
+res@cnFillPalette = "BlAqGrWh2YeOrReVi22"
+tmp               = VegT(2,1,:,:,:)
+tmp               = tmp - VegT(0,1,:,:,:)
+res@lbLabelBarOn = False ; "Always"
+plots(6) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
+; plots(7) = gsn_csm_contour_map(wks,VegT(0,1,15,:,:),res)
+res@lbLabelBarOn = True ; "Always"
+plots(7) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
 delete(res@cnLevels)
-
-; 1, 2, 3, 4, 4.33,  5,  5.67,  6,  7,  8,  9
-; 0, 3, 6, 9, 10,   12,    14, 15, 18, 21, 24
-
-y        = (/4.33, 5.67/)
-print(deltaT(0,0,:))
-plots(9) = gsn_csm_xy(wks,x,deltaT(:,0,:),res1)
-plot1    = gsn_csm_xy(wks,y,LST_tree(0,:),res2)
-overlay(plots(9),plot1)
-delete(res1@tiYAxisString)
-plots(10) = gsn_csm_xy(wks,x,deltaT(:,1,:),res1)
-plot2    = gsn_csm_xy(wks,y,LST_tree(1,:),res2)
-overlay(plots(10),plot2)
-plots(11) = gsn_csm_xy(wks,x,deltaT(:,2,:),res1)
-plot3    = gsn_csm_xy(wks,y,LST_tree(2,:),res2)
-overlay(plots(11),plot3)
-
-do cnt = 0, 11
+delete(tmp)
+do cnt = 0, 7
   txid1   = gsn_create_text(wks, order_name(cnt), txres)
   annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
 end do
-gsn_panel(wks,(/plots/),(/4,3/),pres)
+gsn_panel(wks,(/plots/),(/4,2/),pres)
+delete(plots)
+
+; notes:
+; deltaT : case x day (0,1,2) x region x time steps
+; LST_tree : events x regions x 2 time steps
+
+; diurnal cycle
+
+plots = new(4,graphic)
+res1@pmLegendDisplayMode = "Always"
+res1@trYMinF             = -3.
+res1@trYMaxF             = 10.2
+y                        = (/4.33, 5.67/) ; 10 am & 2 pm
+res1@tiYAxisString       = "~F5~D~F22~T (~S~o~N~C)"
+
+; region 1
+plots(0) = gsn_csm_xy(wks,x,deltaT(:,0,1,:),res1)
+plot1    = gsn_csm_xy(wks,y,LST_tree(0,1,:),res2)
+overlay(plots(0),plot1)
+delete(res1@tiYAxisString)
+
+res1@pmLegendDisplayMode = "Never"
+; plots(10) = gsn_csm_xy(wks,x,deltaT(:,1,:),res1)
+; plot2     = gsn_csm_xy(wks,y,LST_tree(1,:),res2)
+; overlay(plots(10),plot2)
+plots(1) = gsn_csm_xy(wks,x,deltaT(:,2,1,:),res1)
+plot2     = gsn_csm_xy(wks,y,LST_tree(2,1,:),res2)
+overlay(plots(1),plot2)
+
+; region 2
+res1@tiYAxisString       = "~F5~D~F22~T (~S~o~N~C)"
+plots(2) = gsn_csm_xy(wks,x,deltaT(:,0,2,:),res1)
+plot3    = gsn_csm_xy(wks,y,LST_tree(0,2,:),res2)
+overlay(plots(2),plot3)
+delete(res1@tiYAxisString)
+
+; res1@pmLegendDisplayMode = "Never"
+; plots(10) = gsn_csm_xy(wks,x,deltaT(:,1,:),res1)
+; plot2     = gsn_csm_xy(wks,y,LST_tree(1,:),res2)
+; overlay(plots(10),plot2)
+plots(3) = gsn_csm_xy(wks,x,deltaT(:,2,2,:),res1)
+plot4     = gsn_csm_xy(wks,y,LST_tree(2,2,:),res2)
+overlay(plots(3),plot4)
+
+; res1@tiYAxisString       = "VPD (kPa)"
+; res1@trYMinF             = 0.
+; res1@trYMaxF             = 7.
+; plots(12) = gsn_csm_xy(wks,x,VPD(:,0,:),res1)
+; delete(res1@tiYAxisString)
+; plots(13) = gsn_csm_xy(wks,x,VPD(:,1,:),res1)
+; plots(14) = gsn_csm_xy(wks,x,VPD(:,2,:),res1)
+;
+; res1@tiYAxisString       = "~F5~b"
+; res1@trYMinF             = 0.
+; res1@trYMaxF             = 1.
+; plots(15) = gsn_csm_xy(wks,x,Fwsoil(:,0,:),res1)
+; delete(res1@tiYAxisString)
+; plots(16) = gsn_csm_xy(wks,x,Fwsoil(:,1,:),res1)
+; plots(17) = gsn_csm_xy(wks,x,Fwsoil(:,2,:),res1)
+
+do cnt = 0, 3
+  txid1   = gsn_create_text(wks, order_name(cnt), txres)
+  annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
+end do
+gsn_panel(wks,(/plots/),(/2,2/),pres)
 
 
+; ------------------ Check LST missing value -----------------
+; plots = new(2,graphic)
+; LST_Terra_regrid = where(HW .eq. 1, LST_Terra_regrid,LST_Terra_regrid@_FillValue)
+; LST_Aqua_regrid  = where(HW .eq. 1, LST_Aqua_regrid,LST_Aqua_regrid@_FillValue)
+; do day = 0, 30
+;   LST_Terra_regrid(day,:,:) = where(PFT_mask .eq. 1, LST_Terra_regrid(day,:,:),LST_Terra_regrid@_FillValue)
+;   LST_Aqua_regrid(day,:,:)  = where(PFT_mask .eq. 1, LST_Aqua_regrid(day,:,:),LST_Aqua_regrid@_FillValue)
+; end do
+; do day = 0,30
+;   print("VegT")
+;   res@tiXAxisString = "day = " +(day+1)
+;   plots(0) = gsn_csm_contour_map(wks,LST_Terra_regrid(day,:,:),res)
+;   plots(1) = gsn_csm_contour_map(wks,LST_Aqua_regrid(day,:,:),res)
+;   gsn_panel(wks,(/plots/),(/1,2/),pres)
+; end do
+
+; ------------------ Check Jan temp ------------------
 ; do day = 0,30
 ;   print("VegT")
 ;   plots(0) = gsn_csm_contour_map(wks,VegT(0,0,day,:,:),res)
@@ -594,10 +763,7 @@ gsn_panel(wks,(/plots/),(/4,3/),pres)
 ;     annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
 ;   end do
 ;   gsn_panel(wks,(/plots/),(/2,4/),pres)
-;
 ; end do
 
-;
-; gsn_panel(wks,(/plots/),(/4,4/),pres)
 
 end
