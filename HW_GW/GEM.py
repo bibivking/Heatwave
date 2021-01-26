@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pygam import LinearGAM
-from matplotlib import cm
+# from matplotlib import cm
 
 #from pygam.utils import generate_X_grid
 fname = "./txt/scatter_WTD_deltaT_CTL_PFT-tree_2000-19.txt"
@@ -23,10 +23,10 @@ plt.rcParams['legend.fontsize'] = 18
 plt.rcParams['xtick.labelsize'] = 18
 plt.rcParams['ytick.labelsize'] = 18
 
-props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
+# props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
 # colors = cm.Oranges()
 # , c=colors,
-
+print("I am OK 1 ")
 ax = fig.add_subplot(111)
 
 sns.histplot(
@@ -39,6 +39,7 @@ y = df['ΔT (°C)'].values
 xx = x.reshape(x.shape[0], 1)
 yy = y.reshape(y.shape[0], 1)
 
+print("I am OK 2")
 # reshape for gam
 gam    = LinearGAM(n_splines=20).gridsearch(xx, yy)
 x_pred = np.linspace(min(x), max(x), num=100)
@@ -47,8 +48,9 @@ y_int  = gam.confidence_intervals(x_pred, width=.95)
 ax.plot(x_pred, y_pred, color="red", ls='-', lw=2.0, zorder=10)
 ax.fill_between(x_pred, y_int[:, 0], y_int[:, 1], alpha=0.2,
                 facecolor='red', zorder=10)
-ax.text(0.03, 0.95, '(f)', transform=ax.transAxes, fontsize=18, verticalalignment='top', bbox=props)
+# ax.text(0.03, 0.95, '(f)', transform=ax.transAxes, fontsize=18, verticalalignment='top', bbox=props)
 
+print("I am OK 3")
 # plt.setp(ax.get_xticklabels(), visible=False)
 # ax.set(xticks=xtickslocs, xticklabels=cleaner_dates) ####
 ax.yaxis.tick_left()
