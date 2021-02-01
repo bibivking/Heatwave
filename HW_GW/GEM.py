@@ -9,8 +9,8 @@ from pygam import LinearGAM
 fname = "./txt/scatter_WTD_deltaT_CTL_PFT-tree_2000-19.txt"
 df = pd.read_csv(fname, names=["WTD (m)", "ΔT (°C)"], sep=' ', skipinitialspace=True)
 
-width  = 6
-height = 6
+width  = 9
+height = 7
 fig    = plt.figure(figsize=(width, height))
 fig.subplots_adjust(hspace=0.1)
 fig.subplots_adjust(wspace=0.05)
@@ -41,7 +41,7 @@ yy = y.reshape(y.shape[0], 1)
 
 print("I am OK 2")
 # reshape for gam
-gam    = LinearGAM(n_splines=20).gridsearch(xx, yy)
+gam    = LinearGAM(n_splines=22).gridsearch(xx, yy)
 x_pred = np.linspace(min(x), max(x), num=100)
 y_pred = gam.predict(x_pred)
 y_int  = gam.confidence_intervals(x_pred, width=.95)
@@ -55,6 +55,11 @@ print("I am OK 3")
 # ax.set(xticks=xtickslocs, xticklabels=cleaner_dates) ####
 ax.yaxis.tick_left()
 ax.yaxis.set_label_position("left")
+bwith = 2
+ax.spines['bottom'].set_linewidth(bwith)
+ax.spines['left'].set_linewidth(bwith)
+ax.spines['top'].set_linewidth(bwith)
+ax.spines['right'].set_linewidth(bwith)
 # ax.set_ylabel("Evaporative Fraction (-)")
 # ax.axis('tight')
 #ax.set_ylim(0.,120.)

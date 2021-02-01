@@ -418,8 +418,8 @@ res@gsnDraw                 = False  ; Don't draw plots
 res@gsnFrame                = False  ; ����ҳ
 res@gsnMaximize             = False
 
-res@vpHeightF 	            = 0.4               ; change aspect ratio of plot
-res@vpWidthF 	              = 0.4
+res@vpHeightF 	            = 0.38               ; change aspect ratio of plot
+res@vpWidthF 	              = 0.38
 res@tiYAxisFontThicknessF   = 3.
 res@tmXBMajorThicknessF     = 3.
 res@tmXBMinorThicknessF     = 3.
@@ -427,7 +427,7 @@ res@tmYLMajorThicknessF     = 3.
 res@tmYLMinorThicknessF     = 3.
 res@tmYLLabelFontThicknessF = 3.
 res@tmBorderThicknessF      = 3.
-res@txFont                  = 25
+; res@txFont                  = 25
 res@txFontHeightF           = 0.015            ; change title font heights
 res@gsnPaperOrientation     = "landscape";"portrait";"landscape" ;"auto"
 
@@ -440,7 +440,7 @@ res@cnLevelSelectionMode   = "ExplicitLevels"
 
 res@lbLabelBarOn           = True
 res@lbBoxLinesOn           = True                       ;�ر�lbar box ����
-res@lbOrientation          = "vertical"
+res@lbOrientation          = "vertical";"vertical" ;"horizontal"
 res@lbTitleFont            = 25
 res@lbLabelFont            = 25
 res@lbTitleFontHeightF     = 0.013
@@ -514,15 +514,17 @@ pres                    = True
 pres@wkWidth            = 2500
 pres@wkHeight           = 2500
 
-pres@gsnMaximize        = True
+pres@gsnMaximize        = False
 pres@gsnPanelLabelBar   = False
+; pres@gsnPanelMainPosXF  = 0.1
+; pres@gsnPanelMainPosYF  = 0.1
 pres@cnLevelSelectionMode = "ExplicitLevels"
 pres@lbBoxLinesOn       = True
 pres@lbTitleFont        = 25
 pres@lbLabelFont        = 25
 pres@lbTitleFontHeightF = 0.01
 pres@lbLabelFontHeightF = 0.01
-pres@gsnPanelYWhiteSpacePercent = 0.5
+pres@gsnPanelYWhiteSpacePercent = 0.6
 pres@gsnPanelXWhiteSpacePercent = 0.5
 
 
@@ -531,17 +533,28 @@ res1                    = True
 res1@gsnDraw            = False
 res1@gsnFrame           = False
 res1@gsnMaximize        = False
-res1@vpHeightF          = 0.4               ; change aspect ratio of plot
-res1@vpWidthF 	        = 0.4
+res1@vpHeightF          = 0.30               ; change aspect ratio of plot
+res1@vpWidthF 	        = 0.38
 ; res1@vpXF               = 0.08
 ; res1@vpYF               = 0.7
+res1@tiYAxisFontThicknessF   = 3.
+res1@tmXBMajorThicknessF     = 3.
+res1@tmXBMinorThicknessF     = 3.
+res1@tmYLMajorThicknessF     = 3.
+res1@tmYLMinorThicknessF     = 3.
+res1@tmYLLabelFontThicknessF = 3.
+res1@tmBorderThicknessF      = 3.
+; res@txFont                  = 25
+res1@txFontHeightF           = 0.015            ; change title font heights
+res1@gsnPaperOrientation     = "landscape";"portrait";"landscape" ;"auto"
+
+
 res1@pmLegendWidthF     = 0.10                     ; res1ize legend width
 res1@pmLegendHeightF    = 0.10                     ; and height
 res1@tiXAxisFontHeightF = 0.02
 res1@tiYAxisFontHeightF = 0.02
 res1@tmXBLabelFontHeightF = 0.02
 res1@tmYLLabelFontHeightF = 0.02
-res1@gsnPaperOrientation = "landscape";"portrait";"landscape" ;"auto"
 
 res1@lgPerimOn           = False      ; No legend perimeter.
 res1@xyLineThicknesses   = (/2.0, 2.0, 2.0 /)
@@ -593,7 +606,7 @@ pres@lbTitleFont        = 25
 pres@lbLabelFont        = 25
 pres@lbTitleFontHeightF = 0.01
 pres@lbLabelFontHeightF = 0.01
-pres@gsnPanelYWhiteSpacePercent = 0.5
+pres@gsnPanelYWhiteSpacePercent = 0.7
 pres@gsnPanelXWhiteSpacePercent = 0.5
 
 ; -------------- plot order ----------------
@@ -608,7 +621,7 @@ amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
 ; -------------- start to plot ----------------
-plots = new(8,graphic)
+plots = new(10,graphic)
 
 ; -------------- Tmax --------------
 ; 15 Jan
@@ -626,13 +639,18 @@ res@cnFillPalette = "precip3_16lev";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenY
 res@cnLevels      = fspan(0,15, 16) ;deltaT_CTL_lvl
 
 res@lbLabelBarOn = False ; "Always"
-plots(0) = gsn_csm_contour_map(wks,LST_Aqua_regrid(14,:,:),res)
+tmp = LST_Aqua_regrid(14,:,:)
+tmp = where(PFT_mask(0,:,:) .eq. 1, tmp, tmp@_FillValue)
+plots(0) = gsn_csm_contour_map(wks,tmp,res) ;LST_Aqua_regrid(14,:,:),res)
 ; plots(1) = gsn_csm_contour_map(wks,LST_Aqua_regrid(15,:,:),res)
+delete(tmp)
 
 res@lbLabelBarOn = True
-plots(1) = gsn_csm_contour_map(wks,LST_Aqua_regrid(24,:,:),res)
+tmp = LST_Aqua_regrid(24,:,:)
+tmp = where(PFT_mask(0,:,:) .eq. 1, tmp, tmp@_FillValue)
+plots(1) = gsn_csm_contour_map(wks,tmp,res) ;LST_Aqua_regrid(24,:,:),res)
 ; delete(res@cnLevels)
-
+delete(tmp)
 
 ; -------------- deltaT --------------
 ; notes :
@@ -667,30 +685,30 @@ plots(5) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
 delete(tmp)
 ; delete(temp)
 
-; -------------- deltaT DR - GW --------------
-res@cnFillPalette = "BlAqGrWh2YeOrReVi22"
-tmp               = VegT(2,1,:,:,:)
-tmp               = tmp - VegT(0,1,:,:,:)
-res@lbLabelBarOn = False ; "Always"
-plots(6) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
-; plots(7) = gsn_csm_contour_map(wks,VegT(0,1,15,:,:),res)
-res@lbLabelBarOn = True ; "Always"
-plots(7) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
-delete(res@cnLevels)
-delete(tmp)
-do cnt = 0, 7
-  txid1   = gsn_create_text(wks, order_name(cnt), txres)
-  annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
-end do
-gsn_panel(wks,(/plots/),(/4,2/),pres)
-delete(plots)
+; ; -------------- deltaT DR - GW --------------
+; res@cnFillPalette = "BlAqGrWh2YeOrReVi22"
+; tmp               = VegT(2,1,:,:,:)
+; tmp               = tmp - VegT(0,1,:,:,:)
+; res@lbLabelBarOn = True ; "Always"
+; plots(6) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
+; ; plots(7) = gsn_csm_contour_map(wks,VegT(0,1,15,:,:),res)
+; res@lbLabelBarOn = True ; "Always"
+; plots(7) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
+; delete(res@cnLevels)
+; delete(tmp)
+; do cnt = 0, 7
+;   txid1   = gsn_create_text(wks, order_name(cnt), txres)
+;   annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
+; end do
+; gsn_panel(wks,(/plots/),(/2,4/),pres)
+; delete(plots)
 
 ; -------------- diurnal cycle --------------
 ; notes:
 ; deltaT : case x day (0,1,2) x region x time steps
 ; LST_tree : events x regions x 2 time steps
-
-plots = new(4,graphic)
+offset_num = 6;8
+; plots = new(4,graphic)
 res1@pmLegendDisplayMode = "Always"
 res1@trYMinF             = -2.2
 res1@trYMaxF             = 11.
@@ -701,9 +719,9 @@ res1@tiYAxisString       = "~F5~D~F22~T (~S~o~N~C)"
 print("region1 15th")
 print(deltaT(:,0,1,:))
 print(LST_tree(0,1,:))
-plots(0) = gsn_csm_xy(wks,x,deltaT(:,0,1,:),res1)
+plots(0+offset_num) = gsn_csm_xy(wks,x,deltaT(:,0,1,:),res1)
 plot1    = gsn_csm_xy(wks,y,LST_tree(0,1,:),res2)
-overlay(plots(0),plot1)
+overlay(plots(0+offset_num),plot1)
 delete(res1@tiYAxisString)
 
 res1@pmLegendDisplayMode = "Never"
@@ -714,9 +732,9 @@ res1@pmLegendDisplayMode = "Never"
 print("region1 25th")
 print(deltaT(:,2,1,:))
 print(LST_tree(2,1,:))
-plots(1) = gsn_csm_xy(wks,x,deltaT(:,2,1,:),res1)
+plots(1+offset_num) = gsn_csm_xy(wks,x,deltaT(:,2,1,:),res1)
 plot2     = gsn_csm_xy(wks,y,LST_tree(2,1,:),res2)
-overlay(plots(1),plot2)
+overlay(plots(1+offset_num),plot2)
 
 ; region 2
 res1@tiYAxisString       = "~F5~D~F22~T (~S~o~N~C)"
@@ -724,9 +742,9 @@ res1@tiXAxisString       = "hr"
 print("region2 15th")
 print(deltaT(:,0,2,:))
 print(LST_tree(0,2,:))
-plots(2) = gsn_csm_xy(wks,x,deltaT(:,0,2,:),res1)
+plots(2+offset_num) = gsn_csm_xy(wks,x,deltaT(:,0,2,:),res1)
 plot3    = gsn_csm_xy(wks,y,LST_tree(0,2,:),res2)
-overlay(plots(2),plot3)
+overlay(plots(2+offset_num),plot3)
 delete(res1@tiYAxisString)
 
 ; res1@pmLegendDisplayMode = "Never"
@@ -736,9 +754,9 @@ delete(res1@tiYAxisString)
 print("region2 15th")
 print(deltaT(:,2,2,:))
 print(LST_tree(2,2,:))
-plots(3) = gsn_csm_xy(wks,x,deltaT(:,2,2,:),res1)
+plots(3+offset_num) = gsn_csm_xy(wks,x,deltaT(:,2,2,:),res1)
 plot4     = gsn_csm_xy(wks,y,LST_tree(2,2,:),res2)
-overlay(plots(3),plot4)
+overlay(plots(3+offset_num),plot4)
 
 ; -------------- VPD --------------
 ; res1@tiYAxisString       = "VPD (kPa)"
@@ -757,11 +775,11 @@ overlay(plots(3),plot4)
 ; plots(16) = gsn_csm_xy(wks,x,Fwsoil(:,1,:),res1)
 ; plots(17) = gsn_csm_xy(wks,x,Fwsoil(:,2,:),res1)
 
-do cnt = 0, 3
+do cnt = 0, 9;11
   txid1   = gsn_create_text(wks, order_name(cnt), txres)
   annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
 end do
-gsn_panel(wks,(/plots/),(/2,2/),pres)
+gsn_panel(wks,(/plots/),(/5,2/),pres) ;(/3,4/),pres)
 
 
 ; ------------------ Check LST missing value -----------------
