@@ -408,6 +408,12 @@ tmp               = tmp - dim_avg_n_Wrap(Trans(1,ts_s:ts_e,:,:),0)
 plots(1)          = gsn_csm_contour_map(wks,tmp,res)
 delete(tmp)
 
+res@lbTitleString = "~F5~D"+"~F25~Es (mm yr~S~-1~N~)"
+tmp               = dim_avg_n_Wrap(Esoil(0,ts_s:ts_e,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(Esoil(1,ts_s:ts_e,:,:),0)
+plots(2)          = gsn_csm_contour_map(wks,tmp,res)
+delete(tmp)
+
 ; res@lbLabelBarOn  = False
 ; res@gsnDraw       = False  ; Don't draw plots
 ; res@gsnFrame      = False  ; ����ҳ
@@ -431,7 +437,7 @@ print("plot Q2botsoil")
 res@lbTitleString = "~F5~D"+"~F25~Qrec (mm yr~S~-1~N~)"
 tmp               = dim_avg_n_Wrap(Q2botsoil(0,ts_s:ts_e,:,:),0)
 tmp               = tmp - dim_avg_n_Wrap(Q2botsoil(1,ts_s:ts_e,:,:),0)
-plots(2)          = gsn_csm_contour_map(wks,tmp,res)
+plots(3)          = gsn_csm_contour_map(wks,tmp,res)
 delete(tmp)
 delete(res@cnFillPalette)
 delete(cmap)
@@ -441,7 +447,7 @@ res@cnFillPalette = "testcmap"
 res@lbTitleString = "~F5~D"+"~F25~Dr (mm yr~S~-1~N~)"
 tmp               = dim_avg_n_Wrap(Q2aquifer(0,ts_s:ts_e,:,:),0)
 tmp               = tmp - dim_avg_n_Wrap(Q2aquifer(1,ts_s:ts_e,:,:),0)
-plots(3)          = gsn_csm_contour_map(wks,tmp,res)
+plots(4)          = gsn_csm_contour_map(wks,tmp,res)
 delete(tmp)
 delete(res@cnFillPalette)
 delete(res@cnLevels)
@@ -453,9 +459,9 @@ res@lbTitleString = "~F5~Db"
 cmap              = read_colormap_file("testcmap")
 res@cnFillPalette = cmap(0:99:-1,:)
 res@cnLevels      = fspan(0.,0.045,10)
-plots(4) = gsn_csm_contour_map(wks,Fwsoil_diff_max(0,:,:),res)
+plots(5) = gsn_csm_contour_map(wks,Fwsoil_diff_max(0,:,:),res)
 
-do counter = 0, 4
+do counter = 0, 5
   txid1   = gsn_create_text(wks, order_name(counter), txres)
   annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
 end do

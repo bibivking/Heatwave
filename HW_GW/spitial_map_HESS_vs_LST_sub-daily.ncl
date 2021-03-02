@@ -70,17 +70,16 @@ end if
 end if
 
 ; sub region 1
-A_rgn_1 = -39
-B_rgn_1 = -36
-C_rgn_1 = 145
-D_rgn_1 = 148.5
-
+A_rgn_1 = -36
+B_rgn_1 = -34
+C_rgn_1 = 149
+D_rgn_1 = 151
 
 ; sub region 2
-A_rgn_2 = -36
-B_rgn_2 = -34
-C_rgn_2 = 148.5
-D_rgn_2 = 151
+A_rgn_2 = -38
+B_rgn_2 = -36
+C_rgn_2 = 146.5
+D_rgn_2 = 148.5
 
 ; ______ load path ______
 path = new(case_sum,"string")
@@ -533,7 +532,7 @@ res1                    = True
 res1@gsnDraw            = False
 res1@gsnFrame           = False
 res1@gsnMaximize        = False
-res1@vpHeightF          = 0.30               ; change aspect ratio of plot
+res1@vpHeightF          = 0.32               ; change aspect ratio of plot
 res1@vpWidthF 	        = 0.38
 ; res1@vpXF               = 0.08
 ; res1@vpYF               = 0.7
@@ -622,7 +621,7 @@ amres@amJust            = "TopLeft"
 
 ; -------------- start to plot ----------------
 plots = new(10,graphic)
-
+plots2 = new(10,graphic)
 ; -------------- Tmax --------------
 ; 15 Jan
 ; res@cnLevels      = fspan( 20, 60, 41) ;deltaT_CTL_lvl
@@ -685,23 +684,17 @@ plots(5) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
 delete(tmp)
 ; delete(temp)
 
-; ; -------------- deltaT DR - GW --------------
-; res@cnFillPalette = "BlAqGrWh2YeOrReVi22"
-; tmp               = VegT(2,1,:,:,:)
-; tmp               = tmp - VegT(0,1,:,:,:)
-; res@lbLabelBarOn = True ; "Always"
-; plots(6) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
-; ; plots(7) = gsn_csm_contour_map(wks,VegT(0,1,15,:,:),res)
-; res@lbLabelBarOn = True ; "Always"
-; plots(7) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
-; delete(res@cnLevels)
-; delete(tmp)
-; do cnt = 0, 7
-;   txid1   = gsn_create_text(wks, order_name(cnt), txres)
-;   annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
-; end do
-; gsn_panel(wks,(/plots/),(/2,4/),pres)
-; delete(plots)
+; -------------- deltaT DR - GW --------------
+res@cnFillPalette = "BlAqGrWh2YeOrReVi22"
+tmp               = VegT(2,1,:,:,:)
+tmp               = tmp - VegT(0,1,:,:,:)
+res@lbLabelBarOn = False ; "Always"
+plots2(0) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
+; plots(7) = gsn_csm_contour_map(wks,VegT(0,1,15,:,:),res)
+res@lbLabelBarOn = True ; "Always"
+plots2(1) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
+delete(res@cnLevels)
+delete(tmp)
 
 ; -------------- diurnal cycle --------------
 ; notes:
@@ -715,6 +708,7 @@ res1@trYMaxF             = 11.
 y                        = (/4.33, 5.67/) ; 10 am & 2 pm
 res1@tiYAxisString       = "~F5~D~F22~T (~S~o~N~C)"
 
+res1@tiXAxisString       = "hr"
 ; region 1
 print("region1 15th")
 print(deltaT(:,0,1,:))
@@ -728,35 +722,36 @@ res1@pmLegendDisplayMode = "Never"
 ; plots(10) = gsn_csm_xy(wks,x,deltaT(:,1,:),res1)
 ; plot2     = gsn_csm_xy(wks,y,LST_tree(1,:),res2)
 ; overlay(plots(10),plot2)
-
-print("region1 25th")
-print(deltaT(:,2,1,:))
-print(LST_tree(2,1,:))
-plots(1+offset_num) = gsn_csm_xy(wks,x,deltaT(:,2,1,:),res1)
-plot2     = gsn_csm_xy(wks,y,LST_tree(2,1,:),res2)
-overlay(plots(1+offset_num),plot2)
-
-; region 2
-res1@tiYAxisString       = "~F5~D~F22~T (~S~o~N~C)"
-res1@tiXAxisString       = "hr"
-print("region2 15th")
-print(deltaT(:,0,2,:))
-print(LST_tree(0,2,:))
-plots(2+offset_num) = gsn_csm_xy(wks,x,deltaT(:,0,2,:),res1)
-plot3    = gsn_csm_xy(wks,y,LST_tree(0,2,:),res2)
-overlay(plots(2+offset_num),plot3)
-delete(res1@tiYAxisString)
+;
+; print("region1 25th")
+; print(deltaT(:,2,1,:))
+; print(LST_tree(2,1,:))
+; plots(1+offset_num) = gsn_csm_xy(wks,x,deltaT(:,2,1,:),res1)
+; plot2     = gsn_csm_xy(wks,y,LST_tree(2,1,:),res2)
+; overlay(plots(1+offset_num),plot2)
+;
+; ; region 2
+; res1@tiYAxisString       = "~F5~D~F22~T (~S~o~N~C)"
+; res1@tiXAxisString       = "hr"
+; print("region2 15th")
+; print(deltaT(:,0,2,:))
+; print(LST_tree(0,2,:))
+; plots(2+offset_num) = gsn_csm_xy(wks,x,deltaT(:,0,2,:),res1)
+; plot3    = gsn_csm_xy(wks,y,LST_tree(0,2,:),res2)
+; overlay(plots(2+offset_num),plot3)
+; delete(res1@tiYAxisString)
 
 ; res1@pmLegendDisplayMode = "Never"
 ; plots(10) = gsn_csm_xy(wks,x,deltaT(:,1,:),res1)
 ; plot2     = gsn_csm_xy(wks,y,LST_tree(1,:),res2)
 ; overlay(plots(10),plot2)
+res1@tiXAxisString       = "hr"
 print("region2 15th")
 print(deltaT(:,2,2,:))
 print(LST_tree(2,2,:))
-plots(3+offset_num) = gsn_csm_xy(wks,x,deltaT(:,2,2,:),res1)
+plots(1+offset_num) = gsn_csm_xy(wks,x,deltaT(:,2,2,:),res1) ; 3+offset_num
 plot4     = gsn_csm_xy(wks,y,LST_tree(2,2,:),res2)
-overlay(plots(3+offset_num),plot4)
+overlay(plots(1+offset_num),plot4)
 
 ; -------------- VPD --------------
 ; res1@tiYAxisString       = "VPD (kPa)"
@@ -775,12 +770,62 @@ overlay(plots(3+offset_num),plot4)
 ; plots(16) = gsn_csm_xy(wks,x,Fwsoil(:,1,:),res1)
 ; plots(17) = gsn_csm_xy(wks,x,Fwsoil(:,2,:),res1)
 
-do cnt = 0, 9;11
+; ________________ add shading ________________
+poly             = new(6,graphic)
+gres             = True
+gres@gsEdgesOn   = True
+gres@gsEdgeColor = "red"
+gres@gsLineColor = "red"
+gres@gsLineThicknessF = 3.0
+; gres@gsFillColor = "cornsilk" ;"rosybrown" ;"azure"
+; gres@gsFillOpacityF = 0.0
+
+xmin = (/C_rgn_1,C_rgn_2/)
+xmax = (/D_rgn_1,D_rgn_2/)
+ymin = (/A_rgn_1,A_rgn_2/)
+ymax = (/B_rgn_1,B_rgn_2/)
+
+xbars = (/ (/xmin(0), xmax(0), xmax(0), xmin(0), xmin(0)/), \
+            (/xmin(1), xmax(1), xmax(1), xmin(1), xmin(1)/) /)
+
+ybars = (/ (/ymin(0),ymin(0),ymax(0),ymax(0),ymin(0)/), \
+           (/ymin(1),ymin(1),ymax(1),ymax(1),ymin(1)/)  /)
+
+do counter = 0, 5
+  if mod(counter,2) .eq. 0 then
+    shadow_num = 0
+  else
+    shadow_num = 1
+  end if
+  poly(counter) = gsn_add_polyline(wks,plots(counter),xbars(shadow_num,:),ybars(shadow_num,:),gres)
+end do
+
+
+do cnt = 0, 7;9;11
   txid1   = gsn_create_text(wks, order_name(cnt), txres)
   annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
 end do
 gsn_panel(wks,(/plots/),(/5,2/),pres) ;(/3,4/),pres)
 
+; _____________ DR-GW _______________
+poly2 = new(2,graphic)
+do cnt = 0, 1
+  txid1   = gsn_create_text(wks, order_name(cnt), txres)
+  annoid1 = gsn_add_annotation(plots2(cnt), txid1, amres)
+end do
+
+do counter = 0, 1
+  if mod(counter,2) .eq. 0 then
+    shadow_num = 0
+  else
+    shadow_num = 1
+  end if
+  poly2(counter) = gsn_add_polyline(wks,plots2(counter),xbars(shadow_num,:),ybars(shadow_num,:),gres)
+end do
+
+gsn_panel(wks,(/plots2/),(/5,2/),pres)
+delete(plots2)
+delete(poly2)
 
 ; ------------------ Check LST missing value -----------------
 ; plots = new(2,graphic)
