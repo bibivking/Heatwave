@@ -28,7 +28,7 @@ do case_num = 0, case_sum -1
 end do
 
 ; ================================= Predefine ==================================
-year_s   = 2000
+year_s   = 2017
 year_e   = 2019
 year_sum = year_e-year_s+1
 row_sum  = 2
@@ -214,11 +214,13 @@ if GLEAM_plot .eq. True then
   path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/yearly";
   ; use 2000-2019
 
+  gleam_ts_s = 20+(year_s-2000)
+  gleam_ts_e = gleam_ts_s + year_sum - 1
   ; total evapotranspiration
   gleam_ET = path_GLEAM+"/E_1980_2018_GLEAM_v3.3a_YR.nc"
   G_ET     = addfile (gleam_ET,"r")
   E_tmp    = G_ET->E(:,{C:D},{A:B})
-  Evap_GLEAM = E_tmp(time|20:38,lat|:, lon|:)
+  Evap_GLEAM = E_tmp(time|gleam_ts_s:gleam_ts_e,lat|:, lon|:)
   delete(gleam_ET)
   delete(G_ET)
   delete(E_tmp)
@@ -227,7 +229,7 @@ if GLEAM_plot .eq. True then
   gleam_ET = path_GLEAM+"/Et_1980_2018_GLEAM_v3.3a_YR.nc"
   G_ET     = addfile (gleam_ET,"r")
   Et_tmp   = G_ET->Et(:,{C:D},{A:B})
-  Trans_GLEAM = Et_tmp(time|20:38,lat|:, lon|:)
+  Trans_GLEAM = Et_tmp(time|gleam_ts_s:gleam_ts_e,lat|:, lon|:)
   delete(gleam_ET)
   delete(G_ET)
   delete(Et_tmp)
@@ -236,7 +238,7 @@ if GLEAM_plot .eq. True then
   gleam_ET = path_GLEAM+"/Eb_1980_2018_GLEAM_v3.3a_YR.nc" ;
   G_ET     = addfile (gleam_ET,"r")
   Eb_tmp   = G_ET->Eb(:,{C:D},{A:B})
-  Esoil_GLEAM = Eb_tmp(time|20:38,lat|:, lon|:)
+  Esoil_GLEAM = Eb_tmp(time|gleam_ts_s:gleam_ts_e,lat|:, lon|:)
   delete(gleam_ET)
   delete(G_ET)
   delete(Eb_tmp)
@@ -250,10 +252,28 @@ if GLEAM_plot .eq. True then
   printVarSummary(Esoil_GLEAM_regrid)
 end if
 
+; ================================ Read WTD ====================================
+WTD         = new((/241,281/),float)
+WTD         = 0.
+
+do year  = year_s,year_e
+  filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr/outputs-daily/cable_out_"+year+"_SE_Aus.nc"
+  f           = addfile (filename_hw,"r")
+  WTD         = WTD + dim_avg_n_Wrap(f->WatTable(:,{A:B},{C:D}),0)
+end do
+
+WTD = WTD/year_sum
+WTD@_FillValue = f->WatTable@_FillValue
+WTD!0 = "lat"
+WTD!1 = "lon"
+WTD&lat = f->y ;fspan(-40,-28,241)
+WTD&lon = f->x ;fspan(140,154,281)
+printVarSummary(WTD)
+
 ; ================================= Plotting ===================================
 res                         = True
-res@gsnDraw                 = False  ; Don't draw plots
-res@gsnFrame                = False  ; ����ҳ
+res@gsnDraw                 = True  ; Don't draw plots
+res@gsnFrame                = True  ; ����ҳ
 res@gsnMaximize             = True
 
 res@vpHeightF 	            = 0.4               ; change aspect ratio of plot
@@ -374,6 +394,16 @@ amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
 amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
+; ________________ add region average ________________
+txres1                  = True
+txres1@txPerimOn        = False
+txres1@txFont           = 25
+txres1@txFontHeightF    = 0.023
+amres1                  = True
+amres1@amParallelPosF   = 0.45    ; This is the right edge of the plot.
+amres1@amOrthogonalPosF = 0.45    ; This is the bottom edge of the plot.
+amres1@amJust           = "BottomRight"
+
 ; =========================== plot Evaptranspiration ===========================
 pic = "./plots/HESS_E_Qrec_Fwmax_"+pic_message
 
@@ -384,8 +414,6 @@ wks_type@wkHeight = 2500
 wks               = gsn_open_wks(wks_type,pic)
 gsn_define_colormap(wks,"rainbow") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
-ts_s              = 17
-ts_e              = 19
 plots             = new(6,graphic)
 
 cmap              = read_colormap_file("testcmap")
@@ -396,23 +424,153 @@ res@cnLevels      = (/\
                       /)
 ; (/-180,-160,-140,-120,-100,-80,-60,-40,-20,0,20,40,60,80,100,120,140,160,180/) ;
 
+; -------------------------------------------
+tmp_WTD_class = new((/6, lat_sum, lon_sum/),float, default_val)
+tmp_WTD_class@_FillValue = -9999.
+tmp_WTD_class!0 = "WTD_lvl"
+tmp_WTD_class!1 = "lat"
+tmp_WTD_class!2 = "lon"
+tmp_WTD_class&lat = f->y ;fspan(-40,-28,241)
+tmp_WTD_class&lon = f->x ;fspan(140,154,281)
+; -------------------------------------------
+
 res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
-tmp               = dim_avg_n_Wrap(Evap(0,ts_s:ts_e,:,:),0)
-tmp               = tmp - dim_avg_n_Wrap(Evap(1,ts_s:ts_e,:,:),0)
+tmp               = dim_avg_n_Wrap(Evap(0,:,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(Evap(1,:,:,:),0)
+tmp@_FillValue    = -9999.
+
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD  "+"~F5~D"+"~F25~E"               \
+                  + "~C~  0-5m "+sprintf("%4.0f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.0f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.0f",tmp_WTD_10)
+
 plots(0)          = gsn_csm_contour_map(wks,tmp,res)
+txid2             = gsn_create_text(wks, context, txres1)
+annoid2           = gsn_add_annotation(plots(0), txid2, amres1)
+
+; ------------------------------------------
+tmp_WTD_class(0,:,:) = where(tmp .lt. 10,tmp,tmp@_FillValue)
+tmp_WTD_class(1,:,:) = where(tmp .ge. 10 .and. tmp .lt. 50,tmp,tmp@_FillValue)
+tmp_WTD_class(2,:,:) = where(tmp .ge. 50 .and. tmp .lt. 100,tmp,tmp@_FillValue)
+tmp_WTD_class(3,:,:) = where(tmp .ge. 100 .and. tmp .lt. 200,tmp,tmp@_FillValue)
+tmp_WTD_class(4,:,:) = where(tmp .ge. 200 .and. tmp .lt. 500,tmp,tmp@_FillValue)
+tmp_WTD_class(5,:,:) = where(tmp .ge. 500,tmp,tmp@_FillValue)
+
+res@gsnLeftString = "E < 10"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(0,:,:), res)
+res@gsnLeftString = "10 < E < 50"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(1,:,:), res)
+res@gsnLeftString = "50 < E < 100"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(2,:,:), res)
+res@gsnLeftString = "100 < E < 200"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(3,:,:), res)
+res@gsnLeftString = "200 < E < 500"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(4,:,:), res)
+res@gsnLeftString = "500 < E"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(5,:,:), res)
+delete(res@gsnLeftString)
+; ------------------------------------------
+
 delete(tmp)
+delete(tmp_WTD_0)
+delete(tmp_WTD_5)
+delete(tmp_WTD_10)
+delete(context)
 
 res@lbTitleString = "~F5~D"+"~F25~Et (mm yr~S~-1~N~)"
-tmp               = dim_avg_n_Wrap(Trans(0,ts_s:ts_e,:,:),0)
-tmp               = tmp - dim_avg_n_Wrap(Trans(1,ts_s:ts_e,:,:),0)
+tmp               = dim_avg_n_Wrap(Trans(0,:,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(Trans(1,:,:,:),0)
+tmp@_FillValue    = -9999.
+
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD  "+"~F5~D"+"~F25~Et"               \
+                  + "~C~  0-5m "+sprintf("%4.0f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.0f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.0f",tmp_WTD_10)
+
 plots(1)          = gsn_csm_contour_map(wks,tmp,res)
+txid2             = gsn_create_text(wks, context, txres1)
+annoid2           = gsn_add_annotation(plots(1), txid2, amres1)
+
+; ------------------------------------------
+tmp_WTD_class(0,:,:) = where(tmp .lt. 10,tmp,tmp@_FillValue)
+tmp_WTD_class(1,:,:) = where(tmp .ge. 10 .and. tmp .lt. 50,tmp,tmp@_FillValue)
+tmp_WTD_class(2,:,:) = where(tmp .ge. 50 .and. tmp .lt. 100,tmp,tmp@_FillValue)
+tmp_WTD_class(3,:,:) = where(tmp .ge. 100 .and. tmp .lt. 200,tmp,tmp@_FillValue)
+tmp_WTD_class(4,:,:) = where(tmp .ge. 200 .and. tmp .lt. 500,tmp,tmp@_FillValue)
+tmp_WTD_class(5,:,:) = where(tmp .ge. 500,tmp,tmp@_FillValue)
+
+res@gsnLeftString = "Et < 10"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(0,:,:), res)
+res@gsnLeftString = "10 < Et < 50"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(1,:,:), res)
+res@gsnLeftString = "50 < Et < 100"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(2,:,:), res)
+res@gsnLeftString = "100 < Et < 200"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(3,:,:), res)
+res@gsnLeftString = "200 < Et < 500"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(4,:,:), res)
+res@gsnLeftString = "500 < Et"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(5,:,:), res)
+delete(res@gsnLeftString)
+; ------------------------------------------
+
 delete(tmp)
+delete(tmp_WTD_0)
+delete(tmp_WTD_5)
+delete(tmp_WTD_10)
+delete(context)
 
 res@lbTitleString = "~F5~D"+"~F25~Es (mm yr~S~-1~N~)"
-tmp               = dim_avg_n_Wrap(Esoil(0,ts_s:ts_e,:,:),0)
-tmp               = tmp - dim_avg_n_Wrap(Esoil(1,ts_s:ts_e,:,:),0)
+tmp               = dim_avg_n_Wrap(Esoil(0,:,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(Esoil(1,:,:,:),0)
+tmp@_FillValue    = -9999.
+
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD  "+"~F5~D"+"~F25~Es"               \
+                  + "~C~  0-5m "+sprintf("%4.0f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.0f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.0f",tmp_WTD_10)
+
 plots(2)          = gsn_csm_contour_map(wks,tmp,res)
+txid2             = gsn_create_text(wks, context, txres1)
+annoid2           = gsn_add_annotation(plots(2), txid2, amres1)
+
+; ------------------------------------------
+tmp_WTD_class(0,:,:) = where(tmp .lt. 10,tmp,tmp@_FillValue)
+tmp_WTD_class(1,:,:) = where(tmp .ge. 10 .and. tmp .lt. 50,tmp,tmp@_FillValue)
+tmp_WTD_class(2,:,:) = where(tmp .ge. 50 .and. tmp .lt. 100,tmp,tmp@_FillValue)
+tmp_WTD_class(3,:,:) = where(tmp .ge. 100 .and. tmp .lt. 200,tmp,tmp@_FillValue)
+tmp_WTD_class(4,:,:) = where(tmp .ge. 200 .and. tmp .lt. 500,tmp,tmp@_FillValue)
+tmp_WTD_class(5,:,:) = where(tmp .ge. 500,tmp,tmp@_FillValue)
+
+res@gsnLeftString = "Es < 10"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(0,:,:), res)
+res@gsnLeftString = "10 < Es < 50"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(1,:,:), res)
+res@gsnLeftString = "50 < Es < 100"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(2,:,:), res)
+res@gsnLeftString = "100 < Es < 200"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(3,:,:), res)
+res@gsnLeftString = "200 < Es < 500"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(4,:,:), res)
+res@gsnLeftString = "500 < Es"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(5,:,:), res)
+delete(res@gsnLeftString)
+; ------------------------------------------
+
 delete(tmp)
+delete(tmp_WTD_0)
+delete(tmp_WTD_5)
+delete(tmp_WTD_10)
+delete(context)
 
 ; res@lbLabelBarOn  = False
 ; res@gsnDraw       = False  ; Don't draw plots
@@ -435,22 +593,116 @@ print("plot Q2botsoil")
 ;                       /)
 
 res@lbTitleString = "~F5~D"+"~F25~Qrec (mm yr~S~-1~N~)"
-tmp               = dim_avg_n_Wrap(Q2botsoil(0,ts_s:ts_e,:,:),0)
-tmp               = tmp - dim_avg_n_Wrap(Q2botsoil(1,ts_s:ts_e,:,:),0)
+tmp               = dim_avg_n_Wrap(Q2botsoil(0,:,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(Q2botsoil(1,:,:,:),0)
+tmp@_FillValue    = -9999.
+
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD  "+"~F5~D"+"~F25~Qrec"               \
+                  + "~C~  0-5m "+sprintf("%4.0f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.0f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.0f",tmp_WTD_10)
+
 plots(3)          = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
+txid2             = gsn_create_text(wks, context, txres1)
+annoid2           = gsn_add_annotation(plots(3), txid2, amres1)
+
+; ------------------------------------------
+tmp_WTD_class(0,:,:) = where(tmp .lt. 10,tmp,tmp@_FillValue)
+tmp_WTD_class(1,:,:) = where(tmp .ge. 10 .and. tmp .lt. 50,tmp,tmp@_FillValue)
+tmp_WTD_class(2,:,:) = where(tmp .ge. 50 .and. tmp .lt. 100,tmp,tmp@_FillValue)
+tmp_WTD_class(3,:,:) = where(tmp .ge. 100 .and. tmp .lt. 200,tmp,tmp@_FillValue)
+tmp_WTD_class(4,:,:) = where(tmp .ge. 200 .and. tmp .lt. 500,tmp,tmp@_FillValue)
+tmp_WTD_class(5,:,:) = where(tmp .ge. 500,tmp,tmp@_FillValue)
+
+res@gsnLeftString = "Qrec < 10"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(0,:,:), res)
+res@gsnLeftString = "10 < Qrec < 50"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(1,:,:), res)
+res@gsnLeftString = "50 < Qrec < 100"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(2,:,:), res)
+res@gsnLeftString = "100 < Qrec < 200"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(3,:,:), res)
+res@gsnLeftString = "200 < Qrec < 500"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(4,:,:), res)
+res@gsnLeftString = "500 < Qrec"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(5,:,:), res)
+delete(res@gsnLeftString)
+; ------------------------------------------
+
 delete(res@cnFillPalette)
 delete(cmap)
+delete(tmp)
+delete(tmp_WTD_0)
+delete(tmp_WTD_5)
+delete(tmp_WTD_10)
+delete(context)
+
 ; Q2aquifer
 print("plot Q2aquifer")
 res@cnFillPalette = "testcmap"
 res@lbTitleString = "~F5~D"+"~F25~Dr (mm yr~S~-1~N~)"
-tmp               = dim_avg_n_Wrap(Q2aquifer(0,ts_s:ts_e,:,:),0)
-tmp               = tmp - dim_avg_n_Wrap(Q2aquifer(1,ts_s:ts_e,:,:),0)
+tmp               = dim_avg_n_Wrap(Q2aquifer(0,:,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(Q2aquifer(1,:,:,:),0)
+tmp@_FillValue    = -9999.
+
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD  "+"~F5~D"+"~F25~Dr"           \
+                  + "~C~  0-5m "+sprintf("%4.0f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.0f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.0f",tmp_WTD_10)
+
 plots(4)          = gsn_csm_contour_map(wks,tmp,res)
-delete(tmp)
+txid2             = gsn_create_text(wks, context, txres1)
+annoid2           = gsn_add_annotation(plots(4), txid2, amres1)
+
+; ------------------------------------------
+tmp_WTD_class(0,:,:) = where(tmp .ge. 100,tmp,tmp@_FillValue)
+tmp_WTD_class(1,:,:) = where(tmp .ge. 40 .and. tmp .lt. 100, tmp,tmp@_FillValue)
+tmp_WTD_class(2,:,:) = where(tmp .ge. 0 .and. tmp .lt. 40,   tmp,tmp@_FillValue)
+tmp_WTD_class(3,:,:) = where(tmp .ge. -40 .and. tmp .lt. 0,  tmp,tmp@_FillValue)
+tmp_WTD_class(4,:,:) = where(tmp .ge. -100 .and. tmp .lt. -40,tmp,tmp@_FillValue)
+tmp_WTD_class(5,:,:) = where(tmp .ge. -200 .and. tmp .lt. -100,tmp,tmp@_FillValue)
+
+res@gsnLeftString = "100 < Dr"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(0,:,:), res)
+res@gsnLeftString = "40 < Dr < 100"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(1,:,:), res)
+res@gsnLeftString = "0 < Dr < 40"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(2,:,:), res)
+res@gsnLeftString = "-40 < Dr < 0"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(3,:,:), res)
+res@gsnLeftString = "-100 < Dr < -40"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(4,:,:), res)
+res@gsnLeftString = "-200 < Dr < -100"
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(5,:,:), res)
+
+res@gsnLeftString = "Dr < -200"
+tmp_WTD_class(5,:,:) = where(tmp .lt. -200, tmp,tmp@_FillValue)
+plot              = gsn_csm_contour_map(wks,tmp_WTD_class(5,:,:), res)
+;
+; res@gsnLeftString = "-400 < Dr < -600"
+; tmp_WTD_class(5,:,:) = where(tmp .ge. -600 .and. tmp .lt. -400 ,tmp,tmp@_FillValue)
+; plot              = gsn_csm_contour_map(wks,tmp_WTD_class(5,:,:), res)
+;
+; res@gsnLeftString = "Dr < -600"
+; tmp_WTD_class(5,:,:) = where(tmp .le. -600, tmp,tmp@_FillValue)
+; plot              = gsn_csm_contour_map(wks,tmp_WTD_class(5,:,:), res)
+
+delete(res@gsnLeftString)
+; ------------------------------------------
+
 delete(res@cnFillPalette)
 delete(res@cnLevels)
+delete(tmp)
+delete(tmp_WTD_0)
+delete(tmp_WTD_5)
+delete(tmp_WTD_10)
+delete(context)
 
 ; ============================ Plot Fwsoil_diff_max ============================
 ; Fwsoil
@@ -458,7 +710,7 @@ print("plot Fwsoil_diff_max")
 res@lbTitleString = "~F5~Db"
 cmap              = read_colormap_file("testcmap")
 res@cnFillPalette = cmap(0:99:-1,:)
-res@cnLevels      = fspan(0.,0.045,10)
+res@cnLevels      = fspan(0.005,0.045,9)
 plots(5) = gsn_csm_contour_map(wks,Fwsoil_diff_max(0,:,:),res)
 
 do counter = 0, 5
