@@ -6,10 +6,10 @@ from pygam import LinearGAM
 # from matplotlib import cm
 
 #from pygam.utils import generate_X_grid
-fname = "./txt/scatter_WTD_deltaT_CTL_PFT-tree_2000-19.txt"
+fname = "./txt/scatter_WTD_deltaT_CTL_PFT-tree_2017-19.txt"
 df = pd.read_csv(fname, names=["WTD (m)", "ΔT (°C)"], sep=' ', skipinitialspace=True)
 
-width  = 9
+width  = 7
 height = 7
 fig    = plt.figure(figsize=(width, height))
 fig.subplots_adjust(hspace=0.1)
@@ -41,7 +41,7 @@ yy = y.reshape(y.shape[0], 1)
 
 print("I am OK 2")
 # reshape for gam
-gam    = LinearGAM(n_splines=22).gridsearch(xx, yy)
+gam    = LinearGAM(n_splines=4).gridsearch(xx, yy) # n_splines=22
 x_pred = np.linspace(min(x), max(x), num=100)
 y_pred = gam.predict(x_pred)
 y_int  = gam.confidence_intervals(x_pred, width=.95)
@@ -71,4 +71,4 @@ ax.spines['right'].set_linewidth(bwith)
 
 ax.set_xlim(0,10)
 ax.set_ylim(-4,8)
-fig.savefig("scatter_density_deltaT_fitting_2000-19.pdf")
+fig.savefig("scatter_density_deltaT_fitting_2017-19.pdf")

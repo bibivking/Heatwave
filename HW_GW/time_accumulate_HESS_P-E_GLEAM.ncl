@@ -17,8 +17,9 @@ end setvalues
 pic_name  = "P-E"
 case_name = (/"CTL-30x3+30yr/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr"/)
 
-PFT       = "all" ; "tree" ;"all"
+PFT       = "all" ; "tree" ;"nontree"
 scale     = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
+GLEAM_version = "3.5a";"3.3a"
 case_sum  = dimsizes(case_name)
 
 year_s   = 2000
@@ -120,14 +121,14 @@ end do ; case_num
 Rain = Rain*3600*24
 Evap = Evap*3600*24
 
-if PFT .eq. 1 then
+if PFT .eq. "tree" then
   do case_num = 0, case_sum - 1
     do day = 0,time_tot -1
       Rain(case_num,day,:,:)   = where(PFT_mask .eq. 1, Rain(case_num,day,:,:), default_value)
       Evap(case_num,day,:,:)   = where(PFT_mask .eq. 1, Evap(case_num,day,:,:), default_value)
     end do
   end do
-else if PFT .eq. 2 then
+else if PFT .eq. "nontree" then
   do case_num = 0, case_sum - 1
     do day = 0,time_tot -1
       Rain(case_num,day,:,:)   = where(PFT_mask .eq. 2, Rain(case_num,day,:,:), default_value)
@@ -139,9 +140,15 @@ end if
 
 ; ================================ READ GLEAM ==================================
 ; use 2000-2019
-path_GLEAM    = "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/daily/";
+if GLEAM_version .eq. "3.3a" then
+  path_GLEAM    = "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/daily/";
+  gleam_ET      = path_GLEAM+year_s+"/E_"+year_s+"_GLEAM_v3.3a.nc"
+else if GLEAM_version .eq. "3.5a" then
+  path_GLEAM    = "/g/data/ua8/GLEAM_v3-5/v3-5a/daily/";
+  gleam_ET      = path_GLEAM+year_s+"/E_"+year_s+"_GLEAM_v3.5a.nc"
+end if
+end if
 
-gleam_ET      = path_GLEAM+year_s+"/E_"+year_s+"_GLEAM_v3.3a.nc"
 G_ET          = addfile(gleam_ET,"r")
 GLEAM_def_val = doubletofloat(G_ET->E@_FillValue)
 tmp           = G_ET->E(:,{C:D},{A:B})
@@ -156,15 +163,19 @@ Evap_GLEAM    = new((/time_tot, lat_sum, lon_sum/), float, GLEAM_def_val)
 Evap_GLEAM    = GLEAM_def_val
 
 day_step_s = 0
-do year = year_s,year_e-1
+do year = year_s,year_e
   if ( mod(year,4) .eq. 0) then
      dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
   else
      dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
   end if
   yr_tot_day = sum(dom)
-
-  gleam_ET   = path_GLEAM+year+"/E_"+year+"_GLEAM_v3.3a.nc"
+  if GLEAM_version .eq. "3.3a" then
+    gleam_ET   = path_GLEAM+year+"/E_"+year+"_GLEAM_v3.3a.nc"
+  else if GLEAM_version .eq. "3.5a" then
+    gleam_ET   = path_GLEAM+year+"/E_"+year+"_GLEAM_v3.5a.nc"
+  end if
+  end if
   G_ET       = addfile (gleam_ET,"r")
   day_step_e = day_step_s + yr_tot_day - 1
   E_temp     = G_ET->E(:,{C:D}, {A:B})
@@ -183,12 +194,12 @@ end do
 Evap_GLEAM = Evap_GLEAM
 
 ; ___________________________ Mask GLEAM ______________________________
-if PFT .eq. 1 then
+if PFT .eq. "tree" then
   do day = 0,time_tot -1
     Evap_GLEAM(day,:,:) = where(PFT_mask .eq. 1 .and. .not. ismissing(Evap_GLEAM(day,:,:)),\
                                 Evap_GLEAM(day,:,:), default_value)
   end do
-else if PFT .eq. 2 then
+else if PFT .eq. "nontree" then
   do day = 0,time_tot -1
     Evap_GLEAM(day,:,:) = where(PFT_mask .eq. 2 .and. .not. ismissing(Evap_GLEAM(day,:,:)),\
                                 Evap_GLEAM(day,:,:), default_value)
@@ -207,6 +218,9 @@ do year = 2001,2009
   end if
 end do
 
+P     = dim_avg_n_Wrap(Rain,(/2,3/))
+E     = dim_avg_n_Wrap(Evap,(/2,3/))
+GLEAM_E = dim_avg_n_Wrap(Evap_GLEAM,(/1,2/))
 P_E   = dim_avg_n_Wrap(Rain,(/2,3/))
 P_E   = P_E - dim_avg_n_Wrap(Evap,(/2,3/))
 P_GLEAM_E = dim_avg_n_Wrap(Rain(0,:,:,:),(/1,2/))
@@ -225,8 +239,21 @@ do cnt = 0, dimsizes(ts_s) -1
   count = count + 1
 end do
 
+r_CTL_MD = escorc(P(0,ts_s(0):ts_e(0)), E(0,ts_s(0):ts_e(0)))
+r_CTL_RD = escorc(P(0,ts_s(1):ts_e(1)), E(0,ts_s(1):ts_e(1)))
+
+r_FD_MD = escorc(P(1,ts_s(0):ts_e(0)), E(1,ts_s(0):ts_e(0)))
+r_FD_RD = escorc(P(1,ts_s(1):ts_e(1)), E(1,ts_s(1):ts_e(1)))
+
+r_GLEAM_MD = escorc(P(0,ts_s(0):ts_e(0)), GLEAM_E(ts_s(0):ts_e(0)))
+r_GLEAM_RD = escorc(P(0,ts_s(1):ts_e(1)), GLEAM_E(ts_s(1):ts_e(1)))
+
+print("r_CTL_MD: "+r_CTL_MD+"  r_CTL_RD: "+r_CTL_RD)
+print("r_FD_MD: "+r_FD_MD+"  r_FD_RD: "+r_FD_RD)
+print("r_GLEAM_MD: "+r_GLEAM_MD+"  r_GLEAM_RD: "+r_GLEAM_RD)
+
 ; ______________________________ Plotting ______________________________
-pic = "./plots/HESS_time_accumulate_P-E_GLEAM_PFT-"+PFT+"_"+year_s+"-"+year_e
+pic = "./plots/HESS_time_accumulate_P-E_GLEAM_"+GLEAM_version+"_PFT-"+PFT+"_"+year_s+"-"+year_e
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"rainbow") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
@@ -250,9 +277,9 @@ res@tmBorderThicknessF      = 2.
 ; res@txFont                  = 25
 
 res@lgPerimOn              = False      ; No legend perimeter.
-res@pmLegendParallelPosF    = 0.38       ; Move to right
+res@pmLegendParallelPosF    = 0.33       ; Move to right
 res@pmLegendOrthogonalPosF  = -1.27     ; Move into plot
-res@pmLegendWidthF          = 0.2                     ; resize legend width
+res@pmLegendWidthF          = 0.22                     ; resize legend width
 res@pmLegendHeightF         = 0.2                     ; and height
 res@lgBoxMinorExtentF       = 0.3       ; Shorten the legend lines
 
@@ -277,7 +304,7 @@ res@xyLineThicknesses      = (/ 2., 2., 2.,  2., 2., 2./)
 res@xyDashPatterns         = (/  0,  0,  0,   0,  0,  0/)
 res@xyLineOpacities        = (/ 1., 1., 1.,  1., 1., 1./) ;0.5, 0.5, 0.5/)
 res@xyLineColors           = (/"darkgreen","orange", "black",  "green3","gold","gray50"  /)
-res@xyExplicitLegendLabels = (/"GW MD","FD MD","GLEAM MD", "GW RD","FD RD", "GLEAM RD"/)  ; create explicit labels
+res@xyExplicitLegendLabels = (/"GW MD (r="+sprintf("%4.2f",r_CTL_MD)+")","FD MD  (r="+sprintf("%4.2f",r_FD_MD)+")","GLEAM MD", "GW RD (r="+sprintf("%4.2f",r_CTL_RD)+")","FD RD  (r="+sprintf("%4.2f",r_FD_RD)+")", "GLEAM RD"/)  ; create explicit labels
 res@lgItemOrder            = (/2,5, 0,3, 1,4/)
 res@lgJustification        = "TopRight"
 
@@ -301,7 +328,7 @@ pres@gsnPanelXWhiteSpacePercent = 0.1
 
 plots = new(1,graphic)
 
-res@tiYAxisString = "Accumlation of P - E (mm)"
+res@tiYAxisString = "Accumulated P-E (mm)"
 plots             = gsn_csm_xy(wks,x,P_E_acl,res)
 
 

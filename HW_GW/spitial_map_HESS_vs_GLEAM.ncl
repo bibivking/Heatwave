@@ -26,9 +26,6 @@ do case_num = 0, case_sum -1
    path(case_num) = path_mum+case_name(case_num);+"/outputs"
 end do
 
-path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/yearly";
-; path_DOLCE= "/g/data/w35/Shared_data/Observations/Global_ET_products/DOLCE/v2.1"
-
 ; ================================= Predefine ==================================
 year_s   = 2000
 year_e   = 2019
@@ -41,6 +38,14 @@ Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/) ; 6 soil layers
 ; ================================== OPTIONS ===================================
 plot_type = "all"
 scale     = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
+GLEAM_version= "3.5a" ;  "3.3a"
+
+if GLEAM_version .eq. "3.3a" then
+  path_GLEAM= "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_3/3_3a/yearly"
+else if GLEAM_version .eq. "3.5a" then
+  path_GLEAM= "/g/data/ua8/GLEAM_v3-5/v3-5a/yearly";
+end if
+end if
 
 if scale .eq. "Global" then
   A = -90.
@@ -115,12 +120,18 @@ Evap     = Evap*3600.*24.
 
 ; ================================ READ GLEAM ==================================
 ; use 2000-2019
-gleam_ET = path_GLEAM+"/E_1980_2018_GLEAM_v3.3a_YR.nc"
+if GLEAM_version .eq. "3.3a" then
+  gleam_ET = path_GLEAM+"/E_1980_2018_GLEAM_v3.3a_YR.nc"
+else if GLEAM_version .eq. "3.5a" then
+  gleam_ET = path_GLEAM+"/E_1980-2020_GLEAM_v3.5a_YR.nc"
+end if
+end if
+
 G_ET     = addfile (gleam_ET,"r")
 
 E_tmp    = G_ET->E(:,{C:D},{A:B})
 
-Evap_GLEAM = E_tmp(time|20:38,lat|:, lon|:)
+Evap_GLEAM = E_tmp(time|20:40,lat|:, lon|:)
 printVarSummary(Evap_GLEAM)
 delete(G_ET)
 
@@ -255,7 +266,7 @@ amres@amJust            = "TopLeft"
 ; =========================== plot Evaptranspiration ===========================
 plots = new((case_sum+1)*2,graphic)
 
-pic = "./plots/HESS_vs_GLEAM_"+pic_message
+pic = "./plots/HESS_vs_GLEAM_"+GLEAM_version+"_"+pic_message
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"rainbow") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
@@ -318,18 +329,18 @@ delete(tmp_GLEAM)
 ; delete(res@cnLevels)
 ; delete(tmp)
 ;
-; ; ___ 2017-2018 ___
+; ; ___ 2017-2019 ___
 res@lbLabelBarOn  = True
 
-; GLEAM 2017-2018
+; GLEAM 2017-2019
 delete(res@cnFillPalette)
 res@cnLevels      = fspan(0,1000,21)
 res@cnFillPalette = "vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
 res@lbTitleString = "E (mm yr~S~-1~N~)"
 
-; tmp = dim_avg_n_Wrap(Evap_GLEAM(17:18,:,:),0)
+; tmp = dim_avg_n_Wrap(Evap_GLEAM(17:19,:,:),0)
 ; tmp = tmp - dim_avg_n_Wrap(Evap_GLEAM(1:9,:,:),0)
-plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap_GLEAM(17:18,:,:),0),res)
+plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap_GLEAM(17:19,:,:),0),res)
 txid1   = gsn_create_text(wks, order_name(counter), txres)
 annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
 counter = counter+1
@@ -345,9 +356,9 @@ res@cnFillPalette = cmap(::-1,:)
 res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
 
 ; CTL - GLEAM
-tmp_GLEAM     = doubletofloat(dim_avg_n_Wrap(Evap_GLEAM_regrid(17:18,:,:),0))
+tmp_GLEAM     = doubletofloat(dim_avg_n_Wrap(Evap_GLEAM_regrid(17:19,:,:),0))
 
-tmp = dim_avg_n_Wrap(Evap(0,17:18,:,:),0)
+tmp = dim_avg_n_Wrap(Evap(0,17:19,:,:),0)
 tmp = tmp - tmp_GLEAM ; dim_avg_n_Wrap(Evap(0,1:9,:,:),0) ;
 plots(counter) = gsn_csm_contour_map(wks, tmp, res)
 txid1          = gsn_create_text(wks, order_name(counter), txres)
@@ -356,7 +367,7 @@ counter        = counter + 1
 delete(tmp)
 
 ; FD - GLEAM
-tmp = dim_avg_n_Wrap(Evap(1,17:18,:,:),0)
+tmp = dim_avg_n_Wrap(Evap(1,17:19,:,:),0)
 tmp = tmp - tmp_GLEAM ;dim_avg_n_Wrap(Evap(1,1:9,:,:),0)
 plots(counter) = gsn_csm_contour_map(wks, tmp, res)
 txid1          = gsn_create_text(wks, order_name(counter), txres)

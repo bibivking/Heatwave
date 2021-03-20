@@ -262,6 +262,9 @@ res@lbLabelFont            = 25
 res@lbTitleFontHeightF     = 0.013
 res@lbLabelFontHeightF     = 0.013
 res@lbTitlePosition        = "Bottom"
+res@pmLabelBarHeightF       = 0.1
+res@pmLabelBarParallelPosF  = 0.5
+res@pmLabelBarOrthogonalPosF= 0.09
 
 res@tmXBLabelFont           = 25 ;Sets the font index for the bottom X-Axis labels.
 res@tmYLLabelFont           = 25
@@ -339,8 +342,8 @@ pres@lbTitleFont        = 25
 pres@lbLabelFont        = 25
 pres@lbTitleFontHeightF = 0.01
 pres@lbLabelFontHeightF = 0.01
-pres@gsnPanelYWhiteSpacePercent = 0.5
-pres@gsnPanelXWhiteSpacePercent = 0.5
+; pres@gsnPanelYWhiteSpacePercent = 0.5
+; pres@gsnPanelXWhiteSpacePercent = 0.5
 
 txres                   = True
 txres@txPerimOn         = False
@@ -395,7 +398,7 @@ do cnt = 1,2
   delete(res@cnFillPalette)
 
   ; deltaT (GW-FD)
-  res@lbTitleString = "~F5~D"+"~F25~T_diff (~S~o~N~C)"
+  res@lbTitleString = "~F5~D"+"~F25~T~B~leaf~N~ (~S~o~N~C)"
   res@cnLevels      = deltaT_diff_lvl
   res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22"
   tmp  = deltaT_avg(0,cnt,:,:)
