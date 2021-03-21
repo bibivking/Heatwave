@@ -16,7 +16,7 @@ end setvalues
 ; ================================= Predefine ==================================
 pic_name  = "droughts"
 case_name = (/"CTL-30x3+30yr/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr"/)
-
+time_scale= "yearly" ;"monthly"
 PFT       = "all" ; "tree" ;"all"
 scale     = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 case_sum  = dimsizes(case_name)
@@ -25,7 +25,7 @@ var_name  = (/"Rainf","Evap","GPP","Qle","Qh","WatTable"/)
 WTD       = "shallow" ; "medium", "deep"
 
 year_s   = 2000
-year_e   = 2000;19
+year_e   = 2019
 year_sum = year_e-year_s+1
 time_tot = year_sum*12
 var_sum  = dimsizes(var_name)
@@ -59,7 +59,7 @@ end if
           ; 2001, 2017
 ts_s    = (2000-year_s)*12    ;(/ (2001-year_s)*12, (2017-year_s)*12/)
           ; 2009, 2019
-ts_e    = (2000-year_s)*12+11 ;(/ (2009-year_s)*12+11, (2019-year_s)*12+11/)
+ts_e    = (2019-year_s)*12+11 ;(/ (2009-year_s)*12+11, (2019-year_s)*12+11/)
 ;2019
 ; =================================== Path =====================================
 path = new(case_sum,"string")
@@ -133,7 +133,7 @@ end do ; case_num
 Vars(:,0:2,:,:,:) = Vars(:,0:2,:,:,:)*3600*24
 
 ; ================================== Mask ======================================
-WTD_mask = dim_avg_n_Wrap(Vars(0,5,:,:,:),0)
+WTD_mask = dim_avg_n_Wrap(Vars(0,5,:,:,:),0) ; CTL WTD
 
 WTD_mask_multi = new((/time_tot,lat_sum,lon_sum/), float, default_value)
 PFT_mask_multi = new((/time_tot,lat_sum,lon_sum/), float, default_value)
@@ -157,30 +157,59 @@ end do
 delete(PFT_mask_multi)
 
 ; calculate diff
-Vars_diff = new((/4,var_num,time_tot,lat_sum,lon_sum/), float, default_value)
-; Rain
+WTD_class = 4 ; all, shallow, medium, deep
+Vars_diff = new((/WTD_class,var_sum,time_tot,lat_sum,lon_sum/), float, default_value)
+
+; Rain = GW Rain
 Vars_diff(0,0,:,:,:)   = Vars(0,0,:,:,:)
-; E GPP Qle Qh
-Vars_diff(0,1:4,:,:,:) = Vars(0,1:4,:,:,:)  - Vars(1,1:4,:,:,:)
-; WTD
+; E GPP Qle Qh = GW - FD
+Vars_diff(0,1:4,:,:,:) = Vars(0,1:4,:,:,:) - Vars(1,1:4,:,:,:)
+; WTD = GW WTD
 Vars_diff(0,5,:,:,:)   = Vars(0,5,:,:,:)
 
-do case_num = 0, case_sum - 1
-  do var_num = 0,var_sum -1
-    ; WTD .eq. "shallow"
-    Vars_diff(1,var_num,:,:,:)  = where( WTD_mask_multi .le. 5., Vars(case_num,var_num,:,:,:), default_value )
-    ; WTD .eq. "medium"
-    Vars_diff(2,var_num,:,:,:)  = where( WTD_mask_multi .gt. 5. .and. WTD_mask_multi .le. 10., Vars(case_num,var_num,:,:,:), default_value )
-    ; WTD .eq. "deep"
-    Vars_diff(3,var_num,:,:,:)  = where( WTD_mask_multi .gt. 10., Vars(case_num,var_num,:,:,:), default_value )
-  end do
+do var_num = 0,var_sum - 1
+  ; WTD .eq. "shallow"
+  Vars_diff(1,var_num,:,:,:)  = where( WTD_mask_multi .le. 5.,\
+                                Vars_diff(0,var_num,:,:,:), default_value )
+  ; WTD .eq. "medium"
+  Vars_diff(2,var_num,:,:,:)  = where( WTD_mask_multi .gt. 5. .and. WTD_mask_multi .le. 10.,\
+                                Vars_diff(0,var_num,:,:,:), default_value )
+  ; WTD .eq. "deep"
+  Vars_diff(3,var_num,:,:,:)  = where( WTD_mask_multi .gt. 10., \
+                                Vars_diff(0,var_num,:,:,:), default_value )
 end do
 delete(WTD_mask_multi)
 
 ; ============================= plot time series ===============================
 V_diff   = dim_avg_n_Wrap(Vars_diff,(/3,4/))
+V_diff!0 = "wtd"
+V_diff!1 = "var"
+V_diff!2 = "time"
+V_diff_yr= new((/year_sum,WTD_class,var_sum/), float, default_value)
 
-; deseasonal
+; ______________ monthly to annual ______________
+; P E GPP
+V_diff_yr(:,:,0:2) = month_to_annual(V_diff(time|:,wtd|:,var|0:2),0)
+; Qle Qh WTD
+V_diff_yr(:,:,3:5) = month_to_annual(V_diff(time|:,wtd|:,var|3:5),1)
+delete(V_diff)
+
+V_diff_yr!0 = "time"
+V_diff_yr!1 = "wtd"
+V_diff_yr!2 = "var"
+
+V_diff = V_diff_yr(wtd|:,var|:,time|:)
+
+; ; ______________ calulate 12-month smoothing sum/avg ______________
+; month_to_sum    = 12
+; opt             = 1 ; if a _FillValue is encountered, continue calculating the accumulated sum using available values.
+;
+; ; P E GPP
+; V_diff(:,0:2,:) = dim_acumrun_n(V_diff(:,0:2,:),month_to_sum,opt,2)
+; ; Qle Qh
+; V_diff(:,3:4,:) = runave_n_Wrap(V_diff(:,3:4,:),month_to_sum,opt,2)
+
+; ______________ deseasonal ______________
 ; V_deseason   = V ; rainfall doesn't need decycle
 ; V_month_mean = clmMonLLT(V)
 
@@ -216,7 +245,7 @@ res@tmBorderThicknessF      = 2.
 
 res@lgPerimOn              = False      ; No legend perimeter.
 res@pmLegendParallelPosF    = 0.38       ; Move to right
-res@pmLegendOrthogonalPosF  = -1.27     ; Move into plot
+res@pmLegendOrthogonalPosF  = -1.22 ;7     ; Move into plot
 res@pmLegendWidthF          = 0.1                     ; resize legend width
 res@pmLegendHeightF         = 0.1                     ; and height
 res@lgBoxMinorExtentF       = 0.3       ; Shorten the legend lines
@@ -228,15 +257,15 @@ res@lgBoxMinorExtentF       = 0.3       ; Shorten the legend lines
 ; res@gsnPaperOrientation     = "portrait";"portrait";"landscape" ;"auto"
 res@pmLegendDisplayMode     = "Always"
 
-res@trXMinF                 = ts_s
-res@trXMaxF                 = ts_e
+res@trXMinF                 = year_s;ts_s
+res@trXMaxF                 = year_e;ts_e
 ; res@trYMinF                 = -110.
 ; res@trYMaxF                 = 800.
 
 res@tmXBMode                = "Explicit"
-res@tmXBValues              = ispan(ts_s,ts_e,24)
+res@tmXBValues              = ispan(year_s,year_e,2);ispan(ts_s,ts_e,24)
 res@tmXBLabels              = (/"2000","2002","2004","2006","2008","2010","2012","2014","2016","2018"/)
-x                           = ispan(ts_s,ts_e,1)
+x                           = ispan(year_s,year_e,1);ispan(ts_s,ts_e,1)
 
 res@xyLineThicknesses      = (/ 1.5, 1.5, 1.5, 1.5/)
 res@xyDashPatterns         = (/  0,  0,  0,  0   /)
@@ -268,24 +297,25 @@ pres@gsnPanelXWhiteSpacePercent = 0.1
 plots = new(6,graphic)
 
 res@gsnXYBarChart = False            ; create bar chart
-res@tiYAxisString = "P (mm/mth)"
-plots(0)          = gsn_csm_xy(wks,x,V_diff(:,0,ts_s:ts_e),res)
+res@tiYAxisString = "P (mm yr~S~-1~N~)"
+plots(0)          = gsn_csm_xy(wks,x,V_diff(0:3,0,:),res);ts_s:ts_e),res)
 
 res@gsnXYBarChart = False
-res@tiYAxisString = "E_diff (mm/mth)"
-plots(1)          = gsn_csm_xy(wks,x,V_diff(:,1,ts_s:ts_e),res)
+res@tiYAxisString = "E_diff (mm yr~S~-1~N~)"
+plots(1)          = gsn_csm_xy(wks,x,V_diff(0:3,1,:),res);ts_s:ts_e),res)
 
-res@tiYAxisString = "GPP_diff (umol/m2)"
-plots(2)          = gsn_csm_xy(wks,x,V_diff(:,2,ts_s:ts_e),res)
+res@tiYAxisString = "GPP_diff (umol m~S~-2~E~ yr~S~-1~N~)"
+plots(2)          = gsn_csm_xy(wks,x,V_diff(0:3,2,:),res);ts_s:ts_e),res)
 
-res@tiYAxisString = "Qle_diff (W/m2)"
-plots(3)          = gsn_csm_xy(wks,x,V_diff(:,3,ts_s:ts_e),res)
+res@tiYAxisString = "Qle_diff (W m~S~-2~E~)"
+plots(3)          = gsn_csm_xy(wks,x,V_diff(0:3,3,:),res);ts_s:ts_e),res)
 
-res@tiYAxisString = "Qh_diff (W/m2)"
-plots(4)          = gsn_csm_xy(wks,x,V_diff(:,4,ts_s:ts_e),res)
+res@tiYAxisString = "Qh_diff (W m~S~-2~E~)"
+plots(4)          = gsn_csm_xy(wks,x,V_diff(0:3,4,:),res);ts_s:ts_e),res)
 
-res@tiYAxisString = "WTD_diff (m)"
-plots(5)          = gsn_csm_xy(wks,x,V_diff(:,5,ts_s:ts_e),res)
+res@tiYAxisString = "WTD (m)"
+res@trYReverse    = True
+plots(5)          = gsn_csm_xy(wks,x,V_diff(0:3,5,:),res);ts_s:ts_e),res)
 
 ; ________________ add order name ________________
 txres                  = True

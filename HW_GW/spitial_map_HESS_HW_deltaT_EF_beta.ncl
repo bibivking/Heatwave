@@ -398,7 +398,7 @@ do cnt = 1,2
   delete(res@cnFillPalette)
 
   ; deltaT (GW-FD)
-  res@lbTitleString = "~F5~D"+"~F25~T~B~leaf~N~ (~S~o~N~C)"
+  res@lbTitleString = "~F5~D"+"~F25~T~B~canopy~N~ (~S~o~N~C)"
   res@cnLevels      = deltaT_diff_lvl
   res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22"
   tmp  = deltaT_avg(0,cnt,:,:)
