@@ -48,11 +48,13 @@ end
 ; ================================= Start ======================================
 begin
 
-case_name = (/"CTL-30x3+30yr/outputs-daily"/)
-            ; "CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr", \
-            ; "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
-path      = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-pic_message = "CTL"
+case_name   = (/"CTL-30x3+30yr/outputs-daily"/) ; CTL
+            ; (/"FREE_DRAIN/outputs-spinup30x3yr"/) ; FD
+            ; (/"CTL-30x3+30yr-DeepRoot/outputs-daily"/) ; DR
+            ; (/"FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/) ; FD+DR
+
+path        = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
+pic_message = "CTL" ; FD ; DR ; FD+DR
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
 

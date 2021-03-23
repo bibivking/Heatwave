@@ -1,3 +1,10 @@
+
+;MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+; Author  : Mengyuan Mu
+; Version : 1.0 (22.03.2021)"
+; Email   : mu.mengyuan815@gmail.com
+;WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+
 ;*******************************************
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
@@ -48,11 +55,13 @@ end
 ; ================================= Start ======================================
 begin
 
-case_name = (/"FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
-            ; "CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr", \
-            ; "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
-path      = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-pic_message = "FD+DR"
+case_name   = (/"CTL-30x3+30yr/outputs-daily"/) ; CTL
+            ; (/"FREE_DRAIN/outputs-spinup30x3yr"/) ; FD
+            ; (/"CTL-30x3+30yr-DeepRoot/outputs-daily"/) ; DR
+            ; (/"FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/) ; FD+DR
+
+path        = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
+pic_message = "CTL" ; FD ; DR ; FD+DR
 
 Soil_thickness = (/0.022, 0.058, 0.154, 0.409, 1.085, 2.872/)
 
@@ -66,7 +75,7 @@ total    = year_sum*12
 case_sum = dimsizes(case_name)
 
 ; ================================ Set Regrid ==================================
-PFT           = "tree" ; "tree" ;"all"
+PFT           = "all" ; "tree" ;"all"
 use_month     = "May" ; "Jul"
 time_scale    = "monthly" ; "annual"; "monthly"
 grace_version = "Original-fill-nan"

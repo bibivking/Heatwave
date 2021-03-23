@@ -1,10 +1,17 @@
+
+;MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+; Author  : Mengyuan Mu
+; Version : 1.0 (22.03.2021)"
+; Email   : mu.mengyuan815@gmail.com
+;WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+
 ;*******************************************
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-load "./boxplot_draw_mmy.ncl"
-load "./boxplot_stats_mmy.ncl"
+load "./Fig3_boxplot_draw_mmy.ncl"
+load "./Fig3_boxplot_stats_mmy.ncl"
 ;*******************************************
 
 begin
@@ -188,7 +195,7 @@ do var_num = 0, var_sum -1
   res1@trXMinF            = 0
   res1@trXMaxF            = 57
   res1@tmXBLabelFontHeightF = 0.015
-  res1@tmYLLabelFontHeightF = 0.018
+  res1@tmYRLabelFontHeightF = 0.018
   res1@xyLineThicknessF   = 2.0         ; make second line thicker
   res1@xyDashPattern      = 0
   res1@xyLineColor        = "gray40"

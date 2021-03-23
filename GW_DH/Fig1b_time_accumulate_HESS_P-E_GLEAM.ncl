@@ -1,3 +1,10 @@
+
+;MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+; Author  : Mengyuan Mu
+; Version : 1.0 (22.03.2021)"
+; Email   : mu.mengyuan815@gmail.com
+;WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+
 ;*******************************************
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
@@ -277,11 +284,11 @@ res@tmBorderThicknessF      = 2.
 ; res@txFont                  = 25
 
 res@lgPerimOn              = False      ; No legend perimeter.
-res@pmLegendParallelPosF    = 0.34       ; Move to right
+res@pmLegendParallelPosF    = 0.36       ; Move to right
 res@pmLegendOrthogonalPosF  = -1.27     ; Move into plot
 res@pmLegendWidthF          = 0.24                     ; resize legend width
 res@pmLegendHeightF         = 0.21                     ; and height
-res@lgBoxMinorExtentF       = 0.3       ; Shorten the legend lines
+res@lgBoxMinorExtentF       = 0.28       ; Shorten the legend lines
 
 ; res@tiXAxisFontHeightF      = 0.015
 ; res@tiYAxisFontHeightF      = 0.015
