@@ -260,7 +260,7 @@ print("r_FD_MD: "+r_FD_MD+"  r_FD_RD: "+r_FD_RD)
 print("r_GLEAM_MD: "+r_GLEAM_MD+"  r_GLEAM_RD: "+r_GLEAM_RD)
 
 ; ______________________________ Plotting ______________________________
-pic = "./plots/HESS_time_accumulate_P-E_GLEAM_"+GLEAM_version+"_PFT-"+PFT+"_"+year_s+"-"+year_e
+pic = "./plots/Fig1b_time_accumulate_P-E_GLEAM_"+GLEAM_version+"_PFT-"+PFT+"_"+year_s+"-"+year_e
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"rainbow") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 

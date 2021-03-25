@@ -29,7 +29,28 @@ path        = new(case_sum,"string")
 pic_message = "CTL_vs_FD"
 order_name  = (/"(a)","(b)","(c)","(d)","(e)","(f)","(g)","(h)"/) ;
 categorize  = False
-colorbar    = "MPL_BrBG"; "NEO_div_vegetation_b";"NEO_div_vegetation_c";"MPL_BrBG" "CBR_wet"
+colorbar    = "MPL_BrBG";"CBR_drywet";"BlueDarkOrange18";"MPL_BrBG"; "NEO_div_vegetation_b";"NEO_div_vegetation_c";"MPL_BrBG" "CBR_wet"
+cmap_tmp    = read_colormap_file(colorbar)
+cmap        = new((/19, 4/),float)
+cmap(0,:)   = cmap_tmp(0,:)
+cmap(1,:)   = cmap_tmp(7,:)
+cmap(2,:)   = cmap_tmp(15,:)
+cmap(3,:)   = cmap_tmp(21,:)
+cmap(4,:)   = cmap_tmp(27,:)
+cmap(5,:)   = cmap_tmp(35,:)
+cmap(6,:)   = cmap_tmp(37,:)
+cmap(7,:)   = cmap_tmp(44,:)
+cmap(8,:)   = cmap_tmp(55,:)
+cmap(9,:)   = cmap_tmp(63,:)
+cmap(10,:)   = cmap_tmp(72,:)
+cmap(11,:)   = cmap_tmp(79,:)
+cmap(12,:)   = cmap_tmp(86,:)
+cmap(13,:)   = cmap_tmp(95,:)
+cmap(14,:)   = cmap_tmp(101,:)
+cmap(15,:)   = cmap_tmp(111,:)
+cmap(16,:)   = cmap_tmp(116,:)
+cmap(17,:)   = cmap_tmp(122,:)
+cmap(18,:)   = cmap_tmp(127,:)
 
 do case_num = 0, case_sum -1
    path(case_num) = path_mum+case_name(case_num)
@@ -265,13 +286,14 @@ res@lbLabelBarOn            = True
 res@lbBoxLinesOn            = True                       ;�ر�lbar box ����
 res@lbTitleFont             = 25
 res@lbLabelFont             = 25
-res@lbTitleFontHeightF      = 0.013
-res@lbLabelFontHeightF      = 0.013
+res@lbTitleFontHeightF      = 0.015
+res@lbLabelFontHeightF      = 0.01
+res@lbLabelAngleF           = 70
 ; res@lbOrientation           = "Vertical"
 res@lbTitlePosition         = "Bottom"
 res@pmLabelBarHeightF       = 0.1
 res@pmLabelBarParallelPosF  = 0.5
-res@pmLabelBarOrthogonalPosF= 0.09
+res@pmLabelBarOrthogonalPosF= 0.12
 
 res@tmXBLabelFont           = 25 ;Sets the font index for the bottom X-Axis labels.
 res@tmYLLabelFont           = 25
@@ -280,6 +302,7 @@ res@tmYLLabelFontThicknessF = 0.015
 res@tmXBLabelFontHeightF    = 0.015
 res@tmYLLabelFontHeightF    = 0.015
 ; res@mpDataBaseVersion       = "HighRes"
+res@tiMainFontHeightF       = 0.02
 
 res@tmYLMode                = "Explicit"
 res@tmXBMode                = "Explicit"
@@ -347,7 +370,7 @@ pres@lbBoxLinesOn       = True
 pres@lbTitleFont        = 25
 pres@lbLabelFont        = 25
 pres@lbTitleFontHeightF = 0.01
-pres@lbLabelFontHeightF = 0.01
+pres@lbLabelFontHeightF = 0.008
 
 txres                   = True
 txres@txPerimOn         = False
@@ -370,7 +393,7 @@ amres1@amOrthogonalPosF = 0.45    ; This is the bottom edge of the plot.
 amres1@amJust           = "BottomRight"
 
 ; =========================== plot Evaptranspiration ===========================
-pic = "./plots/spitial_map_E_Qrec_Fwmax_"+pic_message
+pic = "./plots/Fig2_spitial_map_E_Qrec_Fwmax_"+pic_message
 
 ; higher resolution
 wks_type          = "pdf"
@@ -385,25 +408,15 @@ res@cnFillOn      = True
 res@cnMissingValFillColor = "gray80"
 res@cnFillBackgroundColor = "gray80"
 
-; cmap              = read_colormap_file("testcmap")
-; res@cnFillPalette = cmap(::-1,:)
-res@cnFillPalette = colorbar
-; res@cnLevels      = (/\
-;                       -500,-400,-300,-200,-100,-40,-10, \
-;                       0,10,40,100,200,300,400,500       \
-;                       /)
 res@cnLevels      = (/\
                       -400,-300,-200,-150,-100,-50,-25,-5, \
                       5,25,50,100,150,200,300,400         \
                       /)
-; res@cnLevels      = (/\
-;                       -500,-400,-300,-200,-180,-160,-140,-120,-100,-80,-60,-40,-20,-10, \
-;                       0,10,20,40,60,80,100,120,140,160,180,200,300,400,500              \
-;                       /)
+
 res@lbLabelStrings =  (/ "-400","-300","-200","-150","-100","-50","-25","-5", \
                          "5","25","50","100","150","200","300","400"        \
                        /)
-; (/-180,-160,-140,-120,-100,-80,-60,-40,-20,0,20,40,60,80,100,120,140,160,180/) ;
+
 
 ; -------------------------------------------
 if categorize then
@@ -417,7 +430,9 @@ if categorize then
 end if
 ; -------------------------------------------
 
-res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
+res@cnFillPalette = cmap
+; res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
+res@tiMainString  = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
 tmp               = dim_avg_n_Wrap(Evap(0,:,:,:),0)
 tmp               = tmp - dim_avg_n_Wrap(Evap(1,:,:,:),0)
 tmp@_FillValue    = -9999.
@@ -465,7 +480,8 @@ delete(tmp_WTD_5)
 delete(tmp_WTD_10)
 delete(context)
 
-res@lbTitleString = "~F5~D"+"~F25~Et (mm yr~S~-1~N~)"
+; res@lbTitleString = "~F5~D"+"~F25~Et (mm yr~S~-1~N~)"
+res@tiMainString = "~F5~D"+"~F25~Et (mm yr~S~-1~N~)"
 tmp               = dim_avg_n_Wrap(Trans(0,:,:,:),0)
 tmp               = tmp - dim_avg_n_Wrap(Trans(1,:,:,:),0)
 tmp@_FillValue    = -9999.
@@ -513,7 +529,8 @@ delete(tmp_WTD_5)
 delete(tmp_WTD_10)
 delete(context)
 
-res@lbTitleString = "~F5~D"+"~F25~Es (mm yr~S~-1~N~)"
+; res@lbTitleString = "~F5~D"+"~F25~Es (mm yr~S~-1~N~)"
+res@tiMainString = "~F5~D"+"~F25~Es (mm yr~S~-1~N~)"
 tmp               = dim_avg_n_Wrap(Esoil(0,:,:,:),0)
 tmp               = tmp - dim_avg_n_Wrap(Esoil(1,:,:,:),0)
 tmp@_FillValue    = -9999.
@@ -566,10 +583,10 @@ delete(context)
 ; =============================== Plot Dr Qrec ================================
 ; Q2aquifer
 print("plot Q2aquifer")
-;res@cnFillPalette = "testcmap"
-cmap              = read_colormap_file(colorbar)
+
 res@cnFillPalette = cmap(::-1,:)
-res@lbTitleString = "~F5~D"+"~F25~Dr (mm yr~S~-1~N~)"
+; res@lbTitleString = "~F5~D"+"~F25~Dr (mm yr~S~-1~N~)"
+res@tiMainString = "~F5~D"+"~F25~Dr (mm yr~S~-1~N~)"
 tmp               = dim_avg_n_Wrap(Q2aquifer(0,:,:,:),0)
 tmp               = tmp - dim_avg_n_Wrap(Q2aquifer(1,:,:,:),0)
 tmp@_FillValue    = -9999.
@@ -616,7 +633,6 @@ if categorize then
 end if
 ; ------------------------------------------
 
-delete(cmap)
 delete(res@cnFillPalette)
 delete(tmp)
 delete(tmp_WTD_0)
@@ -632,8 +648,9 @@ print("plot Q2botsoil")
 ;                       0,10,20,30,40,50,100,200,300,400,500,600          \
 ;                       /)
 
-res@lbTitleString = "~F5~D"+"~F25~Qrec (mm yr~S~-1~N~)"
-res@cnFillPalette = colorbar
+; res@lbTitleString = "~F5~D"+"~F25~Qrec (mm yr~S~-1~N~)"
+res@tiMainString = "~F5~D"+"~F25~Qrec (mm yr~S~-1~N~)"
+res@cnFillPalette = cmap
 tmp               = dim_avg_n_Wrap(Q2botsoil(0,:,:,:),0)
 tmp               = tmp - dim_avg_n_Wrap(Q2botsoil(1,:,:,:),0)
 tmp@_FillValue    = -9999.
@@ -688,11 +705,9 @@ delete(context)
 delete(res@lbLabelStrings)
 ; Fwsoil
 print("plot Fwsoil_diff_max")
-res@lbTitleString = "~F5~Db"
-; cmap              = read_colormap_file("testcmap")
-; res@cnFillPalette = cmap(0:99:-1,:)
-; cmap              = read_colormap_file(colorbar)
-res@cnFillPalette = "CBR_wet";cmap(65:,:)
+; res@lbTitleString = "~F5~Db"
+res@tiMainString = "~F5~Db"
+res@cnFillPalette = cmap(9:,:)
 res@cnLevels      = fspan(0.005,0.045,9)
 plots(5) = gsn_csm_contour_map(wks,Fwsoil_diff_max(0,:,:),res)
 

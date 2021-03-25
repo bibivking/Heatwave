@@ -129,7 +129,7 @@ tair <- tair - 273.15
 
 
 #Initialise plot
-png("./DeltaT_vs_fwsoil_vpd_tair.png",
+png("./plots/Fig7_DeltaT_vs_fwsoil_vpd_tair.png",
     height=2.70, width=8, units="in", res=400)
 
 par(mai=c(0.55, 0.2, 0.2, 0.2))

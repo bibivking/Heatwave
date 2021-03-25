@@ -28,10 +28,10 @@ col_sum  = 3
 heatwave = "hw-90th" ; "hw-90th" ; "all-day"
 scale    = "SE-AU"   ; "45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 case_name= (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/) ;, \
-            ; "CTL-30x3+30yr-DeepRoot/outputs-daily"/);,"FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
+
 path_mum = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 message  = "CTL_FD_DR";_FD+DR-FD"
-pic      = "./plots/Spitial_HESS_LH_SH_"+heatwave+"_"+message
+pic      = "./plots/Fig4_Spitial_HESS_LH_SH_"+heatwave+"_"+message
 
 year_sum = year_e-year_s+1
 day_sum  = 0
@@ -270,7 +270,7 @@ res@lbBoxLinesOn           = True                       ;�ر�lbar box ��
 ; res@lbOrientation          = "vertical"
 res@lbTitleFont            = 25
 res@lbLabelFont            = 25
-res@lbTitleFontHeightF     = 0.013
+res@lbTitleFontHeightF     = 0.015
 res@lbLabelFontHeightF     = 0.013
 res@lbTitlePosition        = "Bottom"
 res@pmLabelBarHeightF       = 0.1
@@ -283,7 +283,7 @@ res@tmXBLabelFontThicknessF = 0.015
 res@tmYLLabelFontThicknessF = 0.015
 res@tmXBLabelFontHeightF    = 0.015
 res@tmYLLabelFontHeightF    = 0.015
-; res@mpDataBaseVersion       = "HighRes"
+res@tiMainFontHeightF       = 0.02
 
 res@tmYLMode                = "Explicit"
 res@tmXBMode                = "Explicit"
@@ -353,8 +353,6 @@ pres@lbTitleFont        = 25
 pres@lbLabelFont        = 25
 pres@lbTitleFontHeightF = 0.01
 pres@lbLabelFontHeightF = 0.01
-; pres@gsnPanelYWhiteSpacePercent = 0.5
-; pres@gsnPanelXWhiteSpacePercent = 0.5
 
 txres                   = True
 txres@txPerimOn         = False
@@ -362,8 +360,8 @@ txres@txFont            = 25
 txres@txFontHeightF     = 0.03
 
 amres                   = True
-amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
-amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
+amres@amParallelPosF    = 0.475    ; This is the right edge of the plot.
+amres@amOrthogonalPosF  = 0.45    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
 Qle_CTL_lvl    = (/10., 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140/)
@@ -379,6 +377,28 @@ Qh_diff_lvl     = Qle_diff_lvl
 deltaT_diff_lvl = (/-1., -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1./)
 EF_diff_lvl     = fspan(-0.4,0.4,17)
 
+; _____________ Colorbar ____________
+; Red
+cmap1  = (/ (/255.,255,255,1/), (/255,255,229,1/), (/255,247,188,1/), (/254,227,145,1/), \
+            (/254,196,79,1/),  (/254,153,41,1/),  (/236,112,20,1/),  (/204,76,2,1/),    \
+            (/153,52,4,1/),    (/102,37,6,1/),    (/103,0,13,1/) /)
+; Blue
+cmap2  = (/ (/255.,255,255,1/), (/247,252,240,1/), (/224,243,219,1/), (/204,235,197,1/),  \
+            (/168,221,181,1/), (/123,204,196,1/),  (/78,179,211,1/),  (/43,140,190,1/),  \
+            (/8,104,172,1/),    (/  8,64,129,1/),    (/2,56,88,1/) /)
+
+; Blue to Red
+cmap3  = (/ (/2.,56,88,1/),     (/  8,64,129,1/),  (/8,104,172,1/),                     \
+            (/43,140,190,1/),  (/78,179,211,1/),  (/123,204,196,1/),(/168,221,181,1/), \
+            (/204,235,197,1/), (/224,243,219,1/), (/247,252,240,1/), (/255,255,255,1/),\
+            (/255,255,255,1/), (/255,255,229,1/), (/255,247,188,1/), (/254,227,145,1/),\
+            (/254,196,79,1/),  (/254,153,41,1/),  (/236,112,20,1/),  (/204,76,2,1/),   \
+            (/153,52,4,1/),    (/102,37,6,1/),    (/103,0,13,1/) /)
+cmap1(:,0:2) = cmap1(:,0:2)/255.
+cmap2(:,0:2) = cmap2(:,0:2)/255.
+cmap3(:,0:2) = cmap3(:,0:2)/255.
+
+;namedcolor2rgba
 plots = new(case_sum*3,graphic)
 
 do cnt = 1,2
@@ -386,32 +406,32 @@ do cnt = 1,2
   res@lbLabelBarOn  = True
 
   ; deltaT
-  res@lbTitleString = "~F5~D"+"~F25~T (~S~o~N~C)"
+  res@tiMainString = "~F5~D"+"~F25~T (~S~o~N~C)"
   res@cnLevels      = deltaT_CTL_lvl
-  res@cnFillPalette = "precip3_16lev";"WhiteBlueGreenYellowRed";"vegetation_ClarkU";"NCV_blue_red";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+  res@cnFillPalette = cmap1
   plots(0) = gsn_csm_contour_map(wks,deltaT_avg(0,cnt,:,:),res)
   delete(res@cnLevels)
   delete(res@cnFillPalette)
 
   ; EF
-  res@lbTitleString = "EF"
+  res@tiMainString = "EF"
   res@cnLevels      = EF_CTL_lvl
-  ;cmap = read_colormap_file("WhiteBlueGreenYellowRed");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
-  res@cnFillPalette = "spread_15lev";cmap(::-1,:)
+  res@cnFillPalette = cmap2
   plots(1) = gsn_csm_contour_map(wks,EF_avg(0,cnt,:,:),res)
   delete(res@cnLevels)
 
   ; Fwsoil
-  res@lbTitleString = "~F5~b"
+  res@tiMainString = "~F5~b"
   res@cnLevels      = Fw_CTL_lvl
   plots(2) = gsn_csm_contour_map(wks,Fwsoil_avg(0,cnt,:,:),res)
   delete(res@cnLevels)
   delete(res@cnFillPalette)
 
+
   ; deltaT (GW-FD)
-  res@lbTitleString = "~F5~D"+"~F25~T~B~canopy~N~ (~S~o~N~C)"
+  res@tiMainString = "~F5~D"+"~F25~T~B~canopy~N~ (~S~o~N~C)"
   res@cnLevels      = deltaT_diff_lvl
-  res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22"
+  res@cnFillPalette = cmap3
   tmp  = deltaT_avg(0,cnt,:,:)
   tmp  = tmp - deltaT_avg(1,cnt,:,:)
   plots(3) = gsn_csm_contour_map(wks,tmp,res)
@@ -421,9 +441,8 @@ do cnt = 1,2
 
 
   ; EF (GW-FD)
-  res@lbTitleString = "~F5~D"+"~F25~EF"
-  cmap = read_colormap_file("BlAqGrWh2YeOrReVi22");("NEO_div_vegetation_a")("ViBlGrWhYeOrRe");
-  res@cnFillPalette = cmap(::-1,:)
+  res@tiMainString = "~F5~D"+"~F25~EF"
+  res@cnFillPalette = cmap3(::-1,:)
 
   res@cnLevels      = EF_diff_lvl
   tmp  = EF_avg(0,cnt,:,:)
@@ -433,7 +452,7 @@ do cnt = 1,2
   delete(res@cnLevels)
 
   ; deltaT (GW-FD)
-  res@lbTitleString = "~F5~Db"
+  res@tiMainString = "~F5~Db"
   res@cnLevels      = Fw_diff_lvl
   tmp  = Fwsoil_avg(0,cnt,:,:)
   tmp  = tmp - Fwsoil_avg(1,cnt,:,:)

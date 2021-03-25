@@ -63,7 +63,7 @@ total_box  = case_sum*2*dimsizes(ts_s)+dimsizes(ts_s)-1 ; case_sum x PFT all/tre
 ; bins       = 100
 ; nVar       = case_sum*8
 
-wks = gsn_open_wks("pdf","./plots/"+pic_name)
+wks = gsn_open_wks("pdf","./plots/Fig3_"+pic_name)
 
 do var_num = 0, var_sum -1
 

@@ -44,7 +44,7 @@ end do
 
 message    = "LST_subday_"+diff
 
-pic_name  = "HESS_"+message+"_"+scale+"_"+year_s+"-"+year_e
+pic_name  = message+"_"+scale+"_"+year_s+"-"+year_e
 
 path_mum  = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 
@@ -114,11 +114,11 @@ wks1 = gsn_open_wks("pdf","Check_LST")
 gsn_define_colormap(wks1,"rainbow")
 
 res9                         = True
-res9@gsnDraw                 = True  ; Don't draw plots
-res9@gsnFrame                = True  ; ����ҳ
+res9@gsnDraw                 = True
+res9@gsnFrame                = True
 res9@gsnMaximize             = False
 res9@cnFillMode              = "RasterFill"            ; Raster Mode
-res9@cnFillOn                = True                            ;��ɫ
+res9@cnFillOn                = True
 res9@cnLinesOn               = False
 
 ; ================================== VegT ======================================
@@ -142,7 +142,6 @@ do case_num = 0, case_sum -1
     end do
   end do ; year
 end do ; case_num
-; delete(PFT_mask)
 
 VegT        = VegT - 273.15
 
@@ -171,9 +170,11 @@ f3  = addfile (filename3,"r")
 ; ______________________ Terra _______________________
 ; Terra passes over Aus ~ 10 am
 LST_Terra_QC = f2->QC_Day(:,{A:B},{C:D})
+; LST_Terra_QC = f2->QC_Night(:,{A:B},{C:D})
 printVarSummary(LST_Terra_QC)
 
 LST_Terra = tofloat(f2->LST_Day_1km(:,{A:B},{C:D}))
+; LST_Terra = tofloat(f2->LST_Night_1km(:,{A:B},{C:D}))
 LST_Terra = where((LST_Terra .ne. 0) .and. (LST_Terra_QC .eq. 0) ,\
                  LST_Terra*0.02-273.15,-9999.)
 LST_Terra@_FillValue = -9999.
@@ -198,9 +199,11 @@ plot = gsn_csm_contour(wks1,LST_Terra_regrid(24,:,:),res9)
 ; ______________________ Aqua _______________________
 ; Aqua passes over Aus ~ 2 pm
 LST_Aqua_QC = f3->QC_Day(:,{A:B},{C:D})
+; LST_Aqua_QC = f3->QC_Night(:,{A:B},{C:D})
 printVarSummary(LST_Aqua_QC)
 
 LST_Aqua = tofloat(f3->LST_Day_1km(:,{A:B},{C:D}))
+; LST_Aqua = tofloat(f3->LST_Night_1km(:,{A:B},{C:D}))
 LST_Aqua = where((LST_Aqua .ne. 0) .and. (LST_Aqua_QC .eq. 0) ,\
                 LST_Aqua*0.02-273.15,-9999.)
 LST_Aqua@_FillValue = -9999.
@@ -412,10 +415,8 @@ do region = 0,2
                              .and. LST_Terra_regrid(24,:,:) .ne. -9999., LST_Aqua_regrid(24,:,:), -9999.) )
 end do
 
-; delete(res9)
-
 ; ================================= Plotting ===================================
-pic = "./plots/"+pic_name
+pic = "./plots/Fig6_"+pic_name
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"rainbow")
 
@@ -454,7 +455,7 @@ res@lbOrientation          = "vertical";"vertical" ;"horizontal"
 res@lbTitleFont            = 25
 res@lbLabelFont            = 25
 res@lbTitleFontHeightF     = 0.013
-res@lbLabelFontHeightF     = 0.013
+res@lbLabelFontHeightF     = 0.01
 
 res@tmXBLabelFont           = 25 ;Sets the font index for the bottom X-Axis labels.
 res@tmYLLabelFont           = 25
@@ -465,12 +466,14 @@ res@tmYLLabelFontHeightF    = 0.015
 ; res@mpDataBaseVersion       = "HighRes"
 
 res@lbLabelBarOn            = True
+res@lbTitlePosition         = "Right"
+res@lbTitleAngleF           = 270
+res@lbTitleDirection        = "Across"                          ; letter angle
 res@tmYLMode                = "Explicit"
 res@tmXBMode                = "Explicit"
 res@txString                = ""
 res@gsnLeftString           = ""
 res@gsnRightString          = ""
-
 if scale .eq. "Global" then
   res@trYMinF         = -60
   res@trYMaxF         = 80
@@ -519,6 +522,29 @@ end if
 end if
 end if
 
+; _____________ Colorbar ____________
+
+; Red
+cmap1  = (/ (/255.,255,255,1/), (/255,255,229,1/), (/255,247,188,1/), (/254,227,145,1/), \
+            (/254,196,79,1/),  (/254,153,41,1/),  (/236,112,20,1/),  (/204,76,2,1/),    \
+            (/153,52,4,1/),    (/102,37,6,1/),    (/103,0,13,1/) /)
+; Blue
+cmap2  = (/ (/255.,255,255,1/), (/247,252,240,1/), (/224,243,219,1/), (/204,235,197,1/),  \
+            (/168,221,181,1/), (/123,204,196,1/),  (/78,179,211,1/),  (/43,140,190,1/),  \
+            (/8,104,172,1/),    (/  8,64,129,1/),    (/2,56,88,1/) /)
+
+; Blue to Red
+cmap3  = (/ (/2.,56,88,1/),     (/  8,64,129,1/),  (/8,104,172,1/),                     \
+            (/43,140,190,1/),  (/78,179,211,1/),  (/123,204,196,1/),(/168,221,181,1/), \
+            (/204,235,197,1/), (/224,243,219,1/), (/255,255,255,1/),\
+            (/255,255,255,1/), (/255,247,188,1/), (/254,227,145,1/),\
+            (/254,196,79,1/),  (/254,153,41,1/),  (/236,112,20,1/),  (/204,76,2,1/),   \
+            (/153,52,4,1/),    (/102,37,6,1/),    (/103,0,13,1/) /)
+
+cmap1(:,0:2) = cmap1(:,0:2)/255.
+cmap2(:,0:2) = cmap2(:,0:2)/255.
+cmap3(:,0:2) = cmap3(:,0:2)/255.
+
 ;**************** ͼ�������� *****************
 pres                    = True
 pres@wkWidth            = 2500
@@ -545,8 +571,6 @@ res1@gsnFrame           = False
 res1@gsnMaximize        = False
 res1@vpHeightF          = 0.32               ; change aspect ratio of plot
 res1@vpWidthF 	        = 0.38
-; res1@vpXF               = 0.08
-; res1@vpYF               = 0.7
 res1@tiYAxisFontThicknessF   = 3.
 res1@tmXBMajorThicknessF     = 3.
 res1@tmXBMinorThicknessF     = 3.
@@ -633,75 +657,58 @@ amres@amJust            = "TopLeft"
 ; -------------- start to plot ----------------
 plots = new(10,graphic)
 plots2 = new(10,graphic)
-; -------------- Tmax --------------
-; 15 Jan
-; res@cnLevels      = fspan( 20, 60, 41) ;deltaT_CTL_lvl
-; res@cnFillPalette = "WhiteBlueGreenYellowRed"
-; plots(0) = gsn_csm_contour_map(wks,Tair(2,14,:,:),res)
-; ; 16 Jan
-; plots(1) = gsn_csm_contour_map(wks,Tair(2,15,:,:),res)
-; ; 25 Jan
-; plots(2) = gsn_csm_contour_map(wks,Tair(2,24,:,:),res)
-; delete(res@cnLevels)
 
 ; -------------- LST --------------
-res@cnFillPalette = "precip3_16lev";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
+res@lbTitleString = "~F5~D~F25~T~B~MOD_2pm~N~ (~S~o~N~C)"
+res@cnFillPalette = cmap1 ;"precip3_16lev";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
 res@cnLevels      = fspan(0,15, 16) ;deltaT_CTL_lvl
 
 res@lbLabelBarOn = False ; "Always"
 tmp = LST_Aqua_regrid(14,:,:)
 tmp = where(PFT_mask(0,:,:) .eq. 1, tmp, tmp@_FillValue)
 plots(0) = gsn_csm_contour_map(wks,tmp,res) ;LST_Aqua_regrid(14,:,:),res)
-; plots(1) = gsn_csm_contour_map(wks,LST_Aqua_regrid(15,:,:),res)
 delete(tmp)
 
 res@lbLabelBarOn = True
 tmp = LST_Aqua_regrid(24,:,:)
 tmp = where(PFT_mask(0,:,:) .eq. 1, tmp, tmp@_FillValue)
-plots(1) = gsn_csm_contour_map(wks,tmp,res) ;LST_Aqua_regrid(24,:,:),res)
-; delete(res@cnLevels)
+plots(1) = gsn_csm_contour_map(wks,tmp,res)
 delete(tmp)
 
 ; -------------- deltaT --------------
 ; notes :
 ; VegT: case x 2 time steps x days x lat x lon
-
+res@lbTitleString = "~F5~D~F25~T~B~GW_2pm~N~ (~S~o~N~C)"
 res@lbLabelBarOn = False ; "Always"
 plots(2) = gsn_csm_contour_map(wks,VegT(0,1,14,:,:),res)
 ; plots(4) = gsn_csm_contour_map(wks,VegT(0,1,15,:,:),res)
 res@lbLabelBarOn = True ; "Always"
 plots(3) = gsn_csm_contour_map(wks,VegT(0,1,24,:,:),res)
 delete(res@cnLevels)
+delete(res@cnFillPalette)
 
 ; -------------- deltaT GW - FD --------------
-res@cnLevels      = (/-5,-4.5,-4,-3.5,-3.,-2.5,-2.,-1.5,-1,-0.5,-0.2,-0.1,0,0.1,0.2,0.5,1.,1.5,2.,2.5,3.,3.5,4.,4.5,5./)
+res@lbTitleString = "~F5~D~F25~T~B~GW_2pm~N~ - ~F5~D~F25~T~B~FD_2pm~N~ (~S~o~N~C)"
+res@cnLevels      = (/-5,-4,-3.,-2.,-1,-0.5,-0.2,-0.1,0,0.1,0.2,0.5,1.,2.,3.,4.,5./)
                    ;fspan(-4,4, 17)
-res@cnFillPalette = "BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
+res@cnFillPalette = cmap3;"BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
 tmp               = VegT(0,1,:,:,:)
 tmp               = tmp - VegT(1,1,:,:,:)
-; temp = VegT(0,1,0,:,:)
-; temp = where(PFT_mask(1,:,:) .eq. 1 .and. HW(14,:,:) .eq. 1 .and. LST_mask(14,0,:,:) .eq. 1,\
-;       tmp(14,:,:), tmp@_FillValue)
+
 res@lbLabelBarOn = False ; "Always"
 plots(4) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
-; delete(temp)
 
-; plots(7) = gsn_csm_contour_map(wks,VegT(0,1,15,:,:),res)
 res@lbLabelBarOn = True ; "Always"
-; temp = where(PFT_mask(1,:,:) .eq. 1 .and. HW(24,:,:) .eq. 1 .and. LST_mask(24,0,:,:) .eq. 1,\
-;       tmp(24,:,:), tmp@_FillValue)
 plots(5) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
-; delete(res@cnLevels)
 delete(tmp)
-; delete(temp)
 
 ; -------------- deltaT DR - GW --------------
-res@cnFillPalette = "BlAqGrWh2YeOrReVi22"
+res@lbTitleString = "~F5~D~F25~T~B~DR_2pm~N~ - ~F5~D~F25~T~B~GW_2pm~N~ (~S~o~N~C)"
+res@cnFillPalette = cmap3;"BlAqGrWh2YeOrReVi22"
 tmp               = VegT(2,1,:,:,:)
 tmp               = tmp - VegT(0,1,:,:,:)
 res@lbLabelBarOn = False ; "Always"
 plots2(0) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
-; plots(7) = gsn_csm_contour_map(wks,VegT(0,1,15,:,:),res)
 res@lbLabelBarOn = True ; "Always"
 plots2(1) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
 delete(res@cnLevels)
@@ -711,8 +718,7 @@ delete(tmp)
 ; notes:
 ; deltaT : case x day (0,1,2) x region x time steps
 ; LST_tree : events x regions x 2 time steps
-offset_num = 6;8
-; plots = new(4,graphic)
+offset_num = 6
 res1@pmLegendDisplayMode = "Always"
 res1@trYMinF             = -2.2
 res1@trYMaxF             = 11.
@@ -730,32 +736,7 @@ overlay(plots(0+offset_num),plot1)
 delete(res1@tiYAxisString)
 
 res1@pmLegendDisplayMode = "Never"
-; plots(10) = gsn_csm_xy(wks,x,deltaT(:,1,:),res1)
-; plot2     = gsn_csm_xy(wks,y,LST_tree(1,:),res2)
-; overlay(plots(10),plot2)
-;
-; print("region1 25th")
-; print(deltaT(:,2,1,:))
-; print(LST_tree(2,1,:))
-; plots(1+offset_num) = gsn_csm_xy(wks,x,deltaT(:,2,1,:),res1)
-; plot2     = gsn_csm_xy(wks,y,LST_tree(2,1,:),res2)
-; overlay(plots(1+offset_num),plot2)
-;
-; ; region 2
-; res1@tiYAxisString       = "~F5~D~F22~T (~S~o~N~C)"
-; res1@tiXAxisString       = "hr"
-; print("region2 15th")
-; print(deltaT(:,0,2,:))
-; print(LST_tree(0,2,:))
-; plots(2+offset_num) = gsn_csm_xy(wks,x,deltaT(:,0,2,:),res1)
-; plot3    = gsn_csm_xy(wks,y,LST_tree(0,2,:),res2)
-; overlay(plots(2+offset_num),plot3)
-; delete(res1@tiYAxisString)
 
-; res1@pmLegendDisplayMode = "Never"
-; plots(10) = gsn_csm_xy(wks,x,deltaT(:,1,:),res1)
-; plot2     = gsn_csm_xy(wks,y,LST_tree(1,:),res2)
-; overlay(plots(10),plot2)
 res1@tiXAxisString       = "hr"
 print("region2 15th")
 print(deltaT(:,2,2,:))
@@ -764,23 +745,6 @@ plots(1+offset_num) = gsn_csm_xy(wks,x,deltaT(:,2,2,:),res1) ; 3+offset_num
 plot4     = gsn_csm_xy(wks,y,LST_tree(2,2,:),res2)
 overlay(plots(1+offset_num),plot4)
 
-; -------------- VPD --------------
-; res1@tiYAxisString       = "VPD (kPa)"
-; res1@trYMinF             = 0.
-; res1@trYMaxF             = 7.
-; plots(12) = gsn_csm_xy(wks,x,VPD(:,0,:),res1)
-; delete(res1@tiYAxisString)
-; plots(13) = gsn_csm_xy(wks,x,VPD(:,1,:),res1)
-; plots(14) = gsn_csm_xy(wks,x,VPD(:,2,:),res1)
-;
-; res1@tiYAxisString       = "~F5~b"
-; res1@trYMinF             = 0.
-; res1@trYMaxF             = 1.
-; plots(15) = gsn_csm_xy(wks,x,Fwsoil(:,0,:),res1)
-; delete(res1@tiYAxisString)
-; plots(16) = gsn_csm_xy(wks,x,Fwsoil(:,1,:),res1)
-; plots(17) = gsn_csm_xy(wks,x,Fwsoil(:,2,:),res1)
-
 ; ________________ add shading ________________
 poly             = new(6,graphic)
 gres             = True
@@ -788,8 +752,6 @@ gres@gsEdgesOn   = True
 gres@gsEdgeColor = "red"
 gres@gsLineColor = "red"
 gres@gsLineThicknessF = 3.0
-; gres@gsFillColor = "cornsilk" ;"rosybrown" ;"azure"
-; gres@gsFillOpacityF = 0.0
 
 xmin = (/C_rgn_1,C_rgn_2/)
 xmax = (/D_rgn_1,D_rgn_2/)
@@ -837,45 +799,5 @@ end do
 gsn_panel(wks,(/plots2/),(/5,2/),pres)
 delete(plots2)
 delete(poly2)
-
-; ------------------ Check LST missing value -----------------
-; plots = new(2,graphic)
-; LST_Terra_regrid = where(HW .eq. 1, LST_Terra_regrid,LST_Terra_regrid@_FillValue)
-; LST_Aqua_regrid  = where(HW .eq. 1, LST_Aqua_regrid,LST_Aqua_regrid@_FillValue)
-; do day = 0, 30
-;   LST_Terra_regrid(day,:,:) = where(PFT_mask .eq. 1, LST_Terra_regrid(day,:,:),LST_Terra_regrid@_FillValue)
-;   LST_Aqua_regrid(day,:,:)  = where(PFT_mask .eq. 1, LST_Aqua_regrid(day,:,:),LST_Aqua_regrid@_FillValue)
-; end do
-; do day = 0,30
-;   print("VegT")
-;   res@tiXAxisString = "day = " +(day+1)
-;   plots(0) = gsn_csm_contour_map(wks,LST_Terra_regrid(day,:,:),res)
-;   plots(1) = gsn_csm_contour_map(wks,LST_Aqua_regrid(day,:,:),res)
-;   gsn_panel(wks,(/plots/),(/1,2/),pres)
-; end do
-
-; ------------------ Check Jan temp ------------------
-; do day = 0,30
-;   print("VegT")
-;   plots(0) = gsn_csm_contour_map(wks,VegT(0,0,day,:,:),res)
-;   plots(1) = gsn_csm_contour_map(wks,VegT(1,0,day,:,:),res)
-;   plots(2) = gsn_csm_contour_map(wks,VegT(2,0,day,:,:),res)
-;   print("LST")
-;   plots(3) = gsn_csm_contour_map(wks,LST_Terra_regrid(day,:,:),res)
-;
-;   print("VegT")
-;   plots(4) = gsn_csm_contour_map(wks,VegT(0,1,day,:,:),res)
-;   plots(5) = gsn_csm_contour_map(wks,VegT(1,1,day,:,:),res)
-;   plots(6) = gsn_csm_contour_map(wks,VegT(2,1,day,:,:),res)
-;   print("LST")
-;   plots(7) = gsn_csm_contour_map(wks,LST_Aqua_regrid(day,:,:),res)
-;
-;   do cnt = 0, 7
-;     txid1   = gsn_create_text(wks, order_name(cnt), txres)
-;     annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
-;   end do
-;   gsn_panel(wks,(/plots/),(/2,4/),pres)
-; end do
-
 
 end

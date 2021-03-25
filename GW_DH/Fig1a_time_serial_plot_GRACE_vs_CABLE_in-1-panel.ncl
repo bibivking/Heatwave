@@ -49,7 +49,7 @@ grace_version = "Original-fill-nan"
 
 
 ; ================================= PLOT ======================================
-pic = "./plots/time_serial_GRACE_JPL06-"+grace_version+"_vs_"+cable_version+\
+pic = "./plots/Fig1a_time_serial_GRACE_JPL06-"+grace_version+"_vs_"+cable_version+\
       "_PFT-"+PFT+"_"+pic_message+"_"+scale+"_"+time_scale
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"WhiteBlueGreenYellowRed")

@@ -58,6 +58,10 @@ res@gsnDraw            = True  ; Don't draw plots
 res@gsnFrame           = True  ; ����ҳ
 res@gsnMaximize        = False
 
+res@cnFillOn                = True
+res@cnMissingValFillColor   = "gray80"
+res@cnFillBackgroundColor   = "gray80"
+
 res@cnFillMode         = "RasterFill"            ; Raster Mode
 res@cnFillOn           = True                    ;��ɫ
 res@lbLabelBarOn           = True
@@ -187,18 +191,37 @@ end if
 end if
 end if
 
-pic1 = "./plots/WTD_2017-2019"
+; ================================= Plot WTD ===================================
+pic1 = "./plots/FigS3_WTD_2017-2019"
 wks1 = gsn_open_wks("pdf",pic1)
 gsn_define_colormap(wks1,"GMT_haxby");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
-levels = fspan(1,20,20)
+; _____________ Colorbar ____________
+colorbar    = "hotcold_18lev";"temp_19lev"
+cmap_tmp    = read_colormap_file(colorbar)
+cmap        = cmap_tmp
+cmap(1,:)   = namedcolor2rgba("blue4")
+cmap(2:5,:) = cmap_tmp(1:4,:)
+cmap(6,:)   = namedcolor2rgba("cadetblue3")
+cmap(7,:)   = namedcolor2rgba("cadetblue1")
+cmap(8,:)   = cmap_tmp(6,:)
+cmap(9,:)   = namedcolor2rgba("white")
+cmap(10,:)  = namedcolor2rgba("beige")
+
+; res@lbTitleString   = "WTD (m)"
+; res@lbTitlePosition = "Bottom"
+levels = fspan(1,17,17)
 res@cnLevels = levels
-; res@txString = "Water Table Depth (CTL-30+30yr)" ;var@long_name
+res@cnFillPalette = cmap
 plots = gsn_csm_contour_map(wks1,WTD,res)
 delete(levels)
 delete(res@cnLevels)
+delete(res@cnFillPalette)
+delete(res@lbTitleString)
 
-pic2 = "./plots/PFT"
+
+; ================================= Plot PFT ===================================
+pic2 = "./plots/FigS4_PFT"
 wks2 = gsn_open_wks("pdf",pic2)
 gsn_define_colormap(wks2,"drought_severity");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 levels = (/1.1,2.1,3.1,4.1/)

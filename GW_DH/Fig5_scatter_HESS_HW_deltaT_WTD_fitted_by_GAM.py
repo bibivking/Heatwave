@@ -79,4 +79,4 @@ ax.spines['right'].set_linewidth(bwith)
 
 ax.set_xlim(0,10)
 ax.set_ylim(-4,8)
-fig.savefig("scatter_density_deltaT_fitting_2017-19.pdf")
+fig.savefig("./plots/Fig5_scatter_density_deltaT_fitting_2017-19.pdf")

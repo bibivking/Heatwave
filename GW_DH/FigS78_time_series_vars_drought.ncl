@@ -250,7 +250,7 @@ V_diff = V_diff_yr(wtd|:,var|:,time|:)
 ; end do
 
 ; ______________________________ Plotting ______________________________
-pic = "./plots/HESS_time_series_droughts_PFT-"+PFT+"_"+year_s+"-"+year_e
+pic = "./plots/FigS78_time_series_droughts_PFT-"+PFT+"_"+year_s+"-"+year_e
 wks = gsn_open_wks("pdf",pic)
 gsn_define_colormap(wks,"rainbow") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
