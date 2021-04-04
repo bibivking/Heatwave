@@ -232,32 +232,53 @@ end if
 end if
 
 ; _______________ colorbar _______________
-colorbar    = "MPL_BrBG";"vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
-cmap_tmp    = read_colormap_file(colorbar)
-cmap        = new((/19, 4/),float)
-cmap(0,:)   = cmap_tmp(0,:)
-cmap(1,:)   = cmap_tmp(7,:)
-cmap(2,:)   = cmap_tmp(15,:)
-cmap(3,:)   = cmap_tmp(21,:)
-cmap(4,:)   = cmap_tmp(27,:)
-cmap(5,:)   = cmap_tmp(35,:)
-cmap(6,:)   = cmap_tmp(37,:)
-cmap(7,:)   = cmap_tmp(44,:)
-cmap(8,:)   = cmap_tmp(55,:)
-cmap(9,:)   = cmap_tmp(63,:)
-cmap(10,:)   = cmap_tmp(72,:)
-cmap(11,:)   = cmap_tmp(79,:)
-cmap(12,:)   = cmap_tmp(86,:)
-cmap(13,:)   = cmap_tmp(95,:)
-cmap(14,:)   = cmap_tmp(101,:)
-cmap(15,:)   = cmap_tmp(111,:)
-cmap(16,:)   = cmap_tmp(116,:)
-cmap(17,:)   = cmap_tmp(122,:)
-cmap(18,:)   = cmap_tmp(127,:)
+; colorbar    = "MPL_BrBG";"vegetation_ClarkU";"GMT_seis";"NOC_ndvi";"MPL_RdYlGn";"WhiteBlueGreenYellowRed"
+; cmap_tmp    = read_colormap_file(colorbar)
+; cmap        = new((/19, 4/),float)
+; cmap(0,:)   = cmap_tmp(0,:)
+; cmap(1,:)   = cmap_tmp(7,:)
+; cmap(2,:)   = cmap_tmp(15,:)
+; cmap(3,:)   = cmap_tmp(21,:)
+; cmap(4,:)   = cmap_tmp(27,:)
+; cmap(5,:)   = cmap_tmp(35,:)
+; cmap(6,:)   = cmap_tmp(37,:)
+; cmap(7,:)   = cmap_tmp(44,:)
+; cmap(8,:)   = cmap_tmp(55,:)
+; cmap(9,:)   = cmap_tmp(63,:)
+; cmap(10,:)   = cmap_tmp(72,:)
+; cmap(11,:)   = cmap_tmp(79,:)
+; cmap(12,:)   = cmap_tmp(86,:)
+; cmap(13,:)   = cmap_tmp(95,:)
+; cmap(14,:)   = cmap_tmp(101,:)
+; cmap(15,:)   = cmap_tmp(111,:)
+; cmap(16,:)   = cmap_tmp(116,:)
+; cmap(17,:)   = cmap_tmp(122,:)
+; cmap(18,:)   = cmap_tmp(127,:)
+;
+; cmap1        = cmap
+; cmap1(8,:)   = cmap_tmp(63,:)
+; cmap1(10,:)  = cmap_tmp(63,:)
 
-cmap1        = cmap
-cmap1(8,:)   = cmap_tmp(63,:)
-cmap1(10,:)  = cmap_tmp(63,:)
+; Red
+cmap1  = (/ (/255.,255,229,1/), (/255,247,188,1/), (/254,227,145,1/),                    \
+            (/254,196,79,1/),  (/254,153,41,1/),  (/236,112,20,1/),  (/204,76,2,1/),    \
+            (/153,52,4,1/),    (/102,37,6,1/),    (/103,0,13,1/),    (/103,0,31,1/)     /)
+; Blue
+cmap2  = (/ (/247.,252,240,1/), (/224,243,219,1/), (/204,235,197,1/),                     \
+            (/168,221,181,1/), (/123,204,196,1/),  (/78,179,211,1/),  (/43,140,190,1/),  \
+            (/8,104,172,1/),    (/  8,64,129,1/),    (/2,56,88,1/),   (/8,29,88,1/)      /)
+
+; Blue to Red
+cmap3  = (/ (/8.,29,88,1/),     (/2.,56,88,1/),    (/  8,64,129,1/),  (/8,104,172,1/),  \                   \
+            (/43,140,190,1/),  (/78,179,211,1/),  (/123,204,196,1/),(/168,221,181,1/), \
+            (/204,235,197,1/), (/255,255,255,1/),\
+            (/255,255,255,1/), (/254,227,145,1/),\
+            (/254,196,79,1/),  (/254,153,41,1/),  (/236,112,20,1/),  (/204,76,2,1/),   \
+            (/153,52,4,1/),    (/127,39,4,1/),    (/102,37,6,1/),    (/103,0,13,1/)   /)
+cmap1(:,0:2) = cmap1(:,0:2)/255.
+cmap2(:,0:2) = cmap2(:,0:2)/255.
+cmap3(:,0:2) = cmap3(:,0:2)/255.
+
 ;**************** ͼ�������� *****************
 pres                    = True
 pres@wkWidth            = 2500
@@ -296,8 +317,8 @@ res@lbLabelBarOn = False
 
 ; GLEAM -----
 ; res@tiYAxisString = "MD"
-res@cnLevels  = fspan(50,1000,20)
-res@cnFillPalette = cmap
+res@cnLevels  = fspan(100,1000,10)
+res@cnFillPalette = cmap2
 res@tiMainString = "~F25~E (mm yr~S~-1~N~)"
 ; res@lbTitleString = "E (mm yr~S~-1~N~)"
 
@@ -314,7 +335,7 @@ res@cnLevels       = (/ -400, -350,  -300,  -250,   -200,  -150,   -100, -50, 0,
 res@lbLabelStrings = (/"-400", " ", "-300",  " ", "-200",   " ", "-100", " ", "0",\
                                " ",  "100",  " ",  "200",   " ",  "300", " ", "400"/)
 delete(res@cnFillPalette)
-res@cnFillPalette = cmap1
+res@cnFillPalette = cmap3(::-1,:)
 res@tiMainString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
 ; res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
 
@@ -348,8 +369,8 @@ res@lbLabelBarOn  = True
 ; GLEAM 2017-2019
 ; res@tiYAxisString = "RD"
 delete(res@cnFillPalette)
-res@cnLevels  = fspan(50,1000,20)
-res@cnFillPalette = cmap
+res@cnLevels  = fspan(100,1000,10)
+res@cnFillPalette = cmap2
 ; res@lbTitleString = "E (mm yr~S~-1~N~)"
 
 plots(counter) = gsn_csm_contour_map(wks,dim_avg_n_Wrap(Evap_GLEAM(17:19,:,:),0),res)
@@ -365,7 +386,7 @@ res@cnLevels       = (/ -400, -350,  -300,  -250,   -200,  -150,   -100, -50, 0,
 res@lbLabelStrings = (/"-400", " ", "-300",  " ", "-200",   " ", "-100", " ", "0",\
                                " ",  "100",  " ",  "200",   " ",  "300", " ", "400"/)
 delete(res@cnFillPalette)
-res@cnFillPalette = cmap1
+res@cnFillPalette = cmap3(::-1,:)
 
 ; res@lbTitleString = "~F5~D"+"~F25~E (mm yr~S~-1~N~)"
 

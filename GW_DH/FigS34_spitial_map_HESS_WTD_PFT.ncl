@@ -197,27 +197,42 @@ wks1 = gsn_open_wks("pdf",pic1)
 gsn_define_colormap(wks1,"GMT_haxby");"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
 ; _____________ Colorbar ____________
-colorbar    = "hotcold_18lev";"temp_19lev"
-cmap_tmp    = read_colormap_file(colorbar)
-cmap        = cmap_tmp
-cmap(1,:)   = namedcolor2rgba("blue4")
-cmap(2:5,:) = cmap_tmp(1:4,:)
-cmap(6,:)   = namedcolor2rgba("cadetblue3")
-cmap(7,:)   = namedcolor2rgba("cadetblue1")
-cmap(8,:)   = cmap_tmp(6,:)
-cmap(9,:)   = namedcolor2rgba("white")
-cmap(10,:)  = namedcolor2rgba("beige")
+; colorbar    = "hotcold_18lev";"temp_19lev"
+; cmap_tmp    = read_colormap_file(colorbar)
+; cmap        = cmap_tmp
+; cmap(1,:)   = namedcolor2rgba("blue4")
+; cmap(2:5,:) = cmap_tmp(1:4,:)
+; cmap(6,:)   = namedcolor2rgba("cadetblue3")
+; cmap(7,:)   = namedcolor2rgba("cadetblue1")
+; cmap(8,:)   = cmap_tmp(6,:)
+; cmap(9,:)   = namedcolor2rgba("white")
+; cmap(10,:)  = namedcolor2rgba("beige")
 
+; Blue to Red
+cmap   = (/ (/8.,29,88,1/),    (/  8,64,129,1/),  (/8,104,172,1/),  \                   \
+            (/43,140,190,1/),  (/78,179,211,1/),  (/123,204,196,1/),(/168,221,181,1/), \
+            (/204,235,197,1/), (/224,243,219,1/), \
+            (/255,255,255,1/), (/255,247,188,1/), (/254,227,145,1/),\
+            (/254,196,79,1/),  (/254,153,41,1/),  (/236,112,20,1/),  (/204,76,2,1/),   \
+            (/153,52,4,1/),    (/102,37,6,1/),    (/103,0,13,1/)  /)
+cmap(:,0:2) = cmap(:,0:2)/255.
+
+; Blue
+cmap2  = (/ (/247.,252,240,1/), (/224,243,219,1/), (/204,235,197,1/),                     \
+            (/168,221,181,1/), (/123,204,196,1/),  (/78,179,211,1/),  (/43,140,190,1/),  \
+            (/8,104,172,1/),    (/  8,64,129,1/),    (/2,56,88,1/),   (/8,29,88,1/)      /)
+
+cmap2(:,0:2) = cmap2(:,0:2)/255.
 ; res@lbTitleString   = "WTD (m)"
 ; res@lbTitlePosition = "Bottom"
-levels = fspan(1,17,17)
+levels = fspan(1,11,11)
 res@cnLevels = levels
-res@cnFillPalette = cmap
+res@cnFillPalette = cmap2(::-1,:)
 plots = gsn_csm_contour_map(wks1,WTD,res)
 delete(levels)
 delete(res@cnLevels)
 delete(res@cnFillPalette)
-delete(res@lbTitleString)
+; delete(res@lbTitleString)
 
 
 ; ================================= Plot PFT ===================================

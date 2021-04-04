@@ -259,6 +259,15 @@ print("r_CTL_MD: "+r_CTL_MD+"  r_CTL_RD: "+r_CTL_RD)
 print("r_FD_MD: "+r_FD_MD+"  r_FD_RD: "+r_FD_RD)
 print("r_GLEAM_MD: "+r_GLEAM_MD+"  r_GLEAM_RD: "+r_GLEAM_RD)
 
+; __________________________ WRITE TXT OUTPUT _____________________________
+option        = True
+option@row    = False
+
+option@fout =  "./txt/Fig1b_time_accumulate_P-E_GLEAM_"+GLEAM_version+"_PFT-"+PFT+"_"+year_s+"-"+year_e+".txt"
+format   = total+"f15.2"
+write_matrix (P_E_acl, format, option)
+delete(option@fout)
+
 ; ______________________________ Plotting ______________________________
 pic = "./plots/Fig1b_time_accumulate_P-E_GLEAM_"+GLEAM_version+"_PFT-"+PFT+"_"+year_s+"-"+year_e
 wks = gsn_open_wks("pdf",pic)

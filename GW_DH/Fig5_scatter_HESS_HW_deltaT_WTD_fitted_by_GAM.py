@@ -53,9 +53,9 @@ gam    = LinearGAM(n_splines=4).gridsearch(xx, yy) # n_splines=22
 x_pred = np.linspace(min(x), max(x), num=100)
 y_pred = gam.predict(x_pred)
 y_int  = gam.confidence_intervals(x_pred, width=.95)
-ax.plot(x_pred, y_pred, color="red", ls='-', lw=2.0, zorder=10)
-ax.fill_between(x_pred, y_int[:, 0], y_int[:, 1], alpha=0.2,
-                facecolor='red', zorder=10)
+# ax.plot(x_pred, y_pred, color="red", ls='-', lw=2.0, zorder=10)
+# ax.fill_between(x_pred, y_int[:, 0], y_int[:, 1], alpha=0.2,
+#                 facecolor='red', zorder=10)
 # ax.text(0.03, 0.95, '(f)', transform=ax.transAxes, fontsize=18, verticalalignment='top', bbox=props)
 
 print("I am OK 3")

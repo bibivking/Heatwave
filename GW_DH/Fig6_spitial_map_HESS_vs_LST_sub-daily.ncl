@@ -454,8 +454,8 @@ res@lbBoxLinesOn           = True                       ;�ر�lbar box ��
 res@lbOrientation          = "vertical";"vertical" ;"horizontal"
 res@lbTitleFont            = 25
 res@lbLabelFont            = 25
-res@lbTitleFontHeightF     = 0.013
-res@lbLabelFontHeightF     = 0.01
+res@lbTitleFontHeightF     = 0.015
+res@lbLabelFontHeightF     = 0.015
 
 res@tmXBLabelFont           = 25 ;Sets the font index for the bottom X-Axis labels.
 res@tmYLLabelFont           = 25
@@ -549,7 +549,8 @@ cmap3(:,0:2) = cmap3(:,0:2)/255.
 pres                    = True
 pres@wkWidth            = 2500
 pres@wkHeight           = 2500
-
+pres@vpHeightF 	        = 0.2               ; change aspect ratio of plot
+pres@vpWidthF 	        = 0.9
 pres@gsnMaximize        = False
 pres@gsnPanelLabelBar   = False
 ; pres@gsnPanelMainPosXF  = 0.1
@@ -655,13 +656,13 @@ amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
 
 ; -------------- start to plot ----------------
-plots = new(10,graphic)
-plots2 = new(10,graphic)
+plots  = new(8,graphic)
+plots2 = new(8,graphic)
 
-; -------------- LST --------------
+; -------------- Fig6 a-b LST --------------
 res@lbTitleString = "~F5~D~F25~T~B~MOD_2pm~N~ (~S~o~N~C)"
 res@cnFillPalette = cmap1 ;"precip3_16lev";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
-res@cnLevels      = fspan(0,15, 16) ;deltaT_CTL_lvl
+res@cnLevels      = fspan(0,16, 9) ;deltaT_CTL_lvl
 
 res@lbLabelBarOn = False ; "Always"
 tmp = LST_Aqua_regrid(14,:,:)
@@ -675,7 +676,7 @@ tmp = where(PFT_mask(0,:,:) .eq. 1, tmp, tmp@_FillValue)
 plots(1) = gsn_csm_contour_map(wks,tmp,res)
 delete(tmp)
 
-; -------------- deltaT --------------
+; -------------- Fig6 c-d deltaT --------------
 ; notes :
 ; VegT: case x 2 time steps x days x lat x lon
 res@lbTitleString = "~F5~D~F25~T~B~GW_2pm~N~ (~S~o~N~C)"
@@ -687,9 +688,9 @@ plots(3) = gsn_csm_contour_map(wks,VegT(0,1,24,:,:),res)
 delete(res@cnLevels)
 delete(res@cnFillPalette)
 
-; -------------- deltaT GW - FD --------------
+; -------------- Fig6 e-f deltaT GW - FD --------------
 res@lbTitleString = "~F5~D~F25~T~B~GW_2pm~N~ - ~F5~D~F25~T~B~FD_2pm~N~ (~S~o~N~C)"
-res@cnLevels      = (/-5,-4,-3.,-2.,-1,-0.5,-0.2,-0.1,0,0.1,0.2,0.5,1.,2.,3.,4.,5./)
+res@cnLevels      = (/-5,-4,-3.,-2.,-1,-0.1,0,0.1,1.,2.,3.,4.,5./)
                    ;fspan(-4,4, 17)
 res@cnFillPalette = cmap3;"BlAqGrWh2YeOrReVi22";"BlAqGrWh2YeOrReVi22";"testcmap";"ViBlGrWhYeOrRe";"WhiteBlueGreenYellowRed"
 tmp               = VegT(0,1,:,:,:)
@@ -701,20 +702,78 @@ plots(4) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
 res@lbLabelBarOn = True ; "Always"
 plots(5) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
 delete(tmp)
+delete(res@cnLevels)
 
-; -------------- deltaT DR - GW --------------
+; -------------- Fig S6 a-b deltaT GW - LST --------------
+res@lbTitleString = "~F5~D~F25~T~B~GW_2pm~N~ - ~F5~D~F25~T~B~MOD_2pm~N~ (~S~o~N~C)"
+res@cnLevels      = (/-8,-7,-6,-5,-4,-3.,-2.,-1,0,1.,2.,3.,4.,5.,6.,7.,8./)
+res@cnFillPalette = cmap3
+tmp               = VegT(0,1,:,:,:)
+tmp               = tmp - LST_Aqua_regrid(:,:,:)
+tmp1              = tmp(14,:,:)
+tmp1              = where(PFT_mask(0,:,:) .eq. 1, tmp1, tmp1@_FillValue)
+tmp2              = tmp(24,:,:)
+tmp2              = where(PFT_mask(0,:,:) .eq. 1, tmp2, tmp2@_FillValue)
+res@lbLabelBarOn = False ; "Always"
+plots2(0) = gsn_csm_contour_map(wks,tmp1,res)
+res@lbLabelBarOn = True ; "Always"
+plots2(1) = gsn_csm_contour_map(wks,tmp2,res)
+delete(tmp)
+delete(tmp1)
+delete(tmp2)
+
+; -------------- Fig S6 c-d deltaT FD - LST --------------
+res@lbTitleString = "~F5~D~F25~T~B~FD_2pm~N~ - ~F5~D~F25~T~B~MOD_2pm~N~ (~S~o~N~C)"
+res@cnFillPalette = cmap3
+tmp               = VegT(1,1,:,:,:)
+tmp               = tmp - LST_Aqua_regrid(:,:,:)
+tmp1              = tmp(14,:,:)
+tmp1              = where(PFT_mask(0,:,:) .eq. 1, tmp1, tmp1@_FillValue)
+tmp2              = tmp(24,:,:)
+tmp2              = where(PFT_mask(0,:,:) .eq. 1, tmp2, tmp2@_FillValue)
+res@lbLabelBarOn = False ; "Always"
+plots2(2) = gsn_csm_contour_map(wks,tmp1,res)
+res@lbLabelBarOn = True ; "Always"
+plots2(3) = gsn_csm_contour_map(wks,tmp2,res)
+delete(tmp)
+delete(tmp1)
+delete(tmp2)
+delete(res@cnLevels)
+
+; -------------- Fig S6 g-h deltaT DR - GW --------------
 res@lbTitleString = "~F5~D~F25~T~B~DR_2pm~N~ - ~F5~D~F25~T~B~GW_2pm~N~ (~S~o~N~C)"
-res@cnFillPalette = cmap3;"BlAqGrWh2YeOrReVi22"
+res@cnLevels      = (/-5,-4,-3.,-2.,-1,-0.1,0,0.1,1.,2.,3.,4.,5./)
+res@cnFillPalette = cmap3
 tmp               = VegT(2,1,:,:,:)
 tmp               = tmp - VegT(0,1,:,:,:)
-res@lbLabelBarOn = False ; "Always"
-plots2(0) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
-res@lbLabelBarOn = True ; "Always"
-plots2(1) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
-delete(res@cnLevels)
-delete(tmp)
 
-; -------------- diurnal cycle --------------
+res@lbLabelBarOn = False ; "Always"
+plots2(4) = gsn_csm_contour_map(wks,tmp(14,:,:),res)
+
+res@lbLabelBarOn = True ; "Always"
+plots2(5) = gsn_csm_contour_map(wks,tmp(24,:,:),res)
+delete(tmp)
+delete(res@cnLevels)
+
+; -------------- Fig S6 e-f deltaT DR - LST --------------
+res@lbTitleString = "~F5~D~F25~T~B~DR_2pm~N~ - ~F5~D~F25~T~B~MOD_2pm~N~ (~S~o~N~C)"
+res@cnLevels      = (/-8,-7,-6,-5,-4,-3.,-2.,-1,0,1.,2.,3.,4.,5.,6.,7.,8./)
+res@cnFillPalette = cmap3
+tmp               = VegT(2,1,:,:,:)
+tmp               = tmp - LST_Aqua_regrid(:,:,:)
+tmp1              = tmp(14,:,:)
+tmp1              = where(PFT_mask(0,:,:) .eq. 1, tmp1, tmp1@_FillValue)
+tmp2              = tmp(24,:,:)
+tmp2              = where(PFT_mask(0,:,:) .eq. 1, tmp2, tmp2@_FillValue)
+res@lbLabelBarOn = False ; "Always"
+plots2(6) = gsn_csm_contour_map(wks,tmp1,res)
+res@lbLabelBarOn = True ; "Always"
+plots2(7) = gsn_csm_contour_map(wks,tmp2,res)
+delete(tmp)
+delete(tmp1)
+delete(tmp2)
+
+; -------------- Fig 6 g-h diurnal cycle --------------
 ; notes:
 ; deltaT : case x day (0,1,2) x region x time steps
 ; LST_tree : events x regions x 2 time steps
@@ -724,8 +783,9 @@ res1@trYMinF             = -2.2
 res1@trYMaxF             = 11.
 y                        = (/4.33, 5.67/) ; 10 am & 2 pm
 res1@tiYAxisString       = "~F5~D~F22~T (~S~o~N~C)"
-
-res1@tiXAxisString       = "hr"
+res1@xyMarkers           = 16
+res1@xyMarkerSizeF       = 0.1
+res1@tiXAxisString       = "hour"
 ; region 1
 print("region1 15th")
 print(deltaT(:,0,1,:))
@@ -737,7 +797,7 @@ delete(res1@tiYAxisString)
 
 res1@pmLegendDisplayMode = "Never"
 
-res1@tiXAxisString       = "hr"
+res1@tiXAxisString       = "hour"
 print("region2 15th")
 print(deltaT(:,2,2,:))
 print(LST_tree(2,2,:))
@@ -773,21 +833,20 @@ do counter = 0, 5
   poly(counter) = gsn_add_polyline(wks,plots(counter),xbars(shadow_num,:),ybars(shadow_num,:),gres)
 end do
 
-
 do cnt = 0, 7;9;11
   txid1   = gsn_create_text(wks, order_name(cnt), txres)
   annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
 end do
-gsn_panel(wks,(/plots/),(/5,2/),pres) ;(/3,4/),pres)
+gsn_panel(wks,(/plots/),(/4,2/),pres) ;(/3,4/),pres)
 
 ; _____________ DR-GW _______________
-poly2 = new(2,graphic)
-do cnt = 0, 1
+poly2 = new(8,graphic)
+do cnt = 0, 7
   txid1   = gsn_create_text(wks, order_name(cnt), txres)
   annoid1 = gsn_add_annotation(plots2(cnt), txid1, amres)
 end do
 
-do counter = 0, 1
+do counter = 0, 7
   if mod(counter,2) .eq. 0 then
     shadow_num = 0
   else
@@ -796,7 +855,7 @@ do counter = 0, 1
   poly2(counter) = gsn_add_polyline(wks,plots2(counter),xbars(shadow_num,:),ybars(shadow_num,:),gres)
 end do
 
-gsn_panel(wks,(/plots2/),(/5,2/),pres)
+gsn_panel(wks,(/plots2/),(/4,2/),pres)
 delete(plots2)
 delete(poly2)
 

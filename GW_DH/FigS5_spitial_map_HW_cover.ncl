@@ -183,7 +183,7 @@ end if
 end if
 
 ; _____________ Colorbar ____________
-cmap      = read_colormap_file("GMT_hot")
+cmap      = read_colormap_file("MPL_YlOrRd")
 
 ;**************** ͼ�������� *****************
 pres                    = True
@@ -217,9 +217,9 @@ amres@amJust            = "TopLeft"
 
 
 plots  = new(2,graphic)
-res@cnFillPalette = cmap(::-1,:)
+res@cnFillPalette = cmap
 
-levels = fspan(20,50,31)
+levels = fspan(20,50,16)
 res@cnLevels = levels
 plots(0) = gsn_csm_contour_map(wks,Tmax_15,res)
 plots(1) = gsn_csm_contour_map(wks,Tmax_25,res)

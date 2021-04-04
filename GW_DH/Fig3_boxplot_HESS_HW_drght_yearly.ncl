@@ -103,12 +103,13 @@ do var_num = 0, var_sum -1
     ranges      = (/-0.5, 5/) ;(/-0.5, 5/)
     ranges_diff = (/-0.8, 0./)
     y_title = "~F5~D"+"~F25~T (~S~o~N~C)"
-    y_title_R = "~F5~D"+"~F25~T (GW-FD) (~S~o~N~C)"
+    y_title_R = "~F5~D"+"~F25~T~B~_GW~N~ -"+\
+                "~F5~D"+"~F25~T~B~_FD~N~ (~S~o~N~C)"
   else if var_name(var_num) .eq. "Fwsoil" then
     ranges      = (/0., 1.05/)
     ranges_diff = (/0., 0.4/)
-    y_title = "~F5~b"
-    y_title_R = "~F5D~b"
+    y_title = "~F5~b"+"~F25~ (-)"
+    y_title_R = "~F5~Db"+"~F25~ (-)"
   else if var_name(var_num) .eq. "SM64cm" then
     ranges      = (/0.1, 0.312/)
     ranges_diff = (/0., 150./)
@@ -117,8 +118,8 @@ do var_num = 0, var_sum -1
   else if var_name(var_num) .eq. "EF" then
     ranges      = (/0., 0.8/)
     ranges_diff = (/0., 0.2/)
-    y_title = "EF"
-    y_title_R = "~F5~D"+"~F25~EF"
+    y_title = "~F25~EF (-)"
+    y_title_R = "~F5~D"+"~F25~EF (-)"
   end if
   end if
   end if
@@ -187,6 +188,7 @@ do var_num = 0, var_sum -1
   res1@tmXBOn             = False
   res1@tmXTBorderOn       = True;False
   res1@tmXTLabelsOn       = False;False
+  res1@gsnPaperOrientation= "landscape"
 
 
   res1@trYMinF            = ranges_diff(0)
@@ -199,7 +201,9 @@ do var_num = 0, var_sum -1
   res1@xyLineThicknessF   = 2.0         ; make second line thicker
   res1@xyDashPattern      = 0
   res1@xyLineColor        = "gray40"
-  ; res1@tiYAxisString      = y_title_R
+  res1@tiYAxisSide        = "Right"
+  res1@tiYAxisString      = y_title_R
+  res1@tiYAxisFontHeightF = 0.023
   plot1 =  gsn_csm_xy(wks,median_x,median_diff,res1)
   overlay(plot1,plot)
 

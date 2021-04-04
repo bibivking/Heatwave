@@ -28,7 +28,7 @@ case_sum    = dimsizes(case_name)
 path        = new(case_sum,"string")
 pic_message = "CTL_vs_FD"
 order_name  = (/"(a)","(b)","(c)","(d)","(e)","(f)","(g)","(h)"/) ;
-categorize  = False
+categorize  = True
 colorbar    = "MPL_BrBG";"CBR_drywet";"BlueDarkOrange18";"MPL_BrBG"; "NEO_div_vegetation_b";"NEO_div_vegetation_c";"MPL_BrBG" "CBR_wet"
 cmap_tmp    = read_colormap_file(colorbar)
 cmap        = new((/19, 4/),float)
@@ -287,7 +287,7 @@ res@lbBoxLinesOn            = True                       ;ï¿½Ø±ï¿½lbar box ï¿½ï¿
 res@lbTitleFont             = 25
 res@lbLabelFont             = 25
 res@lbTitleFontHeightF      = 0.015
-res@lbLabelFontHeightF      = 0.01
+res@lbLabelFontHeightF      = 0.015
 res@lbLabelAngleF           = 70
 ; res@lbOrientation           = "Vertical"
 res@lbTitlePosition         = "Bottom"
@@ -370,7 +370,7 @@ pres@lbBoxLinesOn       = True
 pres@lbTitleFont        = 25
 pres@lbLabelFont        = 25
 pres@lbTitleFontHeightF = 0.01
-pres@lbLabelFontHeightF = 0.008
+pres@lbLabelFontHeightF = 0.01
 
 txres                   = True
 txres@txPerimOn         = False
@@ -451,16 +451,16 @@ annoid2           = gsn_add_annotation(plots(0), txid2, amres1)
 
 ; ------------------------------------------
 if categorize then
-  tmp_WTD_class(0,:,:) = where(tmp .lt. 10,tmp,tmp@_FillValue)
-  tmp_WTD_class(1,:,:) = where(tmp .ge. 10 .and. tmp .lt. 50,tmp,tmp@_FillValue)
+  tmp_WTD_class(0,:,:) = where(tmp .lt. 25,tmp,tmp@_FillValue)
+  tmp_WTD_class(1,:,:) = where(tmp .ge. 25 .and. tmp .lt. 50,tmp,tmp@_FillValue)
   tmp_WTD_class(2,:,:) = where(tmp .ge. 50 .and. tmp .lt. 100,tmp,tmp@_FillValue)
   tmp_WTD_class(3,:,:) = where(tmp .ge. 100 .and. tmp .lt. 200,tmp,tmp@_FillValue)
   tmp_WTD_class(4,:,:) = where(tmp .ge. 200 .and. tmp .lt. 500,tmp,tmp@_FillValue)
   tmp_WTD_class(5,:,:) = where(tmp .ge. 500,tmp,tmp@_FillValue)
 
-  res@gsnLeftString = "E < 10"
+  res@gsnLeftString = "E < 25"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(0,:,:), res)
-  res@gsnLeftString = "10 < E < 50"
+  res@gsnLeftString = "25 < E < 50"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(1,:,:), res)
   res@gsnLeftString = "50 < E < 100"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(2,:,:), res)
@@ -500,16 +500,16 @@ annoid2           = gsn_add_annotation(plots(1), txid2, amres1)
 
 ; ------------------------------------------
   if categorize then
-  tmp_WTD_class(0,:,:) = where(tmp .lt. 10,tmp,tmp@_FillValue)
-  tmp_WTD_class(1,:,:) = where(tmp .ge. 10 .and. tmp .lt. 50,tmp,tmp@_FillValue)
+  tmp_WTD_class(0,:,:) = where(tmp .lt. 25,tmp,tmp@_FillValue)
+  tmp_WTD_class(1,:,:) = where(tmp .ge. 25 .and. tmp .lt. 50,tmp,tmp@_FillValue)
   tmp_WTD_class(2,:,:) = where(tmp .ge. 50 .and. tmp .lt. 100,tmp,tmp@_FillValue)
   tmp_WTD_class(3,:,:) = where(tmp .ge. 100 .and. tmp .lt. 200,tmp,tmp@_FillValue)
   tmp_WTD_class(4,:,:) = where(tmp .ge. 200 .and. tmp .lt. 500,tmp,tmp@_FillValue)
   tmp_WTD_class(5,:,:) = where(tmp .ge. 500,tmp,tmp@_FillValue)
 
-  res@gsnLeftString = "Et < 10"
+  res@gsnLeftString = "Et < 25"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(0,:,:), res)
-  res@gsnLeftString = "10 < Et < 50"
+  res@gsnLeftString = "25 < Et < 50"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(1,:,:), res)
   res@gsnLeftString = "50 < Et < 100"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(2,:,:), res)
@@ -543,22 +543,24 @@ context           = "~C~ WTD  "+"~F5~D"+"~F25~Es"               \
                   + "~C~5-10m "+sprintf("%4.0f",tmp_WTD_5)  \
                   + "~C~ >10m "+sprintf("%4.0f",tmp_WTD_10)
 
+amres1@amParallelPosF   = 0.43    ; This is the right edge of the plot.
+amres1@amOrthogonalPosF = 0.45    ; This is the bottom edge of the plot.
 plots(2)          = gsn_csm_contour_map(wks,tmp,res)
 txid2             = gsn_create_text(wks, context, txres1)
 annoid2           = gsn_add_annotation(plots(2), txid2, amres1)
 
 ; ------------------------------------------
 if categorize then
-  tmp_WTD_class(0,:,:) = where(tmp .lt. 10,tmp,tmp@_FillValue)
-  tmp_WTD_class(1,:,:) = where(tmp .ge. 10 .and. tmp .lt. 50,tmp,tmp@_FillValue)
+  tmp_WTD_class(0,:,:) = where(tmp .lt. 5 .and. tmp .lt. 25, tmp,tmp@_FillValue)
+  tmp_WTD_class(1,:,:) = where(tmp .ge. 25 .and. tmp .lt. 50,tmp,tmp@_FillValue)
   tmp_WTD_class(2,:,:) = where(tmp .ge. 50 .and. tmp .lt. 100,tmp,tmp@_FillValue)
   tmp_WTD_class(3,:,:) = where(tmp .ge. 100 .and. tmp .lt. 200,tmp,tmp@_FillValue)
   tmp_WTD_class(4,:,:) = where(tmp .ge. 200 .and. tmp .lt. 500,tmp,tmp@_FillValue)
   tmp_WTD_class(5,:,:) = where(tmp .ge. 500,tmp,tmp@_FillValue)
 
-  res@gsnLeftString = "Es < 10"
+  res@gsnLeftString = "5 < Es < 25"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(0,:,:), res)
-  res@gsnLeftString = "10 < Es < 50"
+  res@gsnLeftString = "25 < Es < 50"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(1,:,:), res)
   res@gsnLeftString = "50 < Es < 100"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(2,:,:), res)
@@ -605,22 +607,22 @@ annoid2           = gsn_add_annotation(plots(3), txid2, amres1)
 
 ; ------------------------------------------
 if categorize then
-  tmp_WTD_class(0,:,:) = where(tmp .ge. 100,tmp,tmp@_FillValue)
-  tmp_WTD_class(1,:,:) = where(tmp .ge. 40 .and. tmp .lt. 100, tmp,tmp@_FillValue)
-  tmp_WTD_class(2,:,:) = where(tmp .ge. 0 .and. tmp .lt. 40,   tmp,tmp@_FillValue)
-  tmp_WTD_class(3,:,:) = where(tmp .ge. -400 .and. tmp .lt. -200,  tmp,tmp@_FillValue)
-  tmp_WTD_class(4,:,:) = where(tmp .ge. -500 .and. tmp .lt. -400,tmp,tmp@_FillValue)
+  tmp_WTD_class(0,:,:) = where(tmp .ge. 50,tmp,tmp@_FillValue)
+  tmp_WTD_class(1,:,:) = where(tmp .ge. 5 .and. tmp .lt. 50, tmp,tmp@_FillValue)
+  tmp_WTD_class(2,:,:) = where(tmp .ge. -50 .and. tmp .lt. -5,   tmp,tmp@_FillValue)
+  tmp_WTD_class(3,:,:) = where(tmp .ge. -200 .and. tmp .lt. -50,  tmp,tmp@_FillValue)
+  tmp_WTD_class(4,:,:) = where(tmp .ge. -500 .and. tmp .lt. -200,tmp,tmp@_FillValue)
   tmp_WTD_class(5,:,:) = where(tmp .lt. -500,tmp,tmp@_FillValue)
 
-  res@gsnLeftString = "100 < Dr"
+  res@gsnLeftString = "50 < Dr"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(0,:,:), res)
-  res@gsnLeftString = "40 < Dr < 100"
+  res@gsnLeftString = "5 < Dr < 50"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(1,:,:), res)
-  res@gsnLeftString = "0 < Dr < 40"
+  res@gsnLeftString = "-50 < Dr < -5"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(2,:,:), res)
-  res@gsnLeftString = "-400 < Dr < -200"
+  res@gsnLeftString = "-200 < Dr < -50"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(3,:,:), res)
-  res@gsnLeftString = "-500 < Dr < -400"
+  res@gsnLeftString = "-500 < Dr < -200"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(4,:,:), res)
   res@gsnLeftString = "Dr < -500"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(5,:,:), res)
@@ -669,24 +671,24 @@ annoid2           = gsn_add_annotation(plots(4), txid2, amres1)
 
 ; ------------------------------------------
 if categorize then
-  tmp_WTD_class(0,:,:) = where(tmp .lt. 10,tmp,tmp@_FillValue)
-  tmp_WTD_class(1,:,:) = where(tmp .ge. 10 .and. tmp .lt. 50,tmp,tmp@_FillValue)
-  tmp_WTD_class(2,:,:) = where(tmp .ge. 50 .and. tmp .lt. 100,tmp,tmp@_FillValue)
-  tmp_WTD_class(3,:,:) = where(tmp .ge. 100 .and. tmp .lt. 200,tmp,tmp@_FillValue)
-  tmp_WTD_class(4,:,:) = where(tmp .ge. 200 .and. tmp .lt. 500,tmp,tmp@_FillValue)
-  tmp_WTD_class(5,:,:) = where(tmp .ge. 500,tmp,tmp@_FillValue)
+  tmp_WTD_class(0,:,:) = where(tmp .lt. 0,tmp,tmp@_FillValue)
+  tmp_WTD_class(1,:,:) = where(tmp .ge. 0 .and. tmp .lt. 25,tmp,tmp@_FillValue)
+  tmp_WTD_class(2,:,:) = where(tmp .ge. 25 .and. tmp .lt. 50,tmp,tmp@_FillValue)
+  tmp_WTD_class(3,:,:) = where(tmp .ge. 50 .and. tmp .lt. 100,tmp,tmp@_FillValue)
+  tmp_WTD_class(4,:,:) = where(tmp .ge. 100 .and. tmp .lt. 200,tmp,tmp@_FillValue)
+  tmp_WTD_class(5,:,:) = where(tmp .ge. 200,tmp,tmp@_FillValue)
 
-  res@gsnLeftString = "Qrec < 10"
+  res@gsnLeftString = "Qrec < 0"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(0,:,:), res)
-  res@gsnLeftString = "10 < Qrec < 50"
+  res@gsnLeftString = "0 < Qrec < 25"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(1,:,:), res)
-  res@gsnLeftString = "50 < Qrec < 100"
+  res@gsnLeftString = "25 < Qrec < 50"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(2,:,:), res)
-  res@gsnLeftString = "100 < Qrec < 200"
+  res@gsnLeftString = "50 < Qrec < 100"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(3,:,:), res)
-  res@gsnLeftString = "200 < Qrec < 500"
+  res@gsnLeftString = "100 < Qrec < 200"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(4,:,:), res)
-  res@gsnLeftString = "500 < Qrec"
+  res@gsnLeftString = "200 < Qrec"
   plot              = gsn_csm_contour_map(wks,tmp_WTD_class(5,:,:), res)
   res@gsnLeftString =""
 end if
