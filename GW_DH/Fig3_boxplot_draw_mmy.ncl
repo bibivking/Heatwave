@@ -109,8 +109,8 @@ begin
       plot = create "plot" logLinPlotClass wks
         "vpHeightF"            : 0.40 ;for 2 droughts ;0.50
         "vpWidthF"             : 0.70
-        "vpXF"                 : 0.1
-        "vpYF"                 : 0.70
+        ; "vpXF"                 : 0.1
+        ; "vpYF"                 : 0.70
         "trYMinF"              : min_value ;-2 ! MMY
         "trYMaxF"              : max_value ;+2 ! MMY
         "trXMinF"              : min(xAxis)
@@ -137,7 +137,6 @@ begin
         "tmYLMinorOutwardLengthF" : 0.011
         "tmYRMajorOutwardLengthF" : 0.024
         "tmYRMinorOutwardLengthF" : 0.011
-        "gsnPaperOrientation"     : "landscape"
       end create
       if (plotres) then
         attsetvalues(plot,plotres)

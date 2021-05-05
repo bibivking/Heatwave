@@ -288,7 +288,7 @@ res@lbTitleFont             = 25
 res@lbLabelFont             = 25
 res@lbTitleFontHeightF      = 0.015
 res@lbLabelFontHeightF      = 0.015
-res@lbLabelAngleF           = 70
+res@lbLabelAngleF           = 90
 ; res@lbOrientation           = "Vertical"
 res@lbTitlePosition         = "Bottom"
 res@pmLabelBarHeightF       = 0.1
@@ -543,7 +543,7 @@ context           = "~C~ WTD  "+"~F5~D"+"~F25~Es"               \
                   + "~C~5-10m "+sprintf("%4.0f",tmp_WTD_5)  \
                   + "~C~ >10m "+sprintf("%4.0f",tmp_WTD_10)
 
-amres1@amParallelPosF   = 0.43    ; This is the right edge of the plot.
+amres1@amParallelPosF   = 0.485    ; This is the right edge of the plot.
 amres1@amOrthogonalPosF = 0.45    ; This is the bottom edge of the plot.
 plots(2)          = gsn_csm_contour_map(wks,tmp,res)
 txid2             = gsn_create_text(wks, context, txres1)
@@ -708,7 +708,7 @@ delete(res@lbLabelStrings)
 ; Fwsoil
 print("plot Fwsoil_diff_max")
 ; res@lbTitleString = "~F5~Db"
-res@tiMainString = "~F5~Db"
+res@tiMainString = "~F5~Db ~F25~(-)"
 res@cnFillPalette = cmap(9:,:)
 res@cnLevels      = fspan(0.005,0.045,9)
 plots(5) = gsn_csm_contour_map(wks,Fwsoil_diff_max(0,:,:),res)

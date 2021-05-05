@@ -85,7 +85,7 @@ res@pmLegendHeightF        = 0.11       ; Decrease height
 res@lgBoxMinorExtentF      = 0.3       ; Shorten the legend lines
 
 LineColors                 = (/ "black","darkgreen","cornflowerblue","orange"/)
-LineThicknesses	           = (/2.5,2.5,1.5,2.5/)      ; line thicknesses
+LineThicknesses	           = (/3.5,3.5,2.,3.5/)      ; line thicknesses
 DashPatterns	             = (/0.,0.,0.,0./)      ; make all lines solid
 Opacities                  = (/0.9,0.9,0.9,0.9/)
 Labels                     = (/"GRACE","GW", "GW Aquifer", "FD"/)

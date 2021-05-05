@@ -28,12 +28,11 @@ year_e       = 2019
 operation    = "plot" ;"calc" ; "plot"
 scale        = "SE-AU" ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
-case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/);, \
-              ;   "CTL-30x3+30yr-DeepRoot/outputs-daily","FREE_DRAIN/outputs-spinup30x3yr-DeepRoot"/)
+case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/)
 message      = "CTL_vs_FD"
 pic_name     = "HW_boxplot_yearly_tree_"+heatwave+"_"+scale+"_"+message
 
-var_name     = (/"deltaT", "EF", "Fwsoil"/) ; , "SM64cm" "Qh", "Qle",
+var_name     = (/"deltaT", "EF", "Fwsoil"/)
 var_sum      = dimsizes(var_name)
 order_name   = (/"(a)","(b)","(c)","(d)","(e)","(f)"/)
 
@@ -60,16 +59,136 @@ ts_e    = (/425, 790, 1155, 1521, 1886, 2251, 2616, 2982, 3347, 3712, \
           4077, 4443, 4808, 5173, 5538, 5904, 6269, 6634, 6999/)
 
 total_box  = case_sum*2*dimsizes(ts_s)+dimsizes(ts_s)-1 ; case_sum x PFT all/tree x 4 time periods + space
-; bins       = 100
-; nVar       = case_sum*8
 
+
+; =============================== Pre-setting ==================================
 wks = gsn_open_wks("pdf","./plots/Fig3_"+pic_name)
 
+total_box1  = case_sum*dimsizes(ts_s)+dimsizes(ts_s)-1
+x           = ispan(1,total_box1,1)
+
+; ____________ setting for boxes ____________
+res                = True
+
+res@tmXBLabels = (/  \
+                      "2001","","", "","","",     \
+                      "2003","","", "","","",     \
+                      "2005","","", "","","",     \
+                      "2007","","", "","","",     \
+                      "2009","","", "","","",     \
+                      "2011","","", "","","",     \
+                      "2013","","", "","","",    \
+                      "2015","","", "","","",    \
+                      "2017","","", "","","",    \
+                      "2019","" /)
+
+llres                   = True
+llres@gsLineThicknessF  = 3.                ; line thickness
+
+; resources that control color and width of boxes
+opti           = True
+opti@boxWidth  = 0.9
+opti@boxColors = (/ \
+                   "blue","red", "white","blue","red", "white",\
+                   "blue","red", "white","blue","red", "white",\
+                   "blue","red", "white","blue","red", "white",\
+                   "blue","red", "white","blue","red", "white",\
+                   "blue","red", "white","blue","red", "white",\
+                   "blue","red", "white","blue","red", "white",\
+                   "blue","red", "white","blue","red", "white",\
+                   "blue","red", "white","blue","red", "white",\
+                   "blue","red", "white","blue","red", "white",\
+                   "blue","red" \
+                   /)
+
+
+; ____________ setting for diff lines ____________
+res1 = res
+res1@vpXF = 0.15
+res1@vpYF = 0.70
+res1@vpHeightF = 0.40 ;for 2 droughts ;0.50
+res1@vpWidthF  = 0.70
+
+; res1@tmXBBorderOn    = False
+; res1@tmXBOn          = False
+; res1@tmXUseBottom    = False
+; res1@tmXTLabelsOn    = True
+;
+res1@tmYROn          = True
+res1@tmYLOn          = False
+; res1@tmYLBorderOn    = True
+; res1@tmYRBorderOn    = False
+
+res1@tmYUseLeft        = False
+res1@tmYRLabelsOn      = True
+; res1@tmYRMode          = "Explicit"
+; res1@tmYRValues        = yrvalues
+; res1@tmYRLabels        = y2labels
+res1@tmXBOn             = False
+res1@tmXTBorderOn       = True;False
+res1@tmXTLabelsOn       = False;False
+; res1@gsnPaperOrientation= "landscape"
+
+res1@trXMinF            = 0
+res1@trXMaxF            = 57
+res1@tmXBLabelFontHeightF = 0.015
+res1@tmYRLabelFontHeightF = 0.018
+res1@xyLineThicknessF   = 3.0         ; make second line thicker
+res1@xyDashPattern      = 0
+res1@xyLineColor        = "gray40"
+res1@tiYAxisSide        = "Right"
+res1@tiYAxisFontHeightF = 0.023
+
+
+; ____________ order text ____________
+txres                   = True
+txres@txPerimOn         = False
+txres@txFont            = 25
+txres@txFontHeightF     = 0.023
+
+amres                   = True
+amres@amParallelPosF    = 0.42   ; This is the right edge of the plot.
+amres@amOrthogonalPosF  = -0.45;-0.88    ; This is the bottom edge of the plot.
+amres@amJust            = "TopLeft"
+
+; ____________ gsn_panel ____________
+pres                            = True
+pres@vpXF                       = 0.1
+pres@vpYF                       = 0.70
+pres@wkWidth                    = 2500
+pres@wkHeight                   = 2500
+pres@gsnMaximize                = False
+pres@gsnPanelYWhiteSpacePercent = 3
+; pres@gsnPanelXWhiteSpacePercent = 1
+
+plots   = new(3,graphic)
+plots1  = new(3,graphic)
+
+; ____________ loop var ____________
 do var_num = 0, var_sum -1
 
-  ; =============================== READ IN ======================================
-  total_box1     = case_sum*dimsizes(ts_s)+dimsizes(ts_s)-1
-  txt_name       = "./txt/"+var_name(var_num)+"_CTL_FD_yearly_box_stats.txt" ;"./txt/"+
+  if var_name(var_num) .eq. "deltaT" then
+    ranges      = (/-0.5, 5/) ;(/-0.5, 5/)
+    ranges_diff = (/-0.8, 0./)
+    y_title = "~F5~D"+"~F25~T (~S~o~N~C)"
+    y_title_R = "~F5~D"+"~F25~T~B~_GW~N~ - "+\
+                "~F5~D"+"~F25~T~B~_FD~N~ (~S~o~N~C)"
+  end if
+  if var_name(var_num) .eq. "EF" then
+    ranges      = (/0., 0.8/)
+    ranges_diff = (/0., 0.2/)
+    y_title = "~F25~EF (-)"
+    y_title_R = "~F5~D"+"~F25~EF (-)"
+  end if
+  if var_name(var_num) .eq. "Fwsoil" then
+    ranges      = (/0., 1.05/)
+    ranges_diff = (/0., 0.4/)
+    y_title = "~F5~b"+"~F25~ (-)"
+    y_title_R = "~F5~Db"+"~F25~ (-)"
+  end if
+
+  ; ____________ READ IN ____________
+  txt_name       = "./txt/"+var_name(var_num)+"_CTL_FD_yearly_box_stats.txt"
   data_stats_tmp = asciiread(txt_name,(/total_box,5/),"float")
   data_stats     = new((/total_box1,5/),float, -9999.)
   do year = 0,  dimsizes(ts_s) - 1
@@ -83,129 +202,16 @@ do var_num = 0, var_sum -1
   end do
   delete(data_stats_tmp)
 
+  ; ____________ Calc diff ____________
   median_diff = new(dimsizes(ts_s),float, -9999.)
   median_diff = data_stats(0::3,2) - data_stats(1::3,2) ; CTL - FD
   print(median_diff)
   median_x    = fspan(1.5,55.5,19)
-  ; ================================ Plotting ====================================
+  print(var_name)
+  print(median_diff)
 
-  if var_name(var_num) .eq. "Qle" then
-    ranges      = (/0., 150./)
-    ; ranges_diff = (/0., 150./)
-    y_title = "LH (W m~S~-2~N~)"
-    y_title_R = "~F5~D"+"~F25~LH (W m~S~-2~N~)"
-  else if var_name(var_num) .eq. "Qh" then
-    ranges      = (/-20., 250./) ; (/-20., 250./) ;
-    ; ranges_diff = (/0., 150./)
-    y_title = "SH (W m~S~-2~N~)"
-    y_title_R = "~F5~D"+"~F25~SH (W m~S~-2~N~)"
-  else if var_name(var_num) .eq. "deltaT" then
-    ranges      = (/-0.5, 5/) ;(/-0.5, 5/)
-    ranges_diff = (/-0.8, 0./)
-    y_title = "~F5~D"+"~F25~T (~S~o~N~C)"
-    y_title_R = "~F5~D"+"~F25~T~B~_GW~N~ -"+\
-                "~F5~D"+"~F25~T~B~_FD~N~ (~S~o~N~C)"
-  else if var_name(var_num) .eq. "Fwsoil" then
-    ranges      = (/0., 1.05/)
-    ranges_diff = (/0., 0.4/)
-    y_title = "~F5~b"+"~F25~ (-)"
-    y_title_R = "~F5~Db"+"~F25~ (-)"
-  else if var_name(var_num) .eq. "SM64cm" then
-    ranges      = (/0.1, 0.312/)
-    ranges_diff = (/0., 150./)
-    y_title = "SM64cm (m~S~3~N~ m~S~-3~N~)"
-    y_title_R = "SM64cm (m~S~3~N~ m~S~-3~N~)"
-  else if var_name(var_num) .eq. "EF" then
-    ranges      = (/0., 0.8/)
-    ranges_diff = (/0., 0.2/)
-    y_title = "~F25~EF (-)"
-    y_title_R = "~F5~D"+"~F25~EF (-)"
-  end if
-  end if
-  end if
-  end if
-  end if
-  end if
-
-  x   = ispan(1,total_box1,1)
-
-  res            = True
-  res@tmXBLabels = (/  \
-                        "2001","","", "","","",     \
-                        "2003","","", "","","",     \
-                        "2005","","", "","","",     \
-                        "2007","","", "","","",     \
-                        "2009","","", "","","",     \
-                        "2011","","", "","","",     \
-                        "2013","","", "","","",    \
-                        "2015","","", "","","",    \
-                        "2017","","", "","","",    \
-                        "2019","" /)
-
-  llres                   = True
-  llres@gsLineThicknessF  = 3.                ; line thickness
-
-
-  ; resources that control color and width of boxes
-  opti           = True
-  opti@boxWidth  = 0.9
-  opti@boxColors = (/ \
-                     "blue","red", "white","blue","red", "white",\
-                     "blue","red", "white","blue","red", "white",\
-                     "blue","red", "white","blue","red", "white",\
-                     "blue","red", "white","blue","red", "white",\
-                     "blue","red", "white","blue","red", "white",\
-                     "blue","red", "white","blue","red", "white",\
-                     "blue","red", "white","blue","red", "white",\
-                     "blue","red", "white","blue","red", "white",\
-                     "blue","red", "white","blue","red", "white",\
-                     "blue","red" \
-                     /)
-
-  plot = boxplot_mmy(wks,x,data_stats,opti,res,llres, ranges(0), ranges(1), y_title)
-
-  res@tfDoNDCOverlay        = True
-
-  res1 = res
-  res1@vpHeightF = 0.40 ;for 2 droughts ;0.50
-  res1@vpWidthF  = 0.70
-
-  ; res1@tmXBBorderOn    = False
-  ; res1@tmXBOn          = False
-  ; res1@tmXUseBottom    = False
-  ; res1@tmXTLabelsOn    = True
-  ;
-  res1@tmYLOn          = False
-  ; res1@tmYLBorderOn    = True
-  ; res1@tmYRBorderOn    = False
-  res1@tmYROn          = True
-
-  res1@tmYUseLeft        = False
-  res1@tmYRLabelsOn      = True
-  ; res1@tmYRMode          = "Explicit"
-  ; res1@tmYRValues        = yrvalues
-  ; res1@tmYRLabels        = y2labels
-  res1@tmXBOn             = False
-  res1@tmXTBorderOn       = True;False
-  res1@tmXTLabelsOn       = False;False
-  res1@gsnPaperOrientation= "landscape"
-
-
-  res1@trYMinF            = ranges_diff(0)
-  res1@trYMaxF            = ranges_diff(1)
-
-  res1@trXMinF            = 0
-  res1@trXMaxF            = 57
-  res1@tmXBLabelFontHeightF = 0.015
-  res1@tmYRLabelFontHeightF = 0.018
-  res1@xyLineThicknessF   = 2.0         ; make second line thicker
-  res1@xyDashPattern      = 0
-  res1@xyLineColor        = "gray40"
-  res1@tiYAxisSide        = "Right"
-  res1@tiYAxisString      = y_title_R
-  res1@tiYAxisFontHeightF = 0.023
-  plot1 =  gsn_csm_xy(wks,median_x,median_diff,res1)
-  overlay(plot1,plot)
+  ; ____________ Plotting box ____________
+  plots1(var_num) = boxplot_mmy(wks,x,data_stats,opti,res,llres, ranges(0), ranges(1), y_title)
 
   if var_num .eq. 0 then
     textres = True
@@ -220,23 +226,34 @@ do var_num = 0, var_sum -1
     gres@XPosPercent          = 25.  ;expressed as %, 0->100, sets position of left border of legend (Default = 5.)
     lineres@lgDashIndexes     = (/0,0,0/);,0/)
     textres@lgLabels          = (/" ", "GW", "FD", "GW - FD"/);, "FD+DR"/)
-    plot = simple_legend(wks,plot,gres,lineres,textres)
+    plots1(var_num) = simple_legend(wks,plots1(var_num),gres,lineres,textres)
   end if
 
-  txres                   = True
-  txres@txPerimOn         = False
-  txres@txFont            = 25
-  txres@txFontHeightF     = 0.023
-
-  amres                   = True
-  amres@amParallelPosF    = -0.48   ; This is the right edge of the plot.
-  amres@amOrthogonalPosF  = -0.45;-0.88    ; This is the bottom edge of the plot.
-  amres@amJust            = "TopLeft"
-
   txid1   = gsn_create_text(wks, order_name(var_num), txres)
-  annoid1 = gsn_add_annotation(plot, txid1, amres)
+  annoid1 = gsn_add_annotation(plots1(var_num), txid1, amres)
 
-  draw(wks)                                    ; boxplot does not call these
-  frame(wks)                                   ; for you
+  res@tfDoNDCOverlay = True
+
+  ; ____________ Plotting line ____________
+  res1@tfDoNDCOverlay     = True
+  res1@trYMinF            = ranges_diff(0)
+  res1@trYMaxF            = ranges_diff(1)
+  res1@tiYAxisString      = y_title_R
+
+  plots(var_num) =  gsn_csm_xy(wks,median_x,median_diff,res1)
+
+  overlay(plots(var_num),plots1(var_num))
+  draw(plots(var_num))
+  frame(wks)
+
+  ; plots(var_num) = plot
+  ; delete(plot)
 end do ;var_num
+
+
+do var_num = 0, var_sum -1
+end do
+
+gsn_panel(wks,(/plots/),(/3,1/),pres)
+
 end

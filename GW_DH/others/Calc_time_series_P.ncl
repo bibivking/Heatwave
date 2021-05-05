@@ -153,7 +153,12 @@ Rain@_FillValue = default_value
 plot = gsn_csm_contour(wks1, dim_sum_n_Wrap(Rain(:,:,:),0), res1)
 Rain_avg = dim_avg_n_Wrap(Rain,(/1,2/))
 Rain_avg@_FillValue = default_value
-print(Rain_avg)
+
+do  yr = 1970, 2019
+  print(yr+" "+Rain_avg(yr-1970))
+end do
+
+
 
 ; _____________ calc annual amormaly ___________
 if time_scale .eq. "annual" then

@@ -316,7 +316,7 @@ res@tmXBValues              = ispan(1,total,366)
 res@tmXBLabels              = (/"2001~C~2017","","2003~C~2019","","2005","","2007","","2009"/)
 x                           = ispan(1,total,1)
 
-res@xyLineThicknesses      = (/ 2., 2., 2.,  2., 2., 2./)
+res@xyLineThicknesses      = (/ 3.5, 3.5, 3.5,  3.5, 3.5, 3.5/)
 res@xyDashPatterns         = (/  0,  0,  0,   0,  0,  0/)
 res@xyLineOpacities        = (/ 1., 1., 1.,  1., 1., 1./) ;0.5, 0.5, 0.5/)
 res@xyLineColors           = (/"darkgreen","orange", "black",  "green3","gold","gray50"  /)

@@ -353,12 +353,12 @@ amres@amParallelPosF   = -0.487    ; This is the right edge of the plot.
 amres@amOrthogonalPosF = -0.46    ; This is the bottom edge of the plot.
 amres@amJust           = "TopLeft"
 
-do cnt = 0,2
-  txid1   = gsn_create_text(wks, order_name(cnt), txres)
-  annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
-end do
+; do cnt = 0,2
+;   txid1   = gsn_create_text(wks, order_name(cnt), txres)
+;   annoid1 = gsn_add_annotation(plots(cnt), txid1, amres)
+; end do
 
-gsn_panel(wks,(/plots/),(/3,1/),pres)
+gsn_panel(wks,(/plots(0)/),(/1,1/),pres)
 
 exit
 end
