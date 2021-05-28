@@ -1,105 +1,128 @@
+#!/usr/bin/python
+
 from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-import matplotlib.ticker as mticker
+from matplotlib import cm
 
-# def plot_Tair_Wind(ftair, fuas, fvas):
+def leap_year(year):
+   if (year % 4) == 0:
+       return 366
+   else:
+       return 365
 
-# date = ''
-path = '/g/data/ub4/erai/netcdf/3hr/atmos/oper_fc_sfc/v01'
-ftair = path + '/tas/tas_3hrs_ERAI_historical_fc-sfc_20130101_20130131.nc'
-fuas  = path + '/uas/uas_3hrs_ERAI_historical_fc-sfc_20130101_20130131.nc'
-fvas  = path + '/vas/vas_3hrs_ERAI_historical_fc-sfc_20130101_20130131.nc'
+def read_LIS_CABLE(flis,var_name,var_dim):
+    data = Dataset(flis, mode='r')
+    var_tmp = data.variables[var_name][:]
+    if var_dim == 3:
+        var = np.nanmean(var_tmp, axis=(1,2))
+    elif var_dim == 4:
+        var = np.nanmean(var_tmp, axis=(2,3))
+    data.close()
+    return var
 
-# Open the NetCDF4 file (add a directory path if necessary) for reading:
-tas = Dataset(ftair, mode='r')
-uas = Dataset(fuas, mode='r')
-vas = Dataset(fvas, mode='r')
-# Run the following cell to see the MERRA2 metadata. This line will print attribute and variable information. From the 'variables(dimensions)' list, choose which variable(s) to read in below:
-# print(tas)
-# Read in variables:
-# longitude and latitude
-lons = tas.variables['lon']
-lats = tas.variables['lat']
-lon, lat = np.meshgrid(lons, lats)
+def plot_time_series(var,var_name,lvl):
 
-# 2-meter air temperatur K
-T2M = tas.variables['tas']
+    fig = plt.figure(figsize=(7.2,4.5))
+    fig.subplots_adjust(hspace=0.3)
+    fig.subplots_adjust(wspace=0.2)
 
-# 10-meter eastward wind m/s
-U10M = uas.variables['uas']
+    plt.rcParams['text.usetex']     = False
+    plt.rcParams['font.family']     = "sans-serif"
+    plt.rcParams['font.serif']      = "Helvetica"
+    plt.rcParams['axes.linewidth']  = 1.5
+    plt.rcParams['axes.labelsize']  = 14
+    plt.rcParams['font.size']       = 14
+    plt.rcParams['legend.fontsize'] = 12
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 14
 
-# 10-meter northward wind m/s
-V10M = vas.variables['vas']
+    almost_black = '#262626'
+    # change the tick colors also to the almost black
+    plt.rcParams['ytick.color'] = almost_black
+    plt.rcParams['xtick.color'] = almost_black
 
-# # Replace _FillValues with NaNs:
-# U10M_nans = U10M[:]
-# V10M_nans = V10M[:]
-# _FillValueU10M = U10M._FillValue
-# _FillValueV10M = V10M._FillValue
-# U10M_nans[U10M_nans == _FillValueU10M] = np.nan
-# V10M_nans[V10M_nans == _FillValueV10M] = np.nan
+    # change the text colors also to the almost black
+    plt.rcParams['text.color']  = almost_black
 
-# # Calculate wind speed:
-# ws = np.sqrt(U10M_nans**2+V10M_nans**2)
-# # Calculate wind direction in radians:
-# ws_direction = np.arctan2(V10M_nans,U10M_nans)
+    # Change the default axis colors from black to a slightly lighter black,
+    # and a little thinner (0.5 instead of 1)
+    plt.rcParams['axes.edgecolor']  = almost_black
+    plt.rcParams['axes.labelcolor'] = almost_black
 
-# for i in np.arange(31):
-    # NOTE: the MERRA-2 file contains hourly data for 24 hours (t=24). To get the daily mean wind speed, take the average of the hourly wind speeds:
-    # T2M_daily_avg = np.nanmean(T2M[i*8:(i+1)*8,:,:], axis=0) -273.15 # i*8:(i+1)*8
-    # print(T2M_daily_avg)
-    # # NOTE: To calculate the average wind direction correctly it is important to use the 'vector average' as atan2(<v>,<u>) where <v> and <u> are the daily average component vectors, rather than as mean of the individual wind vector direction angle.  This avoids a situation where averaging 1 and 359 = 180 rather than the desired 0.
-    # U10M_daily_avg = np.nanmean(U10M[i*8:(i+1)*8,:,:], axis=0)
-    # V10M_daily_avg = np.nanmean(V10M[i*8:(i+1)*8,:,:], axis=0)
+    # set the box type of sequence number
+    props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
+    # choose colormap
+    colors = cm.Set2(np.arange(0,4))
+    x = np.arange(1,len(var)+1)
+    print(x)
+    ax = fig.add_subplot(111)
+    ax.plot(x, var, c=colors[0], lw=1.5, ls="-", label=var_name, alpha=1.)
+    print(var)
+    ax.set(xticks=x, xticklabels=x)
+    ax.axis('tight')
+    ax.set_ylim(0.,0.4)
+    #ax.set_xlim(day_start,day_end)
+    # ax.axvline(x=1 , ls="--")
+    ax.set_ylabel(var_name)
+    #ax.text(0.02, 0.95, '(b)', transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+    ax.legend(loc='upper center', frameon=False)
+    fig.savefig("./plots/time_series_check_spinup_"+var_name+"_"+lvl , bbox_inches='tight', pad_inches=0.1)
 
-    # ws_daily_avg_direction = np.arctan2(V10M_daily_avg, U10M_daily_avg)
+if __name__ == "__main__":
 
-    #Plot Global MERRA-2 Wind Speed
-    # Set the figure size, projection, and extent
-    # fig = plt.figure(figsize=(8,4))
-    # ax = plt.axes(projection=ccrs.Robinson())
-    # ax.set_global()
-    # ax.coastlines(resolution="110m",linewidth=1)
-    # ax.gridlines(linestyle='--',color='black')
-    # # Plot windspeed: set contour levels, then draw the filled contours and a colorbar
-    # clevs = np.arange(0,19,1)
-    # plt.contourf(lon, lat, ws_daily_avg, clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.jet)
-    #
-    # plt.title('MERRA-2 Daily Average 2-meter Wind Speed, 1 June 2010', size=14)
-    # cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
-    # cb.set_label('m/s',size=12,rotation=0,labelpad=15)
-    # cb.ax.tick_params(labelsize=10)
-    # plt.savefig('Tair.png',dpi=1200)
-    # plt.show()
+    path     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hires_r7264/LIS_output/'
+    var_name = "SoilMoist_inst"
+    year_s   = 1982
+    year_e   = 2012
+    var_dim  = 4
+    layer    = 6
+    # lat_sum  = 179
+    # lon_sum  = 199
+    day_sum  = 0
+    for year in np.arange(year_s+1,year_e+1):
+        day_sum = day_sum + leap_year(year)
 
-for i in np.arange(31*8):
-    # The filled contours show the wind speed. The "quiver" function is used to overlay arrows to show the wind direction. The length of the arrows is determined by the wind speed.
-    # Set the figure size, projection, and extent
-    fig = plt.figure(figsize=(9,5))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-    ax.set_extent([110,155,-45,-10])
-    ax.coastlines(resolution="50m",linewidth=1)
-    # Add gridlines
-    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,linewidth=1, color='black', linestyle='--')
-    gl.xlabels_top = False
-    gl.ylabels_right = False
-    gl.xlines = True
-    gl.xlocator = mticker.FixedLocator([110,115,120,125,130,135,140,145,150,155])
-    gl.ylocator = mticker.FixedLocator([-45,-40,-35,-30,-25,-20,-15,-10])
-    gl.xformatter = LONGITUDE_FORMATTER
-    gl.yformatter = LATITUDE_FORMATTER
-    gl.xlabel_style = {'size':10, 'color':'black'}
-    gl.ylabel_style = {'size':10, 'color':'black'}
-    # Plot windspeed
-    clevs = np.arange(0,44,2)
-    plt.contourf(lon, lat, T2M[i,:,:]-273.15, clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.jet) # T2M_daily_avg
-    plt.title('ERA5 2m Air Temperture ' + str(i), size=16)
-    cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
-    cb.set_label('K',size=14,rotation=0,labelpad=15)
-    cb.ax.tick_params(labelsize=10)
-    # Overlay wind vectors
-    qv = plt.quiver(lon, lat, U10M[i,:,:], V10M[i,:,:], scale=420, color='k')
-    plt.savefig('Tair_Wind_201301-'+str(i)+'.png',dpi=1200)
+    if var_dim == 3:
+        var = np.zeros([day_sum])
+    elif var_dim == 4:
+        var = np.zeros([day_sum, layer])
+
+    day_s = 0
+
+    for year in np.arange(year_s,year_e+1):
+        print(year)
+        if leap_year(year) == 365:
+            dom = [31,28,31,30,31,30,31,31,30,31,30,31]
+        else:
+            dom = [31,29,31,30,31,30,31,31,30,31,30,31]
+
+        if year == 1982:
+            month = 12
+            day_e = day_s + dom[month-1]
+            flis  = path + 'LIS.CABLE.198212-198212.nc'
+            var[day_s:day_e] = read_LIS_CABLE(flis,var_name,var_dim)
+            day_s = day_e
+        elif year == 2012:
+            for month in np.arange(1,12):
+                print(month)
+                day_e = day_s + dom[month-1]
+                flis = path + 'LIS.CABLE.2012'+'{:0>2}'.format(month)+'-2012'+'{:0>2}'.format(month)+'.nc'
+                var[day_s:day_e] = read_LIS_CABLE(flis,var_name,var_dim)
+                day_s = day_e
+        else:
+            for month in np.arange(1,13):
+                print(month)
+                day_e = day_s + dom[month-1]
+                flis = path + 'LIS.CABLE.'+str(year)+'{:0>2}'.format(month)+'-'+str(year)+'{:0>2}'.format(month)+'.nc'
+                var[day_s:day_e] = read_LIS_CABLE(flis,var_name,var_dim)
+                day_s = day_e
+
+    print(var)
+
+    plot_time_series(var[:,0],var_name,"0")
+    plot_time_series(var[:,1],var_name,"1")
+    plot_time_series(var[:,2],var_name,"2")
+    plot_time_series(var[:,3],var_name,"3")
+    plot_time_series(var[:,4],var_name,"4")
+    plot_time_series(var[:,5],var_name,"5")
