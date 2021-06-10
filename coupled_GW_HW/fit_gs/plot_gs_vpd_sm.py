@@ -17,11 +17,37 @@ import matplotlib.pyplot as plt
 import matplotlib.colors
 import datetime as dt
 import netCDF4 as nc
+import cftime
 from matplotlib import cm
 from matplotlib import ticker
 from scipy.interpolate import griddata
 import scipy.stats as stats
 from sklearn.metrics import mean_squared_error
+
+def to_datetime(d):
+
+    if isinstance(d, dt.datetime):
+        return d
+    if isinstance(d, cftime.DatetimeNoLeap):
+        return dt.datetime(d.year, d.month, d.day, d.hour, d.minute, d.second)
+    elif isinstance(d, cftime.DatetimeGregorian):
+        return dt.datetime(d.year, d.month, d.day, d.hour, d.minute, d.second, d.microsecond)
+    elif isinstance(d, str):
+        errors = []
+        for fmt in (
+                "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%dT%H:%M:%S",
+                "%Y-%m-%dT%H:%M:%SZ"):
+            try:
+                return dt.datetime.strptime(d, fmt)
+            except ValueError as e:
+                errors.append(e)
+                continue
+        raise Exception(errors)
+    elif isinstance(d, np.datetime64):
+        return d.astype(dt.datetime)
+    else:
+        raise Exception("Unknown value: {} type: {}".format(d, type(d)))
 
 def plot_gs_vpd_SM(fcable, ring):
 
@@ -182,13 +208,18 @@ def read_cable_var(fcable, var_name):
 
     print("carry on read_cable_var")
     cable = nc.Dataset(fcable, 'r')
-    Time  = nc.num2date(cable.variables['time'][:],cable.variables['time'].units)
     if var_name in ["TVeg", "ESoil", "Rainf", "GPP"]:
         var = pd.DataFrame(cable.variables[var_name][:,0,0]*1800., columns=['obs_a'])
     else:
         var = pd.DataFrame(cable.variables[var_name][:,0,0], columns=['obs_a'])
+
+    Time  = nc.num2date(cable.variables['time'][:],cable.variables['time'].units)
     var['Date'] = Time
+    for i in np.arange(len(Time)):
+        var['Date'][i] = to_datetime(Time[i])
+    print(var['Date'])
     var = var.set_index('Date')
+
     if var_name in ["TVeg", "ESoil", "Rainf", "GPP"]:
         var = var.resample("D").agg('sum')
     else:
@@ -201,7 +232,7 @@ def read_cable_var(fcable, var_name):
 
 def read_obs_swc_tdr(ring):
 
-    fobs   = "/srv/ccrc/data25/z5218916/data/Eucface_data/SM_2013-2019/eucSM1319_gap_filled.csv"
+    fobs   = "./data/eucSM1319_gap_filled.csv"
     tdr = pd.read_csv(fobs, usecols = ['Ring','Date','swc.tdr'])
     tdr['Date'] = pd.to_datetime(tdr['Date'],format="%d/%m/%Y",infer_datetime_format=False) # "%Y-%m-%d"
     tdr['Date'] = tdr['Date'] - pd.datetime(2011,12,31)
@@ -221,7 +252,7 @@ def read_obs_swc_tdr(ring):
 
 def read_obs_trans(ring):
 
-    fobs_Trans = "/srv/ccrc/data25/z5218916/data/Eucface_data/FACE_PACKAGE_HYDROMET_GIMENO_20120430-20141115/data/Gimeno_wb_EucFACE_sapflow.csv"
+    fobs_Trans = "./data/Gimeno_wb_EucFACE_sapflow.csv"
 
     est_trans = pd.read_csv(fobs_Trans, usecols = ['Ring','Date','volRing'])
     est_trans['Date'] = pd.to_datetime(est_trans['Date'],format="%d/%m/%Y",infer_datetime_format=False)
@@ -676,6 +707,6 @@ class PenmanMonteith(object):
 if __name__ == "__main__":
 
     ring    = "amb"#"amb"
-    fcable  = "/srv/ccrc/data25/z5218916/cable/EucFACE/EucFACE_run/outputs/met_LAI-08_vrt_swilt-watr-ssat_hyds10_31uni_teuc_sres_watr/EucFACE_amb_out.nc"
+    fcable  = "./data/EucFACE_amb_out.nc"
 
     plot_gs_vpd_SM(fcable, ring)

@@ -21,70 +21,60 @@ def read_LIS_CABLE(flis,var_name,var_dim):
     data.close()
     return var
 
-def plot_time_series(var,var_name):
-    # ,val_min=None,val_max=None,lvl=None
+def plot_time_series(var,var_name,val_min=None,val_max=None,lvl=None):
 
-    # fig = plt.figure(figsize=(7.2,4.5))
-    # fig.subplots_adjust(hspace=0.3)
-    # fig.subplots_adjust(wspace=0.2)
-    print("get in plot_time_series")
-    fig, ax = plt.subplots()
-    print("get in plot_time_series")
+    fig = plt.figure(figsize=(7.2,4.5))
+    fig.subplots_adjust(hspace=0.3)
+    fig.subplots_adjust(wspace=0.2)
+
+    plt.rcParams['text.usetex']     = False
+    plt.rcParams['font.family']     = "sans-serif"
+    plt.rcParams['font.serif']      = "Helvetica"
+    plt.rcParams['axes.linewidth']  = 1.5
+    plt.rcParams['axes.labelsize']  = 14
+    plt.rcParams['font.size']       = 14
+    plt.rcParams['legend.fontsize'] = 12
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 14
+
+    almost_black = '#262626'
+    # change the tick colors also to the almost black
+    plt.rcParams['ytick.color'] = almost_black
+    plt.rcParams['xtick.color'] = almost_black
+
+    # change the text colors also to the almost black
+    plt.rcParams['text.color']  = almost_black
+
+    # Change the default axis colors from black to a slightly lighter black,
+    # and a little thinner (0.5 instead of 1)
+    plt.rcParams['axes.edgecolor']  = almost_black
+    plt.rcParams['axes.labelcolor'] = almost_black
+
+    # set the box type of sequence number
+    props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
+    # choose colormap
+
+    colors = cm.Set2(np.arange(0,4))
     x = np.arange(1,len(var)+1)
-    ax.plot(x, var, label="dog")
-    ax.legend()
 
-    plt.show()
-    # ax.plot(x, var, c=colors[0], lw=1.5, ls="-", label=var_name, alpha=1.,rasterized=True)
+    print(x)
+    ax = fig.add_subplot(111)
+    ax.plot(x, var, c=colors[0], lw=1.5, ls="-", label=var_name, alpha=1.,rasterized=True)
 
-    # plt.rcParams['text.usetex']     = False
-    # plt.rcParams['font.family']     = "sans-serif"
-    # plt.rcParams['font.serif']      = "Helvetica"
-    # plt.rcParams['axes.linewidth']  = 1.5
-    # plt.rcParams['axes.labelsize']  = 14
-    # plt.rcParams['font.size']       = 14
-    # plt.rcParams['legend.fontsize'] = 12
-    # plt.rcParams['xtick.labelsize'] = 12
-    # plt.rcParams['ytick.labelsize'] = 14
-    #
-    # almost_black = '#262626'
-    # # change the tick colors also to the almost black
-    # plt.rcParams['ytick.color'] = almost_black
-    # plt.rcParams['xtick.color'] = almost_black
-    #
-    # # change the text colors also to the almost black
-    # plt.rcParams['text.color']  = almost_black
-    #
-    # # Change the default axis colors from black to a slightly lighter black,
-    # # and a little thinner (0.5 instead of 1)
-    # plt.rcParams['axes.edgecolor']  = almost_black
-    # plt.rcParams['axes.labelcolor'] = almost_black
-    #
-    # # set the box type of sequence number
-    # props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
-    # # choose colormap
-    #
-    # colors = cm.Set2(np.arange(0,4))
-    # x = np.arange(1,len(var)+1)
-    #
-    # print("get in plot_time_series2")
-    # print(x)
-    # ax = fig.add_subplot(111)
-    # ax.plot(x, var, c=colors[0], lw=1.5, ls="-", label=var_name, alpha=1.,rasterized=True)
-    # print(var)
-    # ax.set(xticks=x, xticklabels=x)
-    # ax.axis('tight')
-    # # if val_min != None and val_max != None:
-    #     # ax.set_ylim(val_min,val_max)
-    # #ax.set_xlim(day_start,day_end)
-    # # ax.axvline(x=1 , ls="--")
-    # ax.set_ylabel(var_name)
-    # #ax.text(0.02, 0.95, '(b)', transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-    # ax.legend(loc='upper center', frameon=False)
-    # # if lvl == None:
-    # fig.savefig("./plots/time_series_check_spinup_"+var_name , bbox_inches='tight', pad_inches=0.1)
-    # # else:
-    #     # fig.savefig("./plots/time_series_check_spinup_"+var_name+"_"+lvl , bbox_inches='tight', pad_inches=0.1)
+    ax.set(xticks=x, xticklabels=x)
+    ax.axis('tight')
+
+    if val_min != None and val_max != None:
+        ax.set_ylim(val_min,val_max)
+    # ax.set_xlim(day_start,day_end)
+    # ax.axvline(x=1 , ls="--")
+    ax.set_ylabel(var_name)
+    #ax.text(0.02, 0.95, '(b)', transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+    ax.legend(loc='upper center', frameon=False)
+    if lvl == None:
+        fig.savefig("./plots/time_series_check_spinup_"+var_name , bbox_inches='tight', pad_inches=0.1)
+    else:
+        fig.savefig("./plots/time_series_check_spinup_"+var_name+"_"+lvl , bbox_inches='tight', pad_inches=0.1)
 
 def plot_file_type_monthly(var_name,var_dim,year_s,year_e,layer=None):
 
@@ -144,16 +134,19 @@ def plot_file_type_all_in_one(var_name,var_dim,io_opt,layer=None):
 
 if __name__ == "__main__":
 
-    path      = '/srv/ccrc/data25/z5218916/cable/WRF-LIS-CABLE_run_from_gadi/hires_r7264/'
+    path      = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hires_r7264/LIS_output/'
     file_type = 'all_in_one'
     layer     = 6
     var_dim   = 3
-    var_names = ["Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Snowf_tavg",
+    var_names = ["ESoil_tavg","CanopInt_inst","SnowCover_inst","GPP_tavg","Wind_f_inst",
+                "Rainf_f_inst","Tair_f_inst", "Qair_f_inst","Psurf_f_inst","SWdown_f_inst","LWdown_f_inst"]
+    '''
+    "Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Snowf_tavg",
                 "Rainf_tavg","Evap_tavg","Qs_tavg","Qsb_tavg","VegT_tavg","AvgSurfT_tavg",
                 "Albedo_inst","SWE_inst","SnowDepth_inst","SoilWet_inst","ECanop_tavg","TVeg_tavg",
-                "FWsoil_tavg","ESoil_tavg","CanopInt_inst","SnowCover_inst","GPP_tavg","Wind_f_inst",
-                "Rainf_f_inst","Tair_f_inst", "Qair_f_inst","Psurf_f_inst","SWdown_f_inst","LWdown_f_inst"]
-
+                "FWsoil_tavg",
+    '''
+                
     '''
     ["Landmask_inst","Landcover_inst","Soiltype_inst","SandFrac_inst","ClayFrac_inst","SiltFrac_inst",
     "SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst","Hyds_inst","Bch_inst","Sucs_inst",
