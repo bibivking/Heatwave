@@ -10,6 +10,68 @@ from cartopy.feature import NaturalEarthFeature
 from wrf import (getvar, interplevel, get_cartopy, cartopy_xlim,
                  cartopy_ylim, to_np, latlon_coords)
 
+def plot_spatial_wrf_Tair_Wind(file_path,height,timeidx):
+
+    ######################################################
+    # Note that since I have updated Python, get_basemap cannot work 
+    # for the new version. Thus the function cannot really work.
+    ######################################################
+    
+    from wrf import get_basemap
+
+    # Open the NetCDF file
+    ncfile = Dataset(file_path)
+
+    # Extract the pressure, geopotential height, and wind variables
+    p = getvar(ncfile, "pressure",timeidx=timeidx)
+    z = getvar(ncfile, "z", units="dm",timeidx=timeidx)
+    ua = getvar(ncfile, "ua", units="kt",timeidx=timeidx)
+    va = getvar(ncfile, "va", units="kt",timeidx=timeidx)
+    wspd = getvar(ncfile, "wspd_wdir", units="kts",timeidx=timeidx)[0,:]
+
+    # Interpolate geopotential height, u, and v winds to 500 hPa
+    ht_hgt = interplevel(z, p, height)
+    u_hgt = interplevel(ua, p, height)
+    v_hgt = interplevel(va, p, height)
+    wspd_hgt = interplevel(wspd, p, height)
+
+    # Get the lat/lon coordinates
+    lats, lons = latlon_coords(ht_hgt)
+
+    # Get the basemap object
+    bm = get_basemap(ht_hgt)
+
+    # Create the figure
+    fig = plt.figure(figsize=(12,9))
+    ax = plt.axes()
+
+    # Convert the lat/lon coordinates to x/y coordinates in the projection space
+    x, y = bm(to_np(lons), to_np(lats))
+
+    # Add the 500 hPa geopotential height contours
+    levels = np.arange(520., 580., 6.)
+    contours = bm.contour(x, y, to_np(ht_hgt), levels=levels, colors="black")
+    plt.clabel(contours, inline=1, fontsize=10, fmt="%i")
+
+    # Add the wind speed contours
+    levels = [25, 30, 35, 40, 50, 60, 70, 80, 90, 100, 110, 120]
+    wspd_contours = bm.contourf(x, y, to_np(wspd_hgt), levels=levels,
+                                cmap=get_cmap("rainbow"))
+    plt.colorbar(wspd_contours, ax=ax, orientation="horizontal", pad=.05)
+
+    # Add the geographic boundaries
+    bm.drawcoastlines(linewidth=0.25)
+    bm.drawstates(linewidth=0.25)
+    bm.drawcountries(linewidth=0.25)
+
+    # Add the 500 hPa wind barbs, only plotting every 125th data point.
+    bm.barbs(x[::125,::125], y[::125,::125], to_np(u_hgt[::125, ::125]),
+            to_np(v_hgt[::125, ::125]), length=6)
+
+    plt.title("500 MB Height (dm), Wind Speed (kt), Barbs (kt)")
+
+    plt.show()
+
 def plot_spatial_wrf(case_name,file_path,var_name,var_unit,height,timeidx,val_min,val_max):
 
     # Open the NetCDF file

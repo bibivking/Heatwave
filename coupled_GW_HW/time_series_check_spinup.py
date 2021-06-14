@@ -217,5 +217,5 @@ if __name__ == "__main__":
     '''
     for var_name in var_names:
         print(var_name)
-        io_opt   =  "read" # 'plot'         
+        io_opt   =  'plot' # "read"         
         plot_file_type_diff_all_in_one(file_paths,case_names,var_name,var_dim,io_opt,layer)
