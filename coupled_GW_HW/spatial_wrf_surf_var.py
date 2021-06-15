@@ -253,7 +253,8 @@ def plot_spatial_wrf_surf_var_diff(file_paths, case_names, var_name, val_min, va
 
     return ax
 
-def plot_spatial_wrf_surf_var_diff_period_mean(file_paths, case_names, var_name, val_min, var_max, timeidx_s, timeidx_e, ts = None):
+def plot_spatial_wrf_surf_var_diff_period_mean(file_paths, case_names, var_name, 
+                                        val_min, var_max, timeidx_s, timeidx_e, ts = None):
 
     # Open the NetCDF file
     ncfile1 = Dataset(file_paths[0])
