@@ -12,13 +12,19 @@ def leap_year(year):
        return 365
 
 def read_LIS_CABLE(flis,var_name,var_dim):
+
     data = Dataset(flis, mode='r')
-    var_tmp = data.variables[var_name][:]
+
+    # Replace _FillValues with NaNs:
+    var_nans = data.variables[var_name][:]
+    var_nans[var_nans == data.variables[var_name]._FillValue] = np.nan
+
     if var_dim == 3:
-        var = np.nanmean(var_tmp, axis=(1,2))
+        var = np.nanmean(var_nans, axis=(1,2))
     elif var_dim == 4:
-        var = np.nanmean(var_tmp, axis=(2,3))
+        var = np.nanmean(var_nans, axis=(2,3))
     data.close()
+    print(var[5000])
     return var
 
 def plot_time_series(var,var_name,case_name,val_min=None,val_max=None,lvl=None):
@@ -140,10 +146,10 @@ def plot_file_type_diff_all_in_one(file_paths,case_names,var_name,var_dim,io_opt
         elif var_dim == 4:
             var_1 = np.zeros([day_sum, layer])
             var_2 = np.zeros([day_sum, layer])
-        
-        var_1[:,] = read_LIS_CABLE(file_paths[0],var_name,var_dim) 
+
+        var_1[:,] = read_LIS_CABLE(file_paths[0],var_name,var_dim)
         var_2[:,] = read_LIS_CABLE(file_paths[1],var_name,var_dim)
-        var_diff  = var_2 - var_1 
+        var_diff  = var_2 - var_1
         np.savetxt("./txt/"+var_name+"_"+case_names[0]+"_vs_"+case_names[1]+".txt",var_diff)
     if io_opt == 'plot':
         var = np.loadtxt("./txt/"+var_name+"_"+case_names[0]+"_vs_"+case_names[1]+".txt",dtype='float')
@@ -152,7 +158,7 @@ def plot_file_type_diff_all_in_one(file_paths,case_names,var_name,var_dim,io_opt
         # val_min, val_max = 0. , 0.4
         plot_time_series(var,var_name,case_name)
 
-        
+
 if __name__ == "__main__":
 
     ### Single Case ###
@@ -169,12 +175,12 @@ if __name__ == "__main__":
                 "FWsoil_tavg","ESoil_tavg","CanopInt_inst","SnowCover_inst","GPP_tavg","Wind_f_inst",
                 "Rainf_f_inst","Tair_f_inst", "Qair_f_inst","Psurf_f_inst","SWdown_f_inst","LWdown_f_inst"]
 
-    
+
     # ["Landmask_inst","Landcover_inst","Soiltype_inst","SandFrac_inst","ClayFrac_inst","SiltFrac_inst",
     # "SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst","Hyds_inst","Bch_inst","Sucs_inst",
     # "Elevation_inst","LAI_inst"]
     # ["RelSMC_inst","SoilMoist_inst","SoilTemp_inst","SmLiqFrac_inst","SmFrozFrac_inst"]
-    
+
     # lat_sum  = 179
     # lon_sum  = 199
     for var_name in var_names:
@@ -203,13 +209,15 @@ if __name__ == "__main__":
     file_type = 'all_in_one'
     layer     = 6
     var_dim   = 3
-    var_names = ["Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Snowf_tavg",
-                "Rainf_tavg","Evap_tavg","Qs_tavg","Qsb_tavg","VegT_tavg","AvgSurfT_tavg",
-                "Albedo_inst","SWE_inst","SnowDepth_inst","SoilWet_inst","ECanop_tavg","TVeg_tavg",
-                "FWsoil_tavg","ESoil_tavg","CanopInt_inst","SnowCover_inst","GPP_tavg","Wind_f_inst",
-                "Rainf_f_inst","Tair_f_inst", "Qair_f_inst","Psurf_f_inst","SWdown_f_inst","LWdown_f_inst"]
+    var_names = ["Swnet_tavg"]
 
     '''
+    "Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Snowf_tavg",
+    "Rainf_tavg","Evap_tavg","Qs_tavg","Qsb_tavg","VegT_tavg","AvgSurfT_tavg",
+    "Albedo_inst","SWE_inst","SnowDepth_inst","SoilWet_inst","ECanop_tavg","TVeg_tavg",
+    "FWsoil_tavg","ESoil_tavg","CanopInt_inst","SnowCover_inst","GPP_tavg","Wind_f_inst",
+    "Rainf_f_inst","Tair_f_inst", "Qair_f_inst","Psurf_f_inst","SWdown_f_inst","LWdown_f_inst"
+
     ["Landmask_inst","Landcover_inst","Soiltype_inst","SandFrac_inst","ClayFrac_inst","SiltFrac_inst",
     "SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst","Hyds_inst","Bch_inst","Sucs_inst",
     "Elevation_inst","LAI_inst"]
@@ -217,5 +225,5 @@ if __name__ == "__main__":
     '''
     for var_name in var_names:
         print(var_name)
-        io_opt   =  'plot' # "read"         
+        io_opt   =  'read' #'plot' # "read"
         plot_file_type_diff_all_in_one(file_paths,case_names,var_name,var_dim,io_opt,layer)

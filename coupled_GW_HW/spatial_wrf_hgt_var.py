@@ -72,7 +72,7 @@ def plot_spatial_wrf_Tair_Wind(file_path,height,timeidx):
 
     plt.show()
 
-def plot_spatial_wrf(case_name,file_path,var_name,var_unit,height,timeidx,val_min,val_max):
+def plot_spatial_wrf_var_Wind(case_name,file_path,var_name,var_unit,height,timeidx,val_min,val_max):
 
     # Open the NetCDF file
     ncfile = Dataset(file_path)
@@ -180,4 +180,4 @@ if __name__ == "__main__":
     case_name = "FD"
     val_min, val_max = -50, 50
     for timeidx in np.arange(0,249):
-      plot_spatial_wrf(case_name,file_path,var_name,var_unit,height,timeidx,val_min,val_max)
+      plot_spatial_wrf_var_Wind(case_name,file_path,var_name,var_unit,height,timeidx,val_min,val_max)
