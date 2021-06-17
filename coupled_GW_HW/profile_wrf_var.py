@@ -80,7 +80,7 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_
     # Get the WRF variables
     z           = getvar(ncfile1, "z")
     var_tmp1    = getvar(ncfile1, var_name, units=var_units, timeidx=ALL_TIMES)
-    var_tmp2    = getvar(ncfile2, var_name, units=var_units, timeidx=ALL_TIMES)    
+    var_tmp2    = getvar(ncfile2, var_name, units=var_units, timeidx=ALL_TIMES)
 
     if ts == None:
         var_1 = np.mean(var_tmp1[timeidx_s:timeidx_e],axis=0)
@@ -160,5 +160,6 @@ if __name__ == "__main__":
 
     timeidx_s = 0      # 12 pm at 4th - 8th Jan 2013
     timeidx_e = 14*8
-    ts        = 3      # 12 pm
-    plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_units, timeidx_s, timeidx_e, ts)
+    tss       = [0, 1, 2, 3, 4, 5, 6, 7]      # 12 pm
+    for ts in tss:
+        plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_units, timeidx_s, timeidx_e, ts)

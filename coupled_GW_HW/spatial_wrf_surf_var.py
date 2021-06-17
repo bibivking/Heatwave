@@ -253,7 +253,7 @@ def plot_spatial_wrf_surf_var_diff(file_paths, case_names, var_name, val_min, va
 
     return ax
 
-def plot_spatial_wrf_surf_var_diff_period_mean(file_paths, case_names, var_name, 
+def plot_spatial_wrf_surf_var_diff_period_mean(file_paths, case_names, var_name,
                                         val_min, var_max, timeidx_s, timeidx_e, ts = None):
 
     # Open the NetCDF file
@@ -402,9 +402,10 @@ if __name__ == "__main__":
         file_paths.append(file_path)
 
     timeidx_s = 0      # 12 pm at 4th - 8th Jan 2013
-    timeidx_e = 31*8
-    ts        = 1      # 12 pm
-    plot_spatial_wrf_surf_var_diff_period_mean(file_paths, case_names, var_name, val_min, var_max, timeidx_s, timeidx_e, ts)
+    timeidx_e = 14*8
+    tss       = [0, 1, 2, 3, 4, 5, 6, 7]      # 12 pm
+    for ts in tss:
+        plot_spatial_wrf_surf_var_diff_period_mean(file_paths, case_names, var_name, val_min, var_max, timeidx_s, timeidx_e, ts)
 
     # # Create the figure
     # fig = plt.figure(figsize=(12,6))
