@@ -48,7 +48,7 @@ end if
 filename_hw = "/g/data/w35/mm3972/scripts/ehfheatwaves/HW_Event_Indicator_1970-2019.nc"
 
 f    = addfile (filename_hw,"r")
-time_s    = (year-1970)*365 + 12
+time_s    = (year-1970)*365 + 12        ; 12 leap years
 time_e    = (year-1970+1)*365-1 + 12
 tmp       = f->event(time_s:time_e,:,:)
 HW_15     = tmp(14,:,:)
