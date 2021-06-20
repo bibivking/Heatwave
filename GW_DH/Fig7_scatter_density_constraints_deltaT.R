@@ -21,7 +21,7 @@ iveg[iveg >4] <- NA
 
 
 #Get HW index
-hw_ind <- brick("/g/data/w35/mm3972/scripts/ehfheatwaves/HW_Event_Indicator_1970-2019.nc")
+hw_ind <- brick("/g/data/w35/mm3972/scripts/ehfheatwaves/nc_file/SE_AUS/HW_Event_Indicator_1970-2019.nc")
 start <- which(getZ(hw_ind) == "2019-01-01")
 hw_ind <- hw_ind[[start:(start+30)]]
 hw_ind[hw_ind < 1] <- NA
@@ -57,6 +57,7 @@ deltat <- vector()
 fwsoil <- vector()
 vpd    <- vector()
 tair   <- vector()
+gpp    <- vector()
 
 #Get data for Janury 2019
 
@@ -70,6 +71,7 @@ for (l in 1:length(years)) {
     fwsoil_data <- mask(mask(brick(file, varname="Fwsoil"), iveg)[[1:31]], hw_ind)
     qair_data   <- mask(mask(brick(file, varname="Qair"), iveg)[[1:31]], hw_ind)
     tair_data   <- mask(mask(brick(file, varname="Tair"), iveg)[[1:31]], hw_ind)
+    gpp_data    <- mask(mask(brick(file, varname="GPP"), iveg)[[1:31]], hw_ind)
 
 
     #Get values
@@ -77,6 +79,7 @@ for (l in 1:length(years)) {
     fwsoil  <- append(fwsoil, as.vector(values(fwsoil_data))[which(!is.na(as.vector(values(fwsoil_data))))])
     vpd     <- append(vpd, as.vector(values(qair_data))[which(!is.na(as.vector(values(qair_data))))])
     tair    <- append(tair, as.vector(values(tair_data))[which(!is.na(as.vector(values(tair_data))))])
+    gpp     <- append(gpp, as.vector(values(gpp_data))[which(!is.na(as.vector(values(gpp_data))))])
 
   }
 
@@ -94,6 +97,7 @@ vpd <- qair_to_vpd(vpd, tair)
 
 deltat_nogw <- vector()
 fwsoil_nogw <- vector()
+gpp_nogw    <- vector()
 
 for (l in 1:length(years)) {
 
@@ -103,10 +107,12 @@ for (l in 1:length(years)) {
 
     leafT_data  <- mask(mask(brick(file, varname="VegT"), iveg)[[1:31]], hw_ind)
     fwsoil_data <- mask(mask(brick(file, varname="Fwsoil"), iveg)[[1:31]], hw_ind)
+    gpp_data    <- mask(mask(brick(file, varname="GPP"), iveg)[[1:31]], hw_ind)
 
     #Get values
     deltat_nogw  <- append(deltat_nogw, as.vector(values(leafT_data))[which(!is.na(as.vector(values(leafT_data))))])
     fwsoil_nogw  <- append(fwsoil_nogw, as.vector(values(fwsoil_data))[which(!is.na(as.vector(values(fwsoil_data))))])
+    gpp_nogw     <- append(gpp_nogw, as.vector(values(gpp_data))[which(!is.na(as.vector(values(gpp_data))))])
 
   }
 
@@ -124,12 +130,90 @@ deltaT_difference <- deltat - deltat_nogw
 
 fwsoil_difference <- fwsoil - fwsoil_nogw
 
+gpp_difference    <- gpp - gpp_nogw
+
+gpp_difference    <- gpp_difference*3600*24*0.000001*12 # umol s-1 to gC d-1
+
 #Convert Tair from K to C
 tair <- tair - 273.15
 
+# ======================= DeltaT vs fwsoil_vpd_tair ============================
+# #Initialise plot
+# png("./plots/Fig7_DeltaT_vs_fwsoil_vpd_tair.png",
+#     height=2.70, width=8, units="in", res=400)
+#
+# par(mai=c(0.55, 0.2, 0.2, 0.2))
+# par(omi=c(0, 0.3, 0.1, 0.1))
+#
+# par(mfcol=c(1,3))
+#
+#
+# ### Fwsoil ###
+#
+# #Set density colours
+# dens_cols  <- densCols(fwsoil_difference, deltaT_difference,
+#                        colramp=colorRampPalette(c("#deebf7", "#3182bd")),
+#                        nbin=1000)
+#
+# #Plot
+# plot(fwsoil_difference, deltaT_difference, pch=20, cex=0.3, col=dens_cols,
+#      ylab="", xlab="")
+#
+# #Calculate correlation
+# cor <- cor.test(fwsoil_difference, deltaT_difference)$estimate
+# mtext(side=1, adj=0.05, line=-2, paste0("r = ", round(cor, digits=2)), cex=0.8)
+#
+# #Labels
+# mtext(side=1, "Δβ (-)", line=2.5, cex=0.8)
+# mtext(side=2, "ΔT difference (°C)", line=2.5, cex=0.8)
+# mtext(side=3, "a)", adj=0.05, line=-1.5, cex=0.8)
+#
+#
+# ### VPD ###
+#
+# #Set density colours
+# dens_cols  <- densCols(vpd, deltaT_difference,
+#                        colramp=colorRampPalette(c("#deebf7", "#3182bd")),
+#                        nbin=1000)
+#
+# #Plot
+# plot(vpd, deltaT_difference, pch=20, cex=0.3, col=dens_cols,
+#      ylab="", xlab="")
+#
+# #Calculate correlation
+# cor <- cor.test(vpd, deltaT_difference)$estimate
+# mtext(side=1, adj=0.05, line=-2, paste0("r = ", round(cor, digits=2)), cex=0.8)
+#
+# #Labels
+# mtext(side=1, "D (kPa)", line=2.5, cex=0.8)
+# mtext(side=3, "b)", adj=0.05, line=-1.5, cex=0.8)
+#
+#
+#
+# ### Tair ###
+#
+# #Set density colours
+# dens_cols  <- densCols(tair, deltaT_difference,
+#                        colramp=colorRampPalette(c("#deebf7", "#3182bd")),
+#                        nbin=1000)
+#
+# #Plot
+# plot(tair, deltaT_difference, pch=20, cex=0.3, col=dens_cols,
+#      ylab="", xlab="")
+#
+# #Calculate correlation
+# cor <- cor.test(tair, deltaT_difference)$estimate
+# mtext(side=1, adj=0.05, line=-2, paste0("r = ", sprintf("%.2f", cor)), cex=0.8)
+#
+# #Labels
+# mtext(side=1, "Tair (°C)", line=2.5, cex=0.8)
+# mtext(side=3, "c)", adj=0.05, line=-1.5, cex=0.8)
+#
 
+
+# ========================= GPP vs fwsoil_vpd_tair =============================
 #Initialise plot
-png("./plots/Fig7_DeltaT_vs_fwsoil_vpd_tair.png",
+png("./plots/Fig7_GPP_vs_fwsoil_vpd_tair.png",
     height=2.70, width=8, units="in", res=400)
 
 par(mai=c(0.55, 0.2, 0.2, 0.2))
@@ -141,33 +225,33 @@ par(mfcol=c(1,3))
 ### Fwsoil ###
 
 #Set density colours
-dens_cols  <- densCols(fwsoil_difference, deltaT_difference,
+dens_cols  <- densCols(fwsoil_difference, gpp_difference,
                        colramp=colorRampPalette(c("#deebf7", "#3182bd")),
                        nbin=1000)
 
 #Plot
-plot(fwsoil_difference, deltaT_difference, pch=20, cex=0.3, col=dens_cols,
+plot(fwsoil_difference, gpp_difference, pch=20, cex=0.3, col=dens_cols,
      ylab="", xlab="")
 
 #Calculate correlation
-cor <- cor.test(fwsoil_difference, deltaT_difference)$estimate
+cor <- cor.test(fwsoil_difference, gpp_difference)$estimate
 mtext(side=1, adj=0.05, line=-2, paste0("r = ", round(cor, digits=2)), cex=0.8)
 
 #Labels
 mtext(side=1, "Δβ (-)", line=2.5, cex=0.8)
-mtext(side=2, "ΔT difference (°C)", line=2.5, cex=0.8)
-mtext(side=3, "a)", adj=0.05, line=-1.5, cex=0.8)
+mtext(side=2, "ΔGPP (gC d-1)", line=2.5, cex=0.8)
+mtext(side=3, "(a)", adj=0.05, line=-1.5, cex=0.8)
 
 
 ### VPD ###
 
 #Set density colours
-dens_cols  <- densCols(vpd, deltaT_difference,
+dens_cols  <- densCols(vpd, gpp_difference,
                        colramp=colorRampPalette(c("#deebf7", "#3182bd")),
                        nbin=1000)
 
 #Plot
-plot(vpd, deltaT_difference, pch=20, cex=0.3, col=dens_cols,
+plot(vpd, gpp_difference, pch=20, cex=0.3, col=dens_cols,
      ylab="", xlab="")
 
 #Calculate correlation
@@ -176,28 +260,58 @@ mtext(side=1, adj=0.05, line=-2, paste0("r = ", round(cor, digits=2)), cex=0.8)
 
 #Labels
 mtext(side=1, "D (kPa)", line=2.5, cex=0.8)
-mtext(side=3, "b)", adj=0.05, line=-1.5, cex=0.8)
-
-
+mtext(side=3, "(b)", adj=0.05, line=-1.5, cex=0.8)
 
 ### Tair ###
 
 #Set density colours
-dens_cols  <- densCols(tair, deltaT_difference,
+dens_cols  <- densCols(tair, gpp_difference,
                        colramp=colorRampPalette(c("#deebf7", "#3182bd")),
                        nbin=1000)
 
 #Plot
-plot(tair, deltaT_difference, pch=20, cex=0.3, col=dens_cols,
+plot(tair, gpp_difference, pch=20, cex=0.3, col=dens_cols,
      ylab="", xlab="")
 
 #Calculate correlation
-cor <- cor.test(tair, deltaT_difference)$estimate
+cor <- cor.test(tair, gpp_difference)$estimate
 mtext(side=1, adj=0.05, line=-2, paste0("r = ", sprintf("%.2f", cor)), cex=0.8)
 
 #Labels
 mtext(side=1, "Tair (°C)", line=2.5, cex=0.8)
-mtext(side=3, "c)", adj=0.05, line=-1.5, cex=0.8)
+mtext(side=3, "(c)", adj=0.05, line=-1.5, cex=0.8)
 
+
+
+
+# ============================= DeltaT vs GPP ==================================
+#Initialise plot
+png("./plots/Fig7_DeltaT_vs_GPP.png",
+    height=2.70, width=2.70, units="in", res=400)
+
+par(mai=c(0.55, 0.2, 0.2, 0.2))
+par(omi=c(0, 0.3, 0.1, 0.1))
+
+par(mfcol=c(1,1))
+
+### gpp vs deltaT ###
+
+#Set density colours
+dens_cols  <- densCols(gpp_difference, deltaT_difference,
+                       colramp=colorRampPalette(c("#deebf7", "#3182bd")),
+                       nbin=1000)
+
+#Plot
+plot(gpp_difference, deltaT_difference, pch=20, cex=0.3, col=dens_cols,
+     ylab="", xlab="")
+
+#Calculate correlation
+cor <- cor.test(gpp_difference, deltaT_difference)$estimate
+mtext(side=1, adj=0.05, line=-2, paste0("r = ", sprintf("%.2f", cor)), cex=0.8)
+
+#Labels
+mtext(side=1, "ΔGPP (gC d-1)", line=2.5, cex=0.8)
+mtext(side=2, "ΔT (°C)", line=2.5, cex=0.8)
+mtext(side=3, "(a)", adj=0.05, line=-1.5, cex=0.8)
 
 dev.off()
