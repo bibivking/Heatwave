@@ -42,6 +42,7 @@ do year = year_s,year_e
   end if
 end do
 
+month_tot    = (year_e-year_s+1)*12
 
 ; set PFT
 iveg_tree_s    = 1
@@ -74,6 +75,11 @@ ts_s    = (/ 366, 6210/)
           ; 2009, 2019
 ts_e    = (/3652, 7304/)
 
+            ; 2001, 2017
+mth_s    = (/   12, 204/)
+            ; 2009, 2019
+mth_e    = (/  119, 239/)
+
 ; =================================== Path =====================================
 path = new(case_sum,"string")
 do case_num = 0, case_sum -1
@@ -93,8 +99,10 @@ lat_sum = dimsizes(f->Rainf(0,{A:B},0))
 lon_sum = dimsizes(f->Rainf(0,0,{C:D}))
 
 Rain     = new((/case_sum, time_tot, lat_sum, lon_sum/), float, default_value)
+Rain_mth = new((/case_sum, month_tot, lat_sum, lon_sum/), float, default_value)
 Evap     = new((/case_sum, time_tot, lat_sum, lon_sum/), float, default_value)
 Rain     = 0.
+Rain_mth = 0.
 Evap     = 0.
 
 ; PFT mask
@@ -106,6 +114,7 @@ delete(f)
 ; ================================= Read Data ==================================
 do case_num = 0,case_sum-1
   day_step_s = 0
+  count      = 0
   do year = year_s,year_e
     print("year = " +year)
     if ( mod(year,4) .eq. 0) then
@@ -120,13 +129,20 @@ do case_num = 0,case_sum-1
 
     Rain(case_num,day_step_s:day_step_e,:,:) = f1->Rainf(:,{A:B},{C:D})
     Evap(case_num,day_step_s:day_step_e,:,:) = f1->Evap(:,{A:B},{C:D})
-
+    day_s = 0
+    do month = 0,11
+      day_e = day_s+dom(month)-1
+      Rain_mth(case_num,count,:,:) = dim_sum_n_Wrap(f1->Rainf(day_s:day_e,{A:B},{C:D}),0)
+      count = count + 1
+      day_s = day_e + 1
+    end do
     day_step_s = day_step_e + 1
     delete(f1)
   end do ; year
 end do ; case_num
 Rain = Rain*3600*24
 Evap = Evap*3600*24
+Rain_mth = Rain_mth*3600*24
 
 if PFT .eq. "tree" then
   do case_num = 0, case_sum - 1
@@ -134,12 +150,18 @@ if PFT .eq. "tree" then
       Rain(case_num,day,:,:)   = where(PFT_mask .eq. 1, Rain(case_num,day,:,:), default_value)
       Evap(case_num,day,:,:)   = where(PFT_mask .eq. 1, Evap(case_num,day,:,:), default_value)
     end do
+    do month = 0,month_tot -1
+      Rain_mth(case_num,month,:,:) = where(PFT_mask .eq. 1, Rain_mth(case_num,month,:,:), default_value)
+    end do
   end do
 else if PFT .eq. "nontree" then
   do case_num = 0, case_sum - 1
     do day = 0,time_tot -1
       Rain(case_num,day,:,:)   = where(PFT_mask .eq. 2, Rain(case_num,day,:,:), default_value)
       Evap(case_num,day,:,:)   = where(PFT_mask .eq. 2, Evap(case_num,day,:,:), default_value)
+    end do
+    do month = 0,month_tot -1
+      Rain_mth(case_num,month,:,:) = where(PFT_mask .eq. 2, Rain_mth(case_num,month,:,:), default_value)
     end do
   end do
 end if
@@ -215,6 +237,66 @@ end if
 end if
 Evap_GLEAM@_FillValue = default_value
 
+
+; ================================ READ DOLCE ==================================
+; use 2000-2019
+
+path_DOLCE    = "/g/data/w35/mm3972/data/DOLCE/v3";
+
+DOLCE_ET      = path_DOLCE+"/DOLCE_v3_"+year_s+".nc"
+D_ET          = addfile(DOLCE_ET,"r")
+lat_sum_DOLCE = dimsizes(D_ET->hfls(0,{A:B},0))
+lon_sum_DOLCE = dimsizes(D_ET->hfls(0,0,{C:D}))
+DOLCE_def_val = D_ET->hfls@_FillValue
+
+DOLCE         = new((/month_tot, lat_sum_DOLCE, lon_sum_DOLCE/), float, DOLCE_def_val)
+DOLCE         = DOLCE_def_val
+DOLCE!0       = "month"
+DOLCE!1       = "lat"
+DOLCE!2       = "lon"
+
+;; DOLCE_sd
+DOLCE&lat     = doubletofloat(D_ET->lat({A:B}))
+DOLCE&lon     = doubletofloat(D_ET->lon({C:D}))
+
+count = 0
+
+do year = year_s,year_e-1
+  if ( mod(year,4) .eq. 0) then
+     dom = (/31,29,31,30,31,30,31,31,30,31,30,31/)
+  else
+     dom = (/31,28,31,30,31,30,31,31,30,31,30,31/)
+  end if
+  DOLCE_ET    = path_DOLCE+"/DOLCE_v3_"+year+".nc"
+  D_ET        = addfile(DOLCE_ET,"r")
+  do month = 0,11
+    DOLCE(count,:,:)  = D_ET->hfls(month,{A:B},{C:D})*dom(month)/28.94
+    count = count + 1
+  end do
+  delete(D_ET)
+end do
+
+; Regrid DOLCE
+Evap_DOLCE = linint2_Wrap(DOLCE&lon,DOLCE&lat,DOLCE,False,CABLE_lon,CABLE_lat,0)
+printVarSummary(Evap_DOLCE)
+
+
+; ___________________________ Mask DOLCE ______________________________
+if PFT .eq. "tree" then
+  do month = 0,month_tot -1
+    Evap_DOLCE(month,:,:) = where(PFT_mask .eq. 1 .and. .not. ismissing(Evap_DOLCE(month,:,:)),\
+                                Evap_DOLCE(month,:,:), default_value)
+  end do
+else if PFT .eq. "nontree" then
+  do month = 0,month_tot -1
+    Evap_DOLCE(month,:,:) = where(PFT_mask .eq. 2 .and. .not. ismissing(Evap_DOLCE(month,:,:)),\
+                                Evap_DOLCE(month,:,:), default_value)
+  end do
+end if
+end if
+Evap_DOLCE@_FillValue = default_value
+
+
 ; ============================= plot time series ===============================
 total = 0
 do year = 2001,2009
@@ -236,13 +318,24 @@ print(P_GLEAM_E)
 P_E_acl = new((/(case_sum+1)*2,total/),float, default_value)
 P_E_acl = default_value
 
+; _________________ DOLCE ___________________
+DOLCE_E   = dim_avg_n_Wrap(Evap_DOLCE,(/1,2/))
+P_MTH     = dim_avg_n_Wrap(Rain_mth,(/2,3/))
+P_DOLCE_E = dim_avg_n_Wrap(Rain_mth(0,:,:,:),(/1,2/))
+P_DOLCE_E = P_DOLCE_E - dim_avg_n_Wrap(Evap_DOLCE,(/1,2/))
+
+P_E_DOLCE_acl = new((/(case_sum+1)*2,total/),float, default_value)
+P_E_DOLCE_acl = default_value
+
 count = 0
 do cnt = 0, dimsizes(ts_s) -1
   do case_num = 0, case_sum -1
     P_E_acl(count,ts_s(cnt)-ts_s(cnt):ts_e(cnt)-ts_s(cnt)) = dim_cumsum_n_Wrap(P_E(case_num,ts_s(cnt):ts_e(cnt)), 0, 0)
+    P_E_DOLCE_acl(count,mth_s(cnt)-mth_s(cnt):mth_e(cnt)-mth_s(cnt)) = dim_cumsum_n_Wrap(P_E(case_num,mth_s(cnt):mth_e(cnt)), 0, 0)
     count = count + 1
   end do
   P_E_acl(count,ts_s(cnt)-ts_s(cnt):ts_e(cnt)-ts_s(cnt)) = dim_cumsum_n_Wrap(P_GLEAM_E(ts_s(cnt):ts_e(cnt)), 0, 0)
+  P_E_DOLCE_acl(count,mth_s(cnt)-mth_s(cnt):ts_e(cnt)-mth_s(cnt)) = dim_cumsum_n_Wrap(P_E(case_num,mth_s(cnt):ts_e(cnt)), 0, 0)
   count = count + 1
 end do
 

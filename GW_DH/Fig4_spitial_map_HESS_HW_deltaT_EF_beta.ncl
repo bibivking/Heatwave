@@ -1,7 +1,7 @@
 
 ;MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 ; Author  : Mengyuan Mu
-; Version : 1.0 (22.03.2021)"
+; Version : 2.0 (21.06.2021)"
 ; Email   : mu.mengyuan815@gmail.com
 ;WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 
@@ -21,7 +21,7 @@ end setvalues
 ;_____________________________________
 
 ; ================================= Predefine ==================================
-year_s   = 2000
+year_s   = 2017
 year_e   = 2019
 row_sum  = 2
 col_sum  = 3
@@ -30,8 +30,8 @@ scale    = "SE-AU"   ; "45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 case_name= (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/) ;, \
 
 path_mum = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
-message  = "CTL_FD_DR";_FD+DR-FD"
-pic      = "./plots/Fig4_Spitial_HESS_LH_SH_"+heatwave+"_"+message
+message  = "CTL_FD_class";_FD+DR-FD"
+pic      = "./plots/Fig4_Spitial_LH_SH_"+heatwave+"_"+message
 
 year_sum = year_e-year_s+1
 day_sum  = 0
@@ -76,12 +76,12 @@ order_name  = (/"(a)","(b)","(c)",\
                 "(d)","(e)","(f)",\
                 "(g)","(h)","(i)",\
                 "(j)","(k)","(l)"/)
-
-;            all years,  2001-2009,  2017-2019,   2010-2011
-;             2000-1-1,   2001-1-1,   2017-1-1,    2010-1-1
-ts_s    = (/         0,        366,       6210,       3653/)
-;           2019-12-31, 2009-12-31, 2019-12-31,  2011-12-31
-ts_e    = (/ day_sum-1,       3652,       7304,       4382/)
+;
+; ;            all years,  2001-2009,  2017-2019,   2010-2011
+; ;             2000-1-1,   2001-1-1,   2017-1-1,    2010-1-1
+; ts_s    = (/         0,        366,       6210,       3653/)
+; ;           2019-12-31, 2009-12-31, 2019-12-31,  2011-12-31
+; ts_e    = (/ day_sum-1,       3652,       7304,       4382/)
 
 
 ; =================================== START ====================================
@@ -109,50 +109,44 @@ Fwsoil    = 0.
 deltaT    = 0.
 EF        = 0.
 
-time_period = 4
-Qle_avg    = new((/case_sum, time_period, lat_sum, lon_sum/), float, default_val)
-Qh_avg     = new((/case_sum, time_period, lat_sum, lon_sum/), float, default_val)
-Fwsoil_avg = new((/case_sum, time_period, lat_sum, lon_sum/), float, default_val)
-deltaT_avg = new((/case_sum, time_period, lat_sum, lon_sum/), float, default_val)
-EF_avg     = new((/case_sum, time_period, lat_sum, lon_sum/), float, default_val)
+Qle_avg    = new((/case_sum, lat_sum, lon_sum/), float, default_val)
+Qh_avg     = new((/case_sum, lat_sum, lon_sum/), float, default_val)
+Fwsoil_avg = new((/case_sum, lat_sum, lon_sum/), float, default_val)
+deltaT_avg = new((/case_sum, lat_sum, lon_sum/), float, default_val)
+EF_avg     = new((/case_sum, lat_sum, lon_sum/), float, default_val)
 
 Qle_avg!0  = "case"
-Qle_avg!1  = "time_period"
-Qle_avg!2  = "lat"
-Qle_avg!3  = "lon"
+Qle_avg!1  = "lat"
+Qle_avg!2  = "lon"
 Qle_avg&lat= CABLE_lat
 Qle_avg&lon= CABLE_lon
 
 Qh_avg!0  = "case"
-Qh_avg!1  = "time_period"
-Qh_avg!2  = "lat"
-Qh_avg!3  = "lon"
+Qh_avg!1  = "lat"
+Qh_avg!2  = "lon"
 Qh_avg&lat= CABLE_lat
 Qh_avg&lon= CABLE_lon
 
 deltaT_avg!0  = "case"
-deltaT_avg!1  = "time_period"
-deltaT_avg!2  = "lat"
-deltaT_avg!3  = "lon"
+deltaT_avg!1  = "lat"
+deltaT_avg!2  = "lon"
 deltaT_avg&lat= CABLE_lat
 deltaT_avg&lon= CABLE_lon
 
 Fwsoil_avg!0  = "case"
-Fwsoil_avg!1  = "time_period"
-Fwsoil_avg!2  = "lat"
-Fwsoil_avg!3  = "lon"
+Fwsoil_avg!1  = "lat"
+Fwsoil_avg!2  = "lon"
 Fwsoil_avg&lat= CABLE_lat
 Fwsoil_avg&lon= CABLE_lon
 
 EF_avg!0  = "case"
-EF_avg!1  = "time_period"
-EF_avg!2  = "lat"
-EF_avg!3  = "lon"
+EF_avg!1  = "lat"
+EF_avg!2  = "lon"
 EF_avg&lat= CABLE_lat
 EF_avg&lon= CABLE_lon
 
 if heatwave .eq. "hw-90th" then
-  filename_hw = "/g/data/w35/mm3972/scripts/ehfheatwaves/HW_Event_Indicator_1970-2019.nc" ; summer HW only
+  filename_hw = "/g/data/w35/mm3972/scripts/ehfheatwaves/nc_file/SE_AUS/HW_Event_Indicator_1970-2019.nc" ; summer HW only
   fhw         = addfile(filename_hw,"r")
 
   HW = new((/day_sum,lat_sum,lon_sum/),float)
@@ -204,13 +198,11 @@ do case_num = 0, case_sum -1
       EF     = where(HW .eq. 1, EF, default_val)
    end if
 
-   do count = 0, 3
-     Qle_avg(case_num, count,:,:)    = dim_avg_n(Qle(ts_s(count):ts_e(count),:,:), 0)
-     Qh_avg(case_num, count,:,:)     = dim_avg_n(Qh(ts_s(count):ts_e(count),:,:), 0)
-     Fwsoil_avg(case_num, count,:,:) = dim_avg_n(Fwsoil(ts_s(count):ts_e(count),:,:), 0)
-     deltaT_avg(case_num, count,:,:) = dim_avg_n(deltaT(ts_s(count):ts_e(count),:,:), 0)
-     EF_avg(case_num, count,:,:)     = dim_avg_n(EF(ts_s(count):ts_e(count),:,:), 0)
-   end do
+    Qle_avg(case_num, :,:)    = dim_avg_n(Qle, 0)
+    Qh_avg(case_num, :,:)     = dim_avg_n(Qh, 0)
+    Fwsoil_avg(case_num, :,:) = dim_avg_n(Fwsoil, 0)
+    deltaT_avg(case_num, :,:) = dim_avg_n(deltaT, 0)
+    EF_avg(case_num, :,:)     = dim_avg_n(EF, 0)
 end do ; case_num
 
 delete(Qle)
@@ -219,6 +211,24 @@ delete(Fwsoil)
 delete(deltaT)
 delete(EF)
 delete(HW)
+
+; ================================ Read WTD ====================================
+WTD         = new((/241,281/),float)
+WTD         = 0.
+
+do year  = year_s,year_e
+  filename_hw = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/CTL-30x3+30yr/outputs-daily/cable_out_"+year+"_SE_Aus.nc"
+  f           = addfile (filename_hw,"r")
+  WTD         = WTD + dim_avg_n_Wrap(f->WatTable(:,{A:B},{C:D}),0)
+end do
+
+WTD = WTD/year_sum
+WTD@_FillValue = f->WatTable@_FillValue
+WTD!0 = "lat"
+WTD!1 = "lon"
+WTD&lat = f->y ;fspan(-40,-28,241)
+WTD&lon = f->x ;fspan(140,154,281)
+printVarSummary(WTD)
 
 ; ; ================================ READ LST ==================================
 ; ; use 2000-2019
@@ -354,15 +364,27 @@ pres@lbLabelFont        = 25
 pres@lbTitleFontHeightF = 0.01
 pres@lbLabelFontHeightF = 0.01
 
+; ________________ add orders ________________
 txres                   = True
 txres@txPerimOn         = False
 txres@txFont            = 25
 txres@txFontHeightF     = 0.03
 
 amres                   = True
-amres@amParallelPosF    = 0.35    ; This is the right edge of the plot.
-amres@amOrthogonalPosF  = 0.35    ; This is the bottom edge of the plot.
+amres@amParallelPosF    = -0.485    ; This is the right edge of the plot.
+amres@amOrthogonalPosF  = -0.46    ; This is the bottom edge of the plot.
 amres@amJust            = "TopLeft"
+
+
+; ________________ add region average ________________
+txres1                  = True
+txres1@txPerimOn        = False
+txres1@txFont           = 25
+txres1@txFontHeightF    = 0.015
+amres1                  = True
+amres1@amParallelPosF   = 0.48    ; This is the right edge of the plot.
+amres1@amOrthogonalPosF = 0.47    ; This is the bottom edge of the plot.
+amres1@amJust           = "BottomRight"
 
 Qle_CTL_lvl    = (/10., 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140/)
 Fw_CTL_lvl     = fspan(0.1,0.9,9)
@@ -400,75 +422,154 @@ cmap2(:,0:2) = cmap2(:,0:2)/255.
 cmap3(:,0:2) = cmap3(:,0:2)/255.
 
 ;namedcolor2rgba
-plots = new(case_sum*3,graphic)
+plots = new(6,graphic)
 
-do cnt = 1,2
+res@lbLabelBarOn  = True
 
-  res@lbLabelBarOn  = True
+; ======================= deltaT =======================
+res@tiMainString = "~F5~D"+"~F25~T (~S~o~N~C)"
+res@cnLevels      = deltaT_CTL_lvl
+res@cnFillPalette = cmap1
 
-  ; deltaT
-  res@tiMainString = "~F5~D"+"~F25~T (~S~o~N~C)"
-  res@cnLevels      = deltaT_CTL_lvl
-  res@cnFillPalette = cmap1
+tmp               = deltaT_avg(0,:,:)
+tmp@_FillValue    = default_val
 
-  plots(0) = gsn_csm_contour_map(wks,deltaT_avg(0,cnt,:,:),res)
-  delete(res@cnLevels)
-  delete(res@cnFillPalette)
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD  "+"~F5~D"+"~F25~T"               \
+                  + "~C~  0-5m "+sprintf("%4.2f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.2f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.2f",tmp_WTD_10)
 
-  ; EF
-  res@tiMainString = "~F25~EF (-)"
-  res@cnLevels      = EF_CTL_lvl
-  res@cnFillPalette = cmap2
-  plots(1) = gsn_csm_contour_map(wks,EF_avg(0,cnt,:,:),res)
-  delete(res@cnLevels)
+plots(0) = gsn_csm_contour_map(wks,tmp,res)
+txid2    = gsn_create_text(wks, context, txres1)
+annoid2  = gsn_add_annotation(plots(0), txid2, amres1)
+delete(res@cnLevels)
+delete(res@cnFillPalette)
 
-  ; Fwsoil
-  res@tiMainString = "~F5~b ~F25~(-)"
-  res@cnLevels      = Fw_CTL_lvl
-  plots(2) = gsn_csm_contour_map(wks,Fwsoil_avg(0,cnt,:,:),res)
-  delete(res@cnLevels)
-  delete(res@cnFillPalette)
+; ======================= EF =======================
+res@tiMainString = "~F25~EF (-)"
+res@cnLevels      = EF_CTL_lvl
+res@cnFillPalette = cmap2
+
+tmp               = EF_avg(0,:,:)
+tmp@_FillValue    = default_val
+
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD  "+"~F25~EF"               \
+                  + "~C~  0-5m "+sprintf("%4.2f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.2f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.2f",tmp_WTD_10)
+
+plots(1) = gsn_csm_contour_map(wks,tmp,res)
+txid2    = gsn_create_text(wks, context, txres1)
+annoid2  = gsn_add_annotation(plots(1), txid2, amres1)
+delete(res@cnLevels)
+
+; ======================= Fwsoil =======================
+res@tiMainString = "~F5~b ~F25~(-)"
+res@cnLevels      = Fw_CTL_lvl
+
+tmp               = Fwsoil_avg(0,:,:)
+tmp@_FillValue    = default_val
+
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD    "+"~F5~b~F25~"               \
+                  + "~C~  0-5m "+sprintf("%4.2f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.2f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.2f",tmp_WTD_10)
+
+plots(2) = gsn_csm_contour_map(wks,tmp,res)
+txid2    = gsn_create_text(wks, context, txres1)
+annoid2  = gsn_add_annotation(plots(2), txid2, amres1)
+delete(res@cnLevels)
+delete(res@cnFillPalette)
 
 
-  ; deltaT (GW-FD)
-  res@tiMainString = "~F5~D"+"~F25~T~B~canopy~N~ (~S~o~N~C)"
-  res@cnLevels      = deltaT_diff_lvl
-  res@cnFillPalette = cmap3
-  tmp  = deltaT_avg(0,cnt,:,:)
-  tmp  = tmp - deltaT_avg(1,cnt,:,:)
-  plots(3) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-  delete(res@cnLevels)
-  delete(res@cnFillPalette)
+; ======================= deltaT (GW-FD) =======================
+res@tiMainString = "~F5~D"+"~F25~T~B~canopy~N~ (~S~o~N~C)"
+res@cnLevels      = deltaT_diff_lvl
+res@cnFillPalette = cmap3
+
+tmp  = deltaT_avg(0,:,:)
+tmp  = tmp - deltaT_avg(1,:,:)
+
+tmp@_FillValue    = default_val
+
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD "+"~F5~D~F25~T~B~canopy~N~"              \
+                  + "~C~  0-5m "+sprintf("%4.2f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.2f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.2f",tmp_WTD_10)
+
+plots(3) = gsn_csm_contour_map(wks,tmp,res)
+txid2    = gsn_create_text(wks, context, txres1)
+annoid2  = gsn_add_annotation(plots(3), txid2, amres1)
+delete(tmp)
+delete(res@cnLevels)
+delete(res@cnFillPalette)
 
 
-  ; EF (GW-FD)
-  res@tiMainString = "~F5~D"+"~F25~EF (-)"
-  res@cnFillPalette = cmap3(::-1,:)
+; ======================= EF (GW-FD) =======================
+res@tiMainString = "~F5~D"+"~F25~EF (-)"
+res@cnFillPalette = cmap3(::-1,:)
 
-  res@cnLevels      = EF_diff_lvl
-  tmp  = EF_avg(0,cnt,:,:)
-  tmp  = tmp - EF_avg(1,cnt,:,:)
-  plots(4) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-  delete(res@cnLevels)
+res@cnLevels      = EF_diff_lvl
+tmp               = EF_avg(0,:,:)
+tmp               = tmp - EF_avg(1,:,:)
 
-  ; deltaT (GW-FD)
-  res@tiMainString = "~F5~Db ~F25~(-)"
-  res@cnLevels      = Fw_diff_lvl
-  tmp  = Fwsoil_avg(0,cnt,:,:)
-  tmp  = tmp - Fwsoil_avg(1,cnt,:,:)
-  plots(5) = gsn_csm_contour_map(wks,tmp,res)
-  delete(tmp)
-  delete(res@cnLevels)
+tmp@_FillValue    = default_val
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD  "+"~F5~D~F25~EF"              \
+                  + "~C~  0-5m "+sprintf("%4.2f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.2f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.2f",tmp_WTD_10)
 
-  do count = 0, 5 ;15
-    txid1   = gsn_create_text(wks, order_name(count), txres)
-    annoid1 = gsn_add_annotation(plots(count), txid1, amres)
-  end do
+plots(4) = gsn_csm_contour_map(wks,tmp,res)
+txid2    = gsn_create_text(wks, context, txres1)
+annoid2  = gsn_add_annotation(plots(4), txid2, amres1)
 
-  gsn_panel(wks,(/plots/),(/row_sum,col_sum/),pres)
-  delete(res@cnFillPalette)
-end do ; cnt
+delete(tmp)
+delete(res@cnLevels)
+
+; ======================= deltaT (GW-FD) =======================
+res@tiMainString  = "~F5~Db ~F25~(-)"
+res@cnLevels      = Fw_diff_lvl
+tmp               = Fwsoil_avg(0,:,:)
+tmp               = tmp - Fwsoil_avg(1,:,:)
+
+tmp@_FillValue    = default_val
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD  "+ "~F5~Db~F25~"              \
+                  + "~C~  0-5m "+sprintf("%4.2f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.2f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.2f",tmp_WTD_10)
+
+plots(5) = gsn_csm_contour_map(wks,tmp,res)
+txid2    = gsn_create_text(wks, context, txres1)
+annoid2  = gsn_add_annotation(plots(5), txid2, amres1)
+
+delete(tmp)
+delete(res@cnLevels)
+
+do count = 0, 5
+  txid1   = gsn_create_text(wks, order_name(count), txres)
+  annoid1 = gsn_add_annotation(plots(count), txid1, amres)
+end do
+
+gsn_panel(wks,(/plots/),(/row_sum,col_sum/),pres)
+delete(res@cnFillPalette)
+
 exit
 end

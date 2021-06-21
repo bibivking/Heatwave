@@ -32,11 +32,11 @@ case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr
 message      = "CTL_vs_FD"
 pic_name     = "HW_boxplot_yearly_tree_"+heatwave+"_"+scale+"_"+message
 
-var_name     = (/"deltaT", "EF", "Fwsoil"/)
+var_name     = (/"deltaT", "EF", "Fwsoil", "TVeg", "GPP"/)
 var_sum      = dimsizes(var_name)
 order_name   = (/"(a)","(b)","(c)","(d)","(e)","(f)"/)
 
-; ================================= Predefine ==================================
+; ================================= Ptomatoefine ==================================
 case_sum  = dimsizes(case_name)
 year_sum = year_e-year_s+1
 
@@ -82,6 +82,9 @@ res@tmXBLabels = (/  \
                       "2017","","", "","","",    \
                       "2019","" /)
 
+XBLabels = (/   "2001","2003","2005","2007","2009","2011",\
+                "2013","2015","2017","2019" /)
+xAxis_major    = (/1.5,7.5,13.5,19.5,25.5,31.5,37.5,43.5,49.5,55.5/)
 llres                   = True
 llres@gsLineThicknessF  = 3.                ; line thickness
 
@@ -89,16 +92,16 @@ llres@gsLineThicknessF  = 3.                ; line thickness
 opti           = True
 opti@boxWidth  = 0.9
 opti@boxColors = (/ \
-                   "blue","red", "white","blue","red", "white",\
-                   "blue","red", "white","blue","red", "white",\
-                   "blue","red", "white","blue","red", "white",\
-                   "blue","red", "white","blue","red", "white",\
-                   "blue","red", "white","blue","red", "white",\
-                   "blue","red", "white","blue","red", "white",\
-                   "blue","red", "white","blue","red", "white",\
-                   "blue","red", "white","blue","red", "white",\
-                   "blue","red", "white","blue","red", "white",\
-                   "blue","red" \
+                   "dodgerblue2","tomato", "white","dodgerblue2","tomato", "white",\
+                   "dodgerblue2","tomato", "white","dodgerblue2","tomato", "white",\
+                   "dodgerblue2","tomato", "white","dodgerblue2","tomato", "white",\
+                   "dodgerblue2","tomato", "white","dodgerblue2","tomato", "white",\
+                   "dodgerblue2","tomato", "white","dodgerblue2","tomato", "white",\
+                   "dodgerblue2","tomato", "white","dodgerblue2","tomato", "white",\
+                   "dodgerblue2","tomato", "white","dodgerblue2","tomato", "white",\
+                   "dodgerblue2","tomato", "white","dodgerblue2","tomato", "white",\
+                   "dodgerblue2","tomato", "white","dodgerblue2","tomato", "white",\
+                   "dodgerblue2","tomato" \
                    /)
 
 
@@ -161,8 +164,18 @@ pres@gsnMaximize                = False
 pres@gsnPanelYWhiteSpacePercent = 3
 ; pres@gsnPanelXWhiteSpacePercent = 1
 
+; _________ add shading ____________
+gres             = True
+gres@gsFillColor = "cornsilk" ;"rosybrown" ;"azure"
+
+; ________ create graphic ___________
 plots   = new(3,graphic)
 plots1  = new(3,graphic)
+
+plots_s  = new(3,graphic)
+plots_s1 = new(3,graphic)
+
+poly     = new(2,graphic)
 
 ; ____________ loop var ____________
 do var_num = 0, var_sum -1
@@ -185,6 +198,18 @@ do var_num = 0, var_sum -1
     ranges_diff = (/0., 0.4/)
     y_title = "~F5~b"+"~F25~ (-)"
     y_title_R = "~F5~Db"+"~F25~ (-)"
+  end if
+  if var_name(var_num) .eq. "GPP" then
+    ranges      = (/0., 12/)
+    ranges_diff = (/0., 1.5/)
+    y_title = "~F25~GPP"+"~F25~ (gC d~S~-1~N~)"
+    y_title_R = "~F5~D"+"~F25~GPP (gC d~S~-1~N~)"
+  end if
+  if var_name(var_num) .eq. "TVeg" then
+    ranges      = (/0., 3.8/)
+    ranges_diff = (/0., 1.1/)
+    y_title = "~F25~Et (mm d~S~-1~N~)"
+    y_title_R = "~F5~D"+"~F25~Et (mm d~S~-1~N~)"
   end if
 
   ; ____________ READ IN ____________
@@ -210,50 +235,92 @@ do var_num = 0, var_sum -1
   print(var_name)
   print(median_diff)
 
-  ; ____________ Plotting box ____________
-  plots1(var_num) = boxplot_mmy(wks,x,data_stats,opti,res,llres, ranges(0), ranges(1), y_title)
+  ; ; ____________ Plotting shading ____________
+  ; xmin = (/0 ,48/)
+  ; xmax = (/27,57/)
+  ; ymin = (/ranges(0),ranges(0)/)
+  ; ymax = (/ranges(1),ranges(1)/)
+  ;
+  ; xbars = (/ (/xmin(0), xmax(0), xmax(0), xmin(0), xmin(0)/), \
+  ; (/xmin(1), xmax(1), xmax(1), xmin(1), xmin(1)/) /)
+  ;
+  ; ybars = (/ (/ymin(0),ymin(0),ymax(0),ymax(0),ymin(0)/), \
+  ; (/ymin(1),ymin(1),ymax(1),ymax(1),ymin(1)/)  /)
+  ;
+  ; if var_num .le. 2 then
+  ;   do shadow_num = 0,1
+  ;     poly(shadow_num) = gsn_add_polygon(wks,plots1(var_num),xbars(shadow_num,:),ybars(shadow_num,:),gres)
+  ;   end do
+  ; else
+  ;   do shadow_num = 0,1
+  ;     poly(shadow_num) = gsn_add_polygon(wks,plots_s1(var_num-3),xbars(shadow_num,:),ybars(shadow_num,:),gres)
+  ;   end do
+  ; end if
 
-  if var_num .eq. 0 then
+  ; ____________ Plotting box ____________
+  if var_num .le. 2 then
+    plots1(var_num)   = boxplot_mmy(wks,x,XBLabels,xAxis_major,data_stats,opti,res,llres, ranges(0), ranges(1), y_title)
+  else
+    plots_s1(var_num-3) = boxplot_mmy(wks,x,XBLabels,xAxis_major,data_stats,opti,res,llres, ranges(0), ranges(1), y_title)
+  end if
+
+  if var_num .eq. 0 .or. var_num .eq. 3 then
     textres = True
     gres    = True
 
     lineres = True
-    lineres@lgLineColors      = (/"white","blue","red","gray40"/);,"orange"/) ;,"white","blue","red","green","orange"/) ; line colors
+    lineres@lgLineColors      = (/"white","dodgerblue2","tomato","gray40"/);,"orange"/) ;,"white","dodgerblue2","tomato","green","orange"/) ; line colors
     lineres@lgLineThicknesses = 2.5                        ; line thicknesses
     lineres@LineLengthPercent = 4.                         ; expressed as %, 0->100, length of line
-    gres@YPosPercent          = 25 ;30.  ;expressed as %, 0->100, sets position of top border of legend (Default = 95.)
 
     gres@XPosPercent          = 25.  ;expressed as %, 0->100, sets position of left border of legend (Default = 5.)
     lineres@lgDashIndexes     = (/0,0,0/);,0/)
     textres@lgLabels          = (/" ", "GW", "FD", "GW - FD"/);, "FD+DR"/)
-    plots1(var_num) = simple_legend(wks,plots1(var_num),gres,lineres,textres)
+    if var_num .eq. 0 then
+      gres@YPosPercent          = 25 ;30.  ;expressed as %, 0->100, sets position of top border of legend (Default = 95.)
+      plots1(var_num)   = simple_legend(wks,plots1(var_num),gres,lineres,textres)
+    else if var_num .eq. 3 then
+      gres@YPosPercent          = 95 ;30.  ;expressed as %, 0->100, sets position of top border of legend (Default = 95.)
+      plots_s1(var_num-3) = simple_legend(wks,plots_s1(var_num-3),gres,lineres,textres)
+    end if
+    end if
   end if
 
-  txid1   = gsn_create_text(wks, order_name(var_num), txres)
-  annoid1 = gsn_add_annotation(plots1(var_num), txid1, amres)
+  if var_num .le. 2 then
+    txid1   = gsn_create_text(wks, order_name(var_num), txres)
+    annoid1 = gsn_add_annotation(plots1(var_num), txid1, amres)
+  else
+    txid1   = gsn_create_text(wks, order_name(var_num-3), txres)
+    annoid1 = gsn_add_annotation(plots_s1(var_num-3), txid1, amres)
+  end if
 
   res@tfDoNDCOverlay = True
+
 
   ; ____________ Plotting line ____________
   res1@tfDoNDCOverlay     = True
   res1@trYMinF            = ranges_diff(0)
   res1@trYMaxF            = ranges_diff(1)
   res1@tiYAxisString      = y_title_R
+  res1@tmXTOn             = False
+  if var_num .le. 2 then
+    plots(var_num) =  gsn_csm_xy(wks,median_x,median_diff,res1)
+    overlay(plots(var_num),plots1(var_num))
+    draw(plots(var_num))
+  else
+    plots_s(var_num-3) =  gsn_csm_xy(wks,median_x,median_diff,res1)
+    overlay(plots_s(var_num-3),plots_s1(var_num-3))
+    draw(plots_s(var_num-3))
+  end if
 
-  plots(var_num) =  gsn_csm_xy(wks,median_x,median_diff,res1)
-
-  overlay(plots(var_num),plots1(var_num))
-  draw(plots(var_num))
   frame(wks)
 
   ; plots(var_num) = plot
   ; delete(plot)
 end do ;var_num
 
-
-do var_num = 0, var_sum -1
-end do
-
 gsn_panel(wks,(/plots/),(/3,1/),pres)
+
+gsn_panel(wks,(/plots_s/),(/3,1/),pres)
 
 end

@@ -12,7 +12,7 @@
 ; Adam Phillips
 ;
 undef("boxplot_mmy")
-function boxplot_mmy (wks:graphic,x[*]:numeric,y[*][*]:numeric,boxOpts:logical,plotres:logical,lineres:logical,min_value:numeric,max_value:numeric,title:string)
+function boxplot_mmy (wks:graphic,x[*]:numeric,XBLabels[*]:string,xAxis_major[*]:numeric,y[*][*]:numeric,boxOpts:logical,plotres:logical,lineres:logical,min_value:numeric,max_value:numeric,title:string)
 ;
 ;    This function creates a blank linLog plot object, on which box plots are created by extensive
 ;    use of gsn_add_polyline. The user can draw as many or as few box plots as they wish.
@@ -118,15 +118,15 @@ begin
         "pmTickMarkDisplayMode": "Always"
         "tfDoNDCOverlay"       : True
         "tmXBMode"             : "Explicit"
-        "tmXBValues"           : xAxis
-        "tmXBLabels"           : labarr
+        "tmXBValues"           : xAxis_major
+        "tmXBLabels"           : XBLabels
         "pmTitleDisplayMode"   : "Always"                   ; allow titles
         "tiYAxisString"        : title
         "tiYAxisFontHeightF"   : 0.023
         "tmYROn"               : False;True
         "tmYRLabelsOn"         : False
         "tmYRBorderOn"         : True
-        "tmXTOn"               : True;False
+        "tmXTOn"               : False;False
         "tmXTBorderOn"         : True;False
         "tmXTLabelsOn"         : False;False
         "tmXBLabelFontHeightF" : 0.015
@@ -270,9 +270,9 @@ begin
         mres@vpYF                  = 0.98
         mres@tiYAxisFontThicknessF = 3.
         mres@tmXBMajorThicknessF   = 3.
-        mres@tmXBMinorThicknessF   = 3.
+        mres@tmXBMinorThicknessF   = 0.
         mres@tmYLMajorThicknessF   = 3.
-        mres@tmYLMinorThicknessF   = 3.
+        mres@tmYLMinorThicknessF   = 0.
         mres@tmYLLabelFontThicknessF= 3.
         mres@tmBorderThicknessF     = 3.
         mres@txFont                 = 25

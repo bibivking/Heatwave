@@ -172,6 +172,7 @@ context = "~C~GRACE SD="+sprintf("%4.2f",SD_GRACE)  \
         + "~C~FD         SD="+sprintf("%4.2f",SD_FD) + ", r="+sprintf("%4.2f",r_FD)
 delete(txres@txFont)
 txres@txFontHeightF         = 0.02
+txres@txFontColor           = "blue4"
 txid2 = gsn_create_text(wks, context, txres)
 amres@amParallelPosF        = -0.43    ; This is the right edge of the plot.
 amres@amOrthogonalPosF      = -0.46     ; This is the bottom edge of the plot.

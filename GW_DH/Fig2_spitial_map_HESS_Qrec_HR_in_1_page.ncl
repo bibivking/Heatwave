@@ -27,6 +27,10 @@ path_mum    = "/g/data/w35/mm3972/model/cable/runs/AWAP_pumping/"
 case_sum    = dimsizes(case_name)
 path        = new(case_sum,"string")
 pic_message = "CTL_vs_FD"
+
+s2d         = 3600*24. ; s-1 to d-1
+GPP_scale   = 0.000001*12*s2d ; umol s-1 to g d-1
+
 order_name  = (/"(a)","(b)","(c)","(d)","(e)","(f)","(g)","(h)"/) ;
 categorize  = True
 colorbar    = "MPL_BrBG";"CBR_drywet";"BlueDarkOrange18";"MPL_BrBG"; "NEO_div_vegetation_b";"NEO_div_vegetation_c";"MPL_BrBG" "CBR_wet"
@@ -106,6 +110,7 @@ Esoil     = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 Fwsoil    = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 Q2botsoil = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val) ; Qrec from the aqufier to bottom soil layer
 Q2aquifer = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val) ; Qrec from bottom soil layer to aquifer
+GPP       = new((/case_sum, year_sum, lat_sum, lon_sum/),float, default_val)
 
 Evap      = 0.
 Trans     = 0.
@@ -113,6 +118,7 @@ Esoil     = 0.
 Fwsoil    = 0.
 Q2botsoil = 0.
 Q2aquifer = 0.
+GPP       = 0.
 
 do case_num = 0, case_sum -1
    do year = year_s, year_e
@@ -137,16 +143,18 @@ do case_num = 0, case_sum -1
       Q2botsoil(case_num,year-year_s,:,:) = dim_sum_n_Wrap(where(Qrec_tmp .le. 0, Qrec_tmp, 0),0)
       Q2aquifer(case_num,year-year_s,:,:) = dim_sum_n_Wrap(where(Qrec_tmp .ge. 0, Qrec_tmp, 0),0)
 
+      GPP(case_num,year-year_s,:,:)       = dim_sum_n_Wrap(f->GPP(:,{A:B},{C:D}),0)
       delete(f)
       delete(Qrec_tmp)
    end do ; year
 end do ; case_num
 
-Evap     = Evap*3600.*24.
-Trans    = Trans*3600.*24.
-Esoil    = Esoil*3600.*24.
-Q2botsoil= Q2botsoil*3600.*24.*(-1.)
-Q2aquifer= Q2aquifer*3600.*24.
+Evap     = Evap*s2d
+Trans    = Trans*s2d
+Esoil    = Esoil*s2d
+Q2botsoil= Q2botsoil*s2d*(-1.)
+Q2aquifer= Q2aquifer*s2d
+GPP      = GPP*GPP_scale
 
 Evap!0           = "case"
 Evap!1           = "year"
@@ -182,6 +190,13 @@ Q2aquifer!2      = "lat"
 Q2aquifer!3      = "lon"
 Q2aquifer&lat    = lat
 Q2aquifer&lon    = lon
+
+GPP!0            = "case"
+GPP!1            = "year"
+GPP!2            = "lat"
+GPP!3            = "lon"
+GPP&lat          = lat
+GPP&lon          = lon
 
 ; ============================== Max Fwsoil_diff ===============================
 delete(case_name)
@@ -371,6 +386,9 @@ pres@lbTitleFont        = 25
 pres@lbLabelFont        = 25
 pres@lbTitleFontHeightF = 0.01
 pres@lbLabelFontHeightF = 0.01
+pres@gsnPanelRowSpec    = True
+pres@gsnPanelCenter     = False
+
 
 txres                   = True
 txres@txPerimOn         = False
@@ -393,7 +411,7 @@ amres1@amOrthogonalPosF = 0.45    ; This is the bottom edge of the plot.
 amres1@amJust           = "BottomRight"
 
 ; =========================== plot Evaptranspiration ===========================
-pic = "./plots/Fig2_spitial_map_E_Qrec_Fwmax_"+pic_message
+pic = "./plots/Fig2_spitial_map_E_Qrec_Fwmax_GPP_"+pic_message
 
 ; higher resolution
 wks_type          = "pdf"
@@ -402,7 +420,7 @@ wks_type@wkHeight = 2500
 wks               = gsn_open_wks(wks_type,pic)
 gsn_define_colormap(wks,"rainbow") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
-plots             = new(6,graphic)
+plots             = new(7,graphic)
 
 res@cnFillOn      = True
 res@cnMissingValFillColor = "gray80"
@@ -713,10 +731,42 @@ res@cnFillPalette = cmap(9:,:)
 res@cnLevels      = fspan(0.005,0.045,9)
 plots(5) = gsn_csm_contour_map(wks,Fwsoil_diff_max(0,:,:),res)
 
-do counter = 0, 5
+delete(res@cnFillPalette)
+delete(res@cnLevels)
+
+; ================================ Plot GPP ================================
+res@cnLevels      = (/\
+                      -300,-250,-200,-150,-100,-50, \
+                      50,100,150,200,250,300        \
+                      /)
+
+res@lbLabelStrings =  (/ "-300","-250","-200","-150","-100","-50", \
+                         "50","100","150","200","250","300"        \
+                       /)
+
+res@cnFillPalette = cmap
+
+res@tiMainString = "~F5~D"+"~F25~GPP (gC yr~S~-1~N~)"
+tmp               = dim_avg_n_Wrap(GPP(0,:,:,:),0)
+tmp               = tmp - dim_avg_n_Wrap(GPP(1,:,:,:),0)
+tmp@_FillValue    = -9999.
+
+tmp_WTD_0         = avg(where(WTD .ge. 0.0 .and. WTD .lt. 5.0, tmp, tmp@_FillValue))
+tmp_WTD_5         = avg(where(WTD .ge. 5.0 .and. WTD .lt. 10.0, tmp, tmp@_FillValue))
+tmp_WTD_10        = avg(where(WTD .ge. 10.0, tmp, tmp@_FillValue))
+context           = "~C~ WTD  "+"~F5~D"+"~F25~GPP"               \
+                  + "~C~  0-5m "+sprintf("%4.0f",tmp_WTD_0)  \
+                  + "~C~5-10m "+sprintf("%4.0f",tmp_WTD_5)  \
+                  + "~C~ >10m "+sprintf("%4.0f",tmp_WTD_10)
+
+plots(6)          = gsn_csm_contour_map(wks,tmp,res)
+txid2             = gsn_create_text(wks, context, txres1)
+annoid2           = gsn_add_annotation(plots(6), txid2, amres1)
+
+do counter = 0, 6
   txid1   = gsn_create_text(wks, order_name(counter), txres)
   annoid1 = gsn_add_annotation(plots(counter), txid1, amres)
 end do
 
-gsn_panel(wks,(/plots/),(/2,3/),pres)
+gsn_panel(wks,(/plots/),(/3,2,2/),pres)
 end
