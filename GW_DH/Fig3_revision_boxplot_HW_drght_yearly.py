@@ -100,7 +100,7 @@ def Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff):
             var_all['year'][var_all['date'] >= ts_s[i] and var_all['date'] <= ts_e[i]] = year+i
 
 
-        # ========================= box-whisker of fwsoil============================
+        # ========================= box-whisker ============================
        
         # seaborn
         #sns.color_palette("Set2", 8)
@@ -108,51 +108,31 @@ def Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff):
         #aaa = sns.set_palette(flatui)
         sns.boxplot(x="year", y="values", hue="case", data=var_all, palette="BrBG",
                     order=np.arange(2001,2019),  width=0.7, hue_order=['GW','FD'],
-                    ax=ax[i], showfliers=False, color=almost_black) # palette="Set2",
+                    ax=axs[i], showfliers=False, color=almost_black) # palette="Set2",
 
-        ax[i].set_ylabel(ylabels[i])
+        axs[i].set_ylabel(ylabels[i])
         # ax[i].set_ylabel(ylabels[i])
 
-        ax[i].set_xlabel("")
-        ax[i].axis('tight')
-        ax[i].set_ylim(ranges[i])
-        ax[i].legend(loc='best', frameon=False)
-        ax[i].text(0.02, 0.95, , transform=ax[i].transAxes, fontsize=14, verticalalignment='top', bbox=props)
+        axs[i].set_xlabel("")
+        axs[i].axis('tight')
+        axs[i].set_ylim(ranges[i])
+        axs[i].legend(loc='best', frameon=False)
+        axs[i].text(0.02, 0.95, , transform=axs[i].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
         #colors = cm.Set3(np.arange(0,len(case_labels)))
-        colors = cm.tab20(np.arange(0,len(case_labels)))
 
 
-        # ============================= boxplot ===================================
-        for case_num in np.arange(len(fcables)):
-            SM  = read_cable_SM(fcables[case_num], layers[case_num])
-            fw  = read_cable_var(fcables[case_num], "Fwsoil")
-            # print(SM)
 
-            # theta_1.5m : using root zone soil moisture
-            if layers[case_num] == "6":
-                sm =(  SM.iloc[:,0]*0.022 + SM.iloc[:,1]*0.058 \
-                    + SM.iloc[:,2]*0.154 + SM.iloc[:,3]*0.409 \
-                    + SM.iloc[:,4]*(1.5-0.022-0.058-0.154-0.409) )/1.5
-            elif layers[case_num] == "31uni":
-                sm = SM.iloc[:,0:10].mean(axis = 1)
+        # ========================= difference lines ============================
+        color = "black"
+        y = np.arange(1,19)
+        diff = ???
+        ax[i].scatter(y, diff,  s=1., marker='-', alpha=0.45, c=color)
 
-            # theta_all : using whole soil column soil moisture
-            # if layers[case_num] == "6":
-            #     sm =(  SM.iloc[:,0]*0.022 + SM.iloc[:,1]*0.058 \
-            #          + SM.iloc[:,2]*0.154 + SM.iloc[:,3]*0.409 \
-            #          + SM.iloc[:,4]*1.085 + SM.iloc[:,5]*2.872 )/4.6
-            # elif layers[case_num] == "31uni":
-            #     sm = SM.iloc[:,:].mean(axis = 1)
+        ax[i].set_xlim()
+        ax[i].set_ylim(ranges_diff[i])
+        ax[i].set_ylabel(ylabels_R[i])
 
-            ax[i].scatter(sm, fw,  s=1., marker='o', alpha=0.45, c=colors[case_num],label=case_labels[case_num])
-
-        ax[i].set_xlim(0.08,0.405)
-        ax[i].set_ylim(0.0,1.05)
-        ax[i].set_ylabel("$β$")
-        ax[i].set_xlabel("$θ$$_{1.5m}$ (m$^{3}$ m$^{-3}$)")
-        #ax2.set_xlabel("$θ$ (m$^{3}$ m$^{-3}$)")
-        #ax2.legend(numpoints=1, loc='lower right', frameon=False)
         ax[i].legend(numpoints=1, loc='best', frameon=False)
         ax[i].text(0.02, 0.95, orders[i], transform=ax[i].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         #plt.setp(ax2.get_yticklabels(), visible=False)
