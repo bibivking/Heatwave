@@ -236,4 +236,8 @@ res@lbLabelAlignment           = "BoxCenters"
 res@cnLevels = levels
 plots = gsn_csm_contour_map(wks2,PFT,res)
 
+cmp = read_colormap_file("drought_severity")
+print(cmp)
+
+
 end

@@ -1,7 +1,7 @@
 
 ;MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 ; Author  : Mengyuan Mu
-; Version : 1.0 (22.03.2021)"
+; Version : 2.0 (22.06.2021)"
 ; Email   : mu.mengyuan815@gmail.com
 ;WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 
@@ -249,15 +249,23 @@ lat_sum_DOLCE = dimsizes(D_ET->hfls(0,{A:B},0))
 lon_sum_DOLCE = dimsizes(D_ET->hfls(0,0,{C:D}))
 DOLCE_def_val = D_ET->hfls@_FillValue
 
+; Values
 DOLCE         = new((/month_tot, lat_sum_DOLCE, lon_sum_DOLCE/), float, DOLCE_def_val)
 DOLCE         = DOLCE_def_val
 DOLCE!0       = "month"
 DOLCE!1       = "lat"
 DOLCE!2       = "lon"
-
-;; DOLCE_sd
 DOLCE&lat     = doubletofloat(D_ET->lat({A:B}))
 DOLCE&lon     = doubletofloat(D_ET->lon({C:D}))
+
+; SD
+DOLCE_SD      = new((/month_tot, lat_sum_DOLCE, lon_sum_DOLCE/), float, DOLCE_def_val)
+DOLCE_SD      = DOLCE_def_val
+DOLCE_SD!0    = "month"
+DOLCE_SD!1    = "lat"
+DOLCE_SD!2    = "lon"
+DOLCE_SD&lat  = doubletofloat(D_ET->lat({A:B}))
+DOLCE_SD&lon  = doubletofloat(D_ET->lon({C:D}))
 
 count = 0
 
@@ -270,31 +278,61 @@ do year = year_s,year_e-1
   DOLCE_ET    = path_DOLCE+"/DOLCE_v3_"+year+".nc"
   D_ET        = addfile(DOLCE_ET,"r")
   do month = 0,11
-    DOLCE(count,:,:)  = D_ET->hfls(month,{A:B},{C:D})*dom(month)/28.94
+    DOLCE(count,:,:)     = D_ET->hfls(month,{A:B},{C:D})*dom(month)/28.94
+    DOLCE_SD(count,:,:)  = D_ET->hfls_sd(month,{A:B},{C:D})*dom(month)/28.94
     count = count + 1
   end do
   delete(D_ET)
 end do
 
 ; Regrid DOLCE
-Evap_DOLCE = linint2_Wrap(DOLCE&lon,DOLCE&lat,DOLCE,False,CABLE_lon,CABLE_lat,0)
-printVarSummary(Evap_DOLCE)
 
+; ; Values
+; Evap_DOLCE         = new((/month_tot, lat_sum, lon_sum/), float, DOLCE_def_val)
+; Evap_DOLCE         = DOLCE_def_val
+
+; ; SD
+; Evap_DOLCE_SD      = new((/month_tot, lat_sum, lon_sum/), float, DOLCE_def_val)
+; Evap_DOLCE_SD      = DOLCE_def_val
+
+Evap_DOLCE    = linint2_Wrap(DOLCE&lon,DOLCE&lat,DOLCE,False,CABLE_lon,CABLE_lat,0)
+Evap_DOLCE_SD = linint2_Wrap(DOLCE_SD&lon,DOLCE_SD&lat,DOLCE_SD,False,CABLE_lon,CABLE_lat,0)
+printVarSummary(Evap_DOLCE)
+printVarSummary(Evap_DOLCE_SD)
+delete(DOLCE)
+delete(DOLCE_SD)
+
+Evap_DOLCE!0       = "month"
+Evap_DOLCE!1       = "lat"
+Evap_DOLCE!2       = "lon"
+Evap_DOLCE&lat     = CABLE_lat
+Evap_DOLCE&lon     = CABLE_lon
+
+Evap_DOLCE_SD!0    = "month"
+Evap_DOLCE_SD!1    = "lat"
+Evap_DOLCE_SD!2    = "lon"
+Evap_DOLCE_SD&lat  = CABLE_lat
+Evap_DOLCE_SD&lon  = CABLE_lon
 
 ; ___________________________ Mask DOLCE ______________________________
 if PFT .eq. "tree" then
   do month = 0,month_tot -1
     Evap_DOLCE(month,:,:) = where(PFT_mask .eq. 1 .and. .not. ismissing(Evap_DOLCE(month,:,:)),\
                                 Evap_DOLCE(month,:,:), default_value)
+    Evap_DOLCE_SD(month,:,:) = where(PFT_mask .eq. 1 .and. .not. ismissing(Evap_DOLCE_SD(month,:,:)),\
+                                Evap_DOLCE_SD(month,:,:), default_value)
   end do
 else if PFT .eq. "nontree" then
   do month = 0,month_tot -1
     Evap_DOLCE(month,:,:) = where(PFT_mask .eq. 2 .and. .not. ismissing(Evap_DOLCE(month,:,:)),\
                                 Evap_DOLCE(month,:,:), default_value)
+    Evap_DOLCE_SD(month,:,:) = where(PFT_mask .eq. 2 .and. .not. ismissing(Evap_DOLCE_SD(month,:,:)),\
+                                Evap_DOLCE_SD(month,:,:), default_value)
   end do
 end if
 end if
 Evap_DOLCE@_FillValue = default_value
+Evap_DOLCE_SD@_FillValue = default_value
 
 
 ; ============================= plot time series ===============================
@@ -307,16 +345,18 @@ do year = 2001,2009
   end if
 end do
 
-P     = dim_avg_n_Wrap(Rain,(/2,3/))
-E     = dim_avg_n_Wrap(Evap,(/2,3/))
-GLEAM_E = dim_avg_n_Wrap(Evap_GLEAM,(/1,2/))
-P_E   = dim_avg_n_Wrap(Rain,(/2,3/))
-P_E   = P_E - dim_avg_n_Wrap(Evap,(/2,3/))
+; _________________ CABLE & GLEAM ___________________
+P         = dim_avg_n_Wrap(Rain,(/2,3/))
+E         = dim_avg_n_Wrap(Evap,(/2,3/))
+GLEAM_E   = dim_avg_n_Wrap(Evap_GLEAM,(/1,2/))
+P_E       = dim_avg_n_Wrap(Rain,(/2,3/))
+P_E       = P_E - dim_avg_n_Wrap(Evap,(/2,3/))
 P_GLEAM_E = dim_avg_n_Wrap(Rain(0,:,:,:),(/1,2/))
 P_GLEAM_E = P_GLEAM_E - dim_avg_n_Wrap(Evap_GLEAM,(/1,2/))
 print(P_GLEAM_E)
-P_E_acl = new((/(case_sum+1)*2,total/),float, default_value)
-P_E_acl = default_value
+
+P_E_acl   = new((/(case_sum+1)*2,total/),float, default_value)
+P_E_acl   = default_value
 
 ; _________________ DOLCE ___________________
 DOLCE_E   = dim_avg_n_Wrap(Evap_DOLCE,(/1,2/))
@@ -324,20 +364,36 @@ P_MTH     = dim_avg_n_Wrap(Rain_mth,(/2,3/))
 P_DOLCE_E = dim_avg_n_Wrap(Rain_mth(0,:,:,:),(/1,2/))
 P_DOLCE_E = P_DOLCE_E - dim_avg_n_Wrap(Evap_DOLCE,(/1,2/))
 
-P_E_DOLCE_acl = new((/(case_sum+1)*2,total/),float, default_value)
+P_DOLCE_E_plus_SD   = dim_avg_n_Wrap(Rain_mth(0,:,:,:),(/1,2/))
+P_DOLCE_E_plus_SD   = P_DOLCE_E_plus_SD - dim_avg_n_Wrap(Evap_DOLCE,(/1,2/)) + dim_avg_n_Wrap(Evap_DOLCE_SD,(/1,2/))
+P_DOLCE_E_minus_SD  = dim_avg_n_Wrap(Rain_mth(0,:,:,:),(/1,2/))
+P_DOLCE_E_minus_SD  = P_DOLCE_E_minus_SD - dim_avg_n_Wrap(Evap_DOLCE,(/1,2/)) - dim_avg_n_Wrap(Evap_DOLCE_SD,(/1,2/))
+
+month_total = (2009-2001+1)*12+1
+P_E_DOLCE_acl = new((/2,month_total/),float, default_value)
 P_E_DOLCE_acl = default_value
+
+P_E_DOLCE_acl_SD = new((/2*2,month_total/),float, default_value)
+P_E_DOLCE_acl_SD = default_value
 
 count = 0
 do cnt = 0, dimsizes(ts_s) -1
   do case_num = 0, case_sum -1
     P_E_acl(count,ts_s(cnt)-ts_s(cnt):ts_e(cnt)-ts_s(cnt)) = dim_cumsum_n_Wrap(P_E(case_num,ts_s(cnt):ts_e(cnt)), 0, 0)
-    P_E_DOLCE_acl(count,mth_s(cnt)-mth_s(cnt):mth_e(cnt)-mth_s(cnt)) = dim_cumsum_n_Wrap(P_E(case_num,mth_s(cnt):mth_e(cnt)), 0, 0)
     count = count + 1
   end do
   P_E_acl(count,ts_s(cnt)-ts_s(cnt):ts_e(cnt)-ts_s(cnt)) = dim_cumsum_n_Wrap(P_GLEAM_E(ts_s(cnt):ts_e(cnt)), 0, 0)
-  P_E_DOLCE_acl(count,mth_s(cnt)-mth_s(cnt):ts_e(cnt)-mth_s(cnt)) = dim_cumsum_n_Wrap(P_E(case_num,mth_s(cnt):ts_e(cnt)), 0, 0)
   count = count + 1
+  P_E_DOLCE_acl(cnt,mth_s(cnt)-mth_s(cnt)+1:ts_e(cnt)-mth_s(cnt)+1) = \
+                                                           dim_cumsum_n_Wrap(P_DOLCE_E(mth_s(cnt):ts_e(cnt)), 0, 0)
+  P_E_DOLCE_acl_SD(cnt*2,  mth_s(cnt)-mth_s(cnt)+1:ts_e(cnt)-mth_s(cnt)+1) = \
+                                                           dim_cumsum_n_Wrap(P_DOLCE_E_plus_SD(mth_s(cnt):ts_e(cnt)), 0, 0)
+  P_E_DOLCE_acl_SD(cnt*2+1,mth_s(cnt)-mth_s(cnt)+1:ts_e(cnt)-mth_s(cnt)+1) = \
+                                                           dim_cumsum_n_Wrap(P_DOLCE_E_minus_SD(mth_s(cnt):ts_e(cnt)), 0, 0)
 end do
+
+P_E_DOLCE_acl(:,0)    = 0.
+P_E_DOLCE_acl_SD(:,0) = P_E_DOLCE_acl_SD(:,1)
 
 r_CTL_MD = escorc(P(0,ts_s(0):ts_e(0)), E(0,ts_s(0):ts_e(0)))
 r_CTL_RD = escorc(P(0,ts_s(1):ts_e(1)), E(0,ts_s(1):ts_e(1)))
@@ -409,13 +465,20 @@ res@tmXBValues              = ispan(1,total,366)
 res@tmXBLabels              = (/"2001~C~2017","","2003~C~2019","","2005","","2007","","2009"/)
 x                           = ispan(1,total,1)
 
-res@xyLineThicknesses      = (/ 3.5, 3.5, 3.5,  3.5, 3.5, 3.5/)
-res@xyDashPatterns         = (/  0,  0,  0,   0,  0,  0/)
-res@xyLineOpacities        = (/ 1., 1., 1.,  1., 1., 1./) ;0.5, 0.5, 0.5/)
-res@xyLineColors           = (/"darkgreen","orange", "black",  "green3","gold","gray50"  /)
-res@xyExplicitLegendLabels = (/"GW MD (r="+sprintf("%4.2f",r_CTL_MD)+")","FD MD  (r="+sprintf("%4.2f",r_FD_MD)+")","GLEAM MD", "GW RD (r="+sprintf("%4.2f",r_CTL_RD)+")","FD RD  (r="+sprintf("%4.2f",r_FD_RD)+")", "GLEAM RD"/)  ; create explicit labels
-res@lgItemOrder            = (/2,5, 0,3, 1,4/)
-res@lgJustification        = "TopRight"
+res@xyLineThicknesses      = (/ 3.5, 3.5, 3.5,  3.5, 3.5, 3.5, 3.5, 3.5/)
+res@xyDashPatterns         = (/  0,  0,  0,   0,  0,  0,  0,  0/)
+res@xyLineOpacities        = (/ 1., 1., 1.,  1., 1., 1., 1., 1./) ;0.5, 0.5, 0.5/)
+; res@xyLineColors           = (/"darkgreen","orange", "black","blue3",  "green3","gold","gray50", "deepskyblue"  /)
+; res@xyExplicitLegendLabels = (/"GW MD (r="+sprintf("%4.2f",r_CTL_MD)+")", \
+;                                "FD MD  (r="+sprintf("%4.2f",r_FD_MD)+")",\
+;                                "GLEAM MD", \
+;                                "DOLCE MD", \
+;                                "GW RD (r="+sprintf("%4.2f",r_CTL_RD)+")",\
+;                                "FD RD  (r="+sprintf("%4.2f",r_FD_RD)+")",\
+;                                "GLEAM RD", \
+;                                "DOLCE RD"  /)  ; create explicit labels
+; res@lgItemOrder            = (/5, 7, 3, 1, 4, 6, 2, 0/)
+; res@lgJustification        = "TopRight"
 
 
 ; res@tiXAxisString        = "months"
@@ -435,10 +498,49 @@ pres@gsnPanelXWhiteSpacePercent = 0.1
 ; pres@lbTitleFontHeightF = 0.2
 ; pres@lbLabelFontHeightF = 0.2
 
-plots = new(1,graphic)
-
+; -------------- Fig 1b GW, FD, GLEAM lines --------------
 res@tiYAxisString = "Accumulated P-E (mm)"
-plots             = gsn_csm_xy(wks,x,P_E_acl,res)
+
+res@xyLineColors  = (/"darkgreen","orange", "black", "green3","gold","gray50" /)
+plot              = gsn_csm_xy(wks,x,P_E_acl,res)
+
+
+; -------------- Fig 1b DOLCE lines  --------------
+res1              = True
+res1@trYMinF      = -110.
+res1@trYMaxF      = 800.
+res1@trXMinF      = 0
+res1@trXMaxF      = total
+
+              ;      2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+y            =  (/1,  365,  730, 1095, 1461, 1826, 2191, 2556, 2922, 3287/)
+
+res1@xyLineThicknesses  = (/ 3.5, 3.5, 3.5,  3.5, 3.5, 3.5, 3.5, 3.5/)
+res1@xyDashPatterns     = (/  0,  0,  0,   0,  0,  0,  0,  0/)
+res1@xyLineOpacities    = (/ 1., 1., 1.,  1., 1., 1., 1., 1./) ;0.5, 0.5, 0.5/)
+res1@xyLineColors       = (/"blue3","deepskyblue" /)
+plot_DOLCE   = gsn_csm_xy(wks,y,P_E_DOLCE_acl,res1)
+overlay(plot,plot_DOLCE)
+delete(res1@xyLineThicknesses)
+delete(res1@xyDashPatterns)
+delete(res1@xyLineOpacities)
+delete(res1@xyLineColors)
+
+; ________________ add error bar ________________
+; gsresy = True
+; gsresy@gsLineColor      = "blue"                       ; add y error bars
+; gsresy@gsLineThicknessF = 2.0
+
+print("add uncertainty")
+res1@xyLineColor        = -1
+res1@gsnXYFillOpacities = 0.1
+
+res1@gsnXYFillColors    = "blue3"
+plot_uncert             = gsn_csm_xy (wks,y,P_E_DOLCE_acl_SD(0:1,:),res1)
+overlay(plot,plot_uncert)
+res1@gsnXYFillColors    = "deepskyblue"
+plot_uncert             = gsn_csm_xy (wks,y,P_E_DOLCE_acl_SD(2:3,:),res1)
+overlay(plot,plot_uncert)
 
 
 ; ________________ add order name ________________
@@ -452,9 +554,37 @@ amres@amOrthogonalPosF = -0.46    ; This is the bottom edge of the plot.
 amres@amJust           = "TopLeft"
 
 txid1   = gsn_create_text(wks, "(b)", txres)
-annoid1 = gsn_add_annotation(plots(0), txid1, amres)
+annoid1 = gsn_add_annotation(plot, txid1, amres)
 
-gsn_panel(wks,(/plots/),(/1,1/),pres)
-; delete(plot)
+gsn_panel(wks,plot,(/1,1/),pres)
+
+; ________________ add legend ________________
+genres                           = True
+genres@XPosPercent               = 76                      ; orientation on page
+genres@YPosPercent               = 15
+genres@ItemSpacePercent          = 3
+textres                          = True
+textres@lgLabels                 = (/"GW MD (r="+sprintf("%4.2f",r_CTL_MD)+")", \
+                                     "FD MD  (r="+sprintf("%4.2f",r_FD_MD)+")",\
+                                     "GLEAM MD", \
+                                     "DOLCE MD", \
+                                     "GW RD (r="+sprintf("%4.2f",r_CTL_RD)+")",\
+                                     "FD RD  (r="+sprintf("%4.2f",r_FD_RD)+")",\
+                                     "GLEAM RD", \
+                                     "DOLCE RD"  /)
+textres@lgPerimOn                = False                   ; no perimeter
+textres@lgItemCount              = 8                       ; how many
+textres@lgItemOrder              = (/5, 7, 3, 1, 4, 6, 2, 0/)
+lineres                          = True
+lineres@lgLineLabelFontHeightF   = 0.015                   ; font height
+lineres@lgDashIndexes            = 0
+lineres@lgLineColors             = (/"darkgreen","orange", "black","blue3",  \
+                                     "green3","gold","gray50", "deepskyblue"  /)
+lineres@lgLineThicknesses        = 3.5                     ; line thicknesses
+
+simple_legend_ndc(wks, genres, lineres, textres)
+drawNDCGrid(wks)                                    ; This is for debugging purposes to help position the legend
+frame(wks)
+
 exit
 end

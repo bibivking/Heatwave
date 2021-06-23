@@ -8,6 +8,7 @@ import os
 import sys
 import glob
 import numpy as np
+from numpy.core.numeric import NaN
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors
@@ -19,9 +20,8 @@ from matplotlib import cm
 from matplotlib import ticker
 from scipy.interpolate import griddata
 from sklearn.metrics import mean_squared_error
-from plot_eucface_get_var import *
 
-def plot_fwsoil_boxplot_SM( fcables, case_labels, layers, ring):
+def Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff):
 
     """
     (a) box-whisker of fwsoil
@@ -29,7 +29,7 @@ def plot_fwsoil_boxplot_SM( fcables, case_labels, layers, ring):
     """
 
     # ======================= Plot setting ============================
-    fig = plt.figure(figsize=[10,11])
+    fig, axs = plt.subplots(2, 2, figsize=(10, 11))
     fig.subplots_adjust(hspace=0.20)
     fig.subplots_adjust(wspace=0.12)
 
@@ -59,119 +59,289 @@ def plot_fwsoil_boxplot_SM( fcables, case_labels, layers, ring):
 
     # set the box type of sequence number
     props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
-
-    # choose colormap
     #colors = cm.Set2(np.arange(0,len(case_labels)))
 
-    #print(colors)
-    ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(212)
+    # ==================== Summers ===================
+            # 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,\
+            # 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
+    ts_s    = [ 335, 700, 1065, 1430, 1796, 2161, 2526, 2891, 3257, 3622,
+                3987,4352, 4718, 5083, 5448, 5813, 6179, 6544, 6909]
 
-    # ========================= box-whisker of fwsoil============================
-    day_start_drought = 2101 # 2017-10-1
-    day_end_drought   = 2466 # 2018-10-1
+    ts_e    = [ 425, 790, 1155, 1521, 1886, 2251, 2616, 2982, 3347, 3712, 
+                4077, 4443, 4808,5173, 5538, 5904, 6269, 6634, 6999]
+    orders  = ['(a)','(b)','(c)','(d)']
+    # ==================== Start ====================
+    for i, var_name in enumerate(var_names):
 
-    day_start_all     = 367  # first day of 2013
-    day_end           = 2923 # first day of 2020
+        filename_GW = "./txt/"+var_name+"_GW_rawdata_4_Python.txt"
+        filename_FD = "./txt/"+var_name+"_FD_rawdata_4_Python.txt"
 
-    day_drought  = day_end_drought - day_start_drought + 1
-    day_all      = day_end - day_start_all + 1
-    case_sum     = len(fcables)
-    fw           = pd.DataFrame(np.zeros((day_drought+day_all)*case_sum),columns=['fwsoil'])
-    fw['year']   = [''] * ((day_drought+day_all)*case_sum)
-    fw['exp']    = [''] * ((day_drought+day_all)*case_sum)
+        var_GW      = pd.read_csv(filename_GW, header = None, names= ["date","GW"])
+        var_FD      = pd.read_csv(filename_FD, header = None, names= ["date","FD"])
 
-    s = 0
+        data_len    = len(var_GW)
+        var_all     = pd.DataFrame(np.zeros(data_len*2),columns=['values'])
 
-    for case_num in np.arange(case_sum):
+        var_all['values'][0:data_len]          = var_GW["GW"]
+        var_all['values'][data_len:data_len*2] = var_FD["FD"]
 
-        cable = nc.Dataset(fcables[case_num], 'r')
-        Time  = nc.num2date(cable.variables['time'][:],cable.variables['time'].units)
+        var_all['case']                        = [''] * data_len*2
+        var_all['case'][0:data_len]            = ['GW'] * data_len
+        var_all['case'][data_len:data_len*2]   = ['FD'] * data_len
 
-        Fwsoil          = pd.DataFrame(cable.variables['Fwsoil'][:,0,0],columns=['fwsoil'])
-        Fwsoil['dates'] = Time
-        Fwsoil          = Fwsoil.set_index('dates')
-        Fwsoil          = Fwsoil.resample("D").agg('mean')
-        Fwsoil.index    = Fwsoil.index - pd.datetime(2011,12,31)
-        Fwsoil.index    = Fwsoil.index.days
+        var_all['date']                        = [0] * data_len*2
+        var_all['date'][0:data_len]            = var_GW["date"]
+        var_all['date'][data_len:data_len*2]   = var_FD["date"]
 
-        e  = s+day_drought
+        var_all['year']                        = NaN * data_len*2
 
-        fw['fwsoil'].iloc[s:e] = Fwsoil[np.all([Fwsoil.index >= day_start_drought,
-                                 Fwsoil.index <=day_end_drought],axis=0)]['fwsoil'].values
-        fw['year'].iloc[s:e]   = ['drought'] * day_drought
-        fw['exp'].iloc[s:e]    = [ case_labels[case_num]] * day_drought
-        s  = e
-        e  = s+day_all
-        fw['fwsoil'].iloc[s:e] = Fwsoil[np.all([Fwsoil.index >= day_start_all,
-                                 Fwsoil.index <=day_end],axis=0)]['fwsoil'].values
-        fw['year'].iloc[s:e]   = ['all'] * day_all
-        fw['exp'].iloc[s:e]    = [ case_labels[case_num]] * day_all
-        s  =  e
+        year = 2001
+        for i in np.arange(len(ts_s)):
+            var_all['year'][var_all['date'] >= ts_s[i] and var_all['date'] <= ts_e[i]] = year+i
 
-    # seaborn
-    #sns.color_palette("Set2", 8)
-    #flatui = ["orange", "dodgerblue"]
-    #aaa = sns.set_palette(flatui)
-    sns.boxplot(x="exp", y="fwsoil", hue="year", data=fw, palette="BrBG",
-                order=case_labels,  width=0.7, hue_order=['drought','all'],
-                ax=ax1, showfliers=False, color=almost_black) # palette="Set2",
 
-    ax1.set_ylabel("$β$")
-    ax1.set_xlabel("")
-    ax1.axis('tight')
-    ax1.set_ylim(0.,1.1)
-    ax1.axhline(y=np.mean(fw[np.all([fw.year=='drought',fw.exp=='Ctl'],axis=0)]['fwsoil'].values),
-                c=almost_black, ls="--")
-    ax1.legend(loc='best', frameon=False)
-    ax1.text(0.02, 0.95, '(a)', transform=ax1.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+        # ========================= box-whisker of fwsoil============================
+       
+        # seaborn
+        #sns.color_palette("Set2", 8)
+        #flatui = ["orange", "dodgerblue"]
+        #aaa = sns.set_palette(flatui)
+        sns.boxplot(x="year", y="values", hue="case", data=var_all, palette="BrBG",
+                    order=np.arange(2001,2019),  width=0.7, hue_order=['GW','FD'],
+                    ax=ax[i], showfliers=False, color=almost_black) # palette="Set2",
 
-    print("***********************")
-    # case_labels = ["Ctl", "Sres", "Watr", "Hi-Res-1", "Hi-Res-2", "Opt",  "β-hvrd",  "β-exp" ]
-    print("median of Ctl is %f" % np.median(fw[np.all([fw.year=='all',fw.exp=='Ctl'],axis=0)]['fwsoil'].values))
-    print("median of Sres is %f" % np.median(fw[np.all([fw.year=='all',fw.exp=='Sres'],axis=0)]['fwsoil'].values))
-    print("median of Watr is %f" % np.median(fw[np.all([fw.year=='all',fw.exp=='Watr'],axis=0)]['fwsoil'].values))
-    print("median of Hi-Res-1 is %f" % np.median(fw[np.all([fw.year=='all',fw.exp=='Hi-Res-1'],axis=0)]['fwsoil'].values))
-    print("median of Hi-Res-2 is %f" % np.median(fw[np.all([fw.year=='all',fw.exp=='Hi-Res-2'],axis=0)]['fwsoil'].values))
-    print("median of Opt is %f" % np.median(fw[np.all([fw.year=='all',fw.exp=='Opt'],axis=0)]['fwsoil'].values))
-    print("median of β-hvrd is %f" % np.median(fw[np.all([fw.year=='all',fw.exp=='β-hvrd'],axis=0)]['fwsoil'].values))
-    print("median of β-exp is %f" % np.median(fw[np.all([fw.year=='all',fw.exp=='β-exp'],axis=0)]['fwsoil'].values))
-    print("***********************")
+        ax[i].set_ylabel(ylabels[i])
+        # ax[i].set_ylabel(ylabels[i])
 
-    #colors = cm.Set3(np.arange(0,len(case_labels)))
-    colors = cm.tab20(np.arange(0,len(case_labels)))
-    # ============================= boxplot ===================================
-    for case_num in np.arange(len(fcables)):
-        SM  = read_cable_SM(fcables[case_num], layers[case_num])
-        fw  = read_cable_var(fcables[case_num], "Fwsoil")
-        # print(SM)
+        ax[i].set_xlabel("")
+        ax[i].axis('tight')
+        ax[i].set_ylim(ranges[i])
+        ax[i].legend(loc='best', frameon=False)
+        ax[i].text(0.02, 0.95, , transform=ax[i].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
-        # theta_1.5m : using root zone soil moisture
-        if layers[case_num] == "6":
-            sm =(  SM.iloc[:,0]*0.022 + SM.iloc[:,1]*0.058 \
-                 + SM.iloc[:,2]*0.154 + SM.iloc[:,3]*0.409 \
-                 + SM.iloc[:,4]*(1.5-0.022-0.058-0.154-0.409) )/1.5
-        elif layers[case_num] == "31uni":
-            sm = SM.iloc[:,0:10].mean(axis = 1)
+        #colors = cm.Set3(np.arange(0,len(case_labels)))
+        colors = cm.tab20(np.arange(0,len(case_labels)))
 
-        # theta_all : using whole soil column soil moisture
-        # if layers[case_num] == "6":
-        #     sm =(  SM.iloc[:,0]*0.022 + SM.iloc[:,1]*0.058 \
-        #          + SM.iloc[:,2]*0.154 + SM.iloc[:,3]*0.409 \
-        #          + SM.iloc[:,4]*1.085 + SM.iloc[:,5]*2.872 )/4.6
-        # elif layers[case_num] == "31uni":
-        #     sm = SM.iloc[:,:].mean(axis = 1)
 
-        ax2.scatter(sm, fw,  s=1., marker='o', alpha=0.45, c=colors[case_num],label=case_labels[case_num])
+        # ============================= boxplot ===================================
+        for case_num in np.arange(len(fcables)):
+            SM  = read_cable_SM(fcables[case_num], layers[case_num])
+            fw  = read_cable_var(fcables[case_num], "Fwsoil")
+            # print(SM)
 
-    ax2.set_xlim(0.08,0.405)
-    ax2.set_ylim(0.0,1.05)
-    ax2.set_ylabel("$β$")
-    ax2.set_xlabel("$θ$$_{1.5m}$ (m$^{3}$ m$^{-3}$)")
-    #ax2.set_xlabel("$θ$ (m$^{3}$ m$^{-3}$)")
-    #ax2.legend(numpoints=1, loc='lower right', frameon=False)
-    ax2.legend(numpoints=1, loc='best', frameon=False)
-    ax2.text(0.02, 0.95, '(b)', transform=ax2.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-    #plt.setp(ax2.get_yticklabels(), visible=False)
+            # theta_1.5m : using root zone soil moisture
+            if layers[case_num] == "6":
+                sm =(  SM.iloc[:,0]*0.022 + SM.iloc[:,1]*0.058 \
+                    + SM.iloc[:,2]*0.154 + SM.iloc[:,3]*0.409 \
+                    + SM.iloc[:,4]*(1.5-0.022-0.058-0.154-0.409) )/1.5
+            elif layers[case_num] == "31uni":
+                sm = SM.iloc[:,0:10].mean(axis = 1)
 
-    fig.savefig("./plots/EucFACE_Fwsoil_boxplot_SM" , bbox_inches='tight', pad_inches=0.1)
+            # theta_all : using whole soil column soil moisture
+            # if layers[case_num] == "6":
+            #     sm =(  SM.iloc[:,0]*0.022 + SM.iloc[:,1]*0.058 \
+            #          + SM.iloc[:,2]*0.154 + SM.iloc[:,3]*0.409 \
+            #          + SM.iloc[:,4]*1.085 + SM.iloc[:,5]*2.872 )/4.6
+            # elif layers[case_num] == "31uni":
+            #     sm = SM.iloc[:,:].mean(axis = 1)
+
+            ax[i].scatter(sm, fw,  s=1., marker='o', alpha=0.45, c=colors[case_num],label=case_labels[case_num])
+
+        ax[i].set_xlim(0.08,0.405)
+        ax[i].set_ylim(0.0,1.05)
+        ax[i].set_ylabel("$β$")
+        ax[i].set_xlabel("$θ$$_{1.5m}$ (m$^{3}$ m$^{-3}$)")
+        #ax2.set_xlabel("$θ$ (m$^{3}$ m$^{-3}$)")
+        #ax2.legend(numpoints=1, loc='lower right', frameon=False)
+        ax[i].legend(numpoints=1, loc='best', frameon=False)
+        ax[i].text(0.02, 0.95, orders[i], transform=ax[i].transAxes, fontsize=14, verticalalignment='top', bbox=props)
+        #plt.setp(ax2.get_yticklabels(), visible=False)
+
+    fig.savefig("./plots/Fig3_revision_boxplot" , bbox_inches='tight', pad_inches=0.1)
+
+
+
+'''
+Martin's script 
+
+#!/usr/bin/env python
+
+"""
+Plot SWP
+
+That's all folks.
+"""
+__author__ = "Martin De Kauwe"
+__version__ = "1.0 (18.10.2017)"
+__email__ = "mdekauwe@gmail.com"
+
+import xarray as xr
+import matplotlib.pyplot as plt
+import sys
+import datetime as dt
+import pandas as pd
+import numpy as np
+from matplotlib.ticker import FixedLocator
+import datetime
+import os
+import glob
+import seaborn as sns
+sns.set_theme(style="ticks", palette="pastel")
+
+
+def main(fname, fname2, fname_fixed):
+
+    df_fix = pd.read_csv(fname_fixed)
+    df_fix = df_fix[df_fix.plc_max > -500.].reset_index()
+    df_fix['map'] = np.ones(len(df_fix)) * np.nan
+
+    df = pd.read_csv(fname)
+    df = df[df.plc_max > -500.].reset_index()
+    df['map'] = np.ones(len(df)) * np.nan
+
+    df_map = pd.read_csv("euc_map.csv")
+    df_map = df_map.sort_values(by=['map'])
+    print(df_map)
+
+    species = df_map.species
+    species = species.str.replace("_", " ")
+    species = species.str.replace("Eucalyptus", "E.")
+
+
+    df2 = pd.read_csv(fname2)
+    df2['map'] = np.ones(len(df2)) * np.nan
+
+    for i in range(len(df_map)):
+        spp = df_map.species[i]
+        map = df_map.map[i]
+
+        for j in range(len(df)):
+
+            if df.species[j] == spp.replace(" ", "_"):
+                df['map'][j] = map
+                df_fix['map'][j] = map
+
+    for i in range(len(df_map)):
+        spp = df_map.species[i]
+        map = df_map.map[i]
+
+        for k in range(len(df2)):
+            if df2.species[k] == spp:
+                df2['map'][k] = map
+    df2 = df2.sort_values(by=['map'])
+    sorted_map = df_map['map'].values
+
+    #df = df.sort_values(by=['map'])
+
+    #for i in range(len(df)):
+    #    print(i, df.species[i], df.psi_leaf_mean[i])
+
+    df['species'] = df['species'].str.replace("_", " ")
+    df['species'] = df['species'].str.replace("Eucalyptus", "E.")
+
+    df_fix['species'] = df_fix['species'].str.replace("_", " ")
+    df_fix['species'] = df_fix['species'].str.replace("Eucalyptus", "E.")
+
+    df2['species'] = df2['species'].str.replace("_", " ")
+    df2['species'] = df2['species'].str.replace("Eucalyptus", "E.")
+    #species = np.unique(df.species)
+
+
+    sns.set_style("ticks")
+    sns.set_style({"xtick.direction": "in","ytick.direction": "in"})
+
+    fig = plt.figure(figsize=(12,6))
+    fig.subplots_adjust(hspace=0.1)
+    fig.subplots_adjust(wspace=0.05)
+    plt.rcParams['text.usetex'] = False
+    plt.rcParams['font.family'] = "sans-serif"
+    plt.rcParams['font.sans-serif'] = "Helvetica"
+    plt.rcParams['axes.labelsize'] = 14
+    plt.rcParams['font.size'] = 12
+    plt.rcParams['legend.fontsize'] = 12
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 12
+
+    ax = fig.add_subplot(111)
+
+    flierprops = dict(marker='o', markersize=3, markerfacecolor="black")
+
+
+    #ax = sns.boxplot(x="species", y="psi_leaf_min", data=df,
+    #                 flierprops=flierprops, palette=["m", "g", "b"],
+    #                 hue="time", order=species)
+    lineprops = {'color': 'black', 'linewidth': 2.0}
+    boxplot_kwargs = dict({'medianprops': lineprops})
+
+    ax = sns.boxplot(x="species", y="psi_leaf_min", data=df,
+                     showfliers=False, palette=["m", "g", "b"],
+                     hue="time", order=species, **boxplot_kwargs)
+    bx = sns.stripplot(x="species", y="psi_leaf_min", data=df,
+                       color=".3", size=1.3, dodge=True,
+                       hue="time", order=species)
+
+    # fixed co2
+    boxprops = {'edgecolor': 'grey', 'linewidth': 1.5, 'facecolor': 'w', 'alpha':.5}
+    lineprops = {'color': 'grey', 'linewidth': 1.5}
+    whiskerprops = {'ls': ' ', 'lw': 0.0, 'color': 'white'}
+    cap_col = dict(color="white")
+    medianprops = {'linestyle':'-', 'linewidth':1.5, 'color':'salmon'}
+    boxplot_kwargs = dict({'boxprops': boxprops, 'medianprops': medianprops,
+                       'whiskerprops': whiskerprops, 'capprops':cap_col})
+
+
+    cx = sns.boxplot(x="species", y="psi_leaf_min", data=df_fix,
+                     showfliers=False, palette=["m", "g", "b"],
+                     hue="time", order=species, **boxplot_kwargs)
+
+    ax = sns.scatterplot(data=df2, x="species", y="p50", color="red",
+                         marker="*", s=100, label="p50")
+    ax.set_ylabel("$\Psi$$_{l}$ (MPa)")
+    ax.set_xlabel(" ")
+
+    ##8da0cb
+    plt.text(-1.4, -0.2,
+             "MAP\n(mm yr$^{-1}$)", horizontalalignment='center', size=10,
+             color="royalblue", weight="bold")
+
+    offset = 0
+    for i,val in enumerate(sorted_map):
+
+        plt.text(-0.05+offset, -0.2,
+                 "%d" % (val), horizontalalignment='center', size=10,
+                 color="royalblue")
+
+        offset += 1.0
+
+    #ax.legend(numpoints=1, loc="best", frameon=False)
+
+
+
+
+
+    handles, labels = ax.get_legend_handles_labels()
+    print(handles)
+    print(labels)
+    hh = handles[0:3]
+    ll = labels[0:3]
+    hh2 = handles[9:]
+    ll2 = labels[9:]
+
+    l = plt.legend(hh+hh2, ll+ll2, loc="best", frameon=False)
+
+
+    ax.set_xticklabels(species, rotation=90)
+    of = "/Users/mdekauwe/Desktop/psi_leaf_all_years.png"
+    plt.savefig(of, bbox_inches='tight', dpi=300, pad_inches=0.1)
+'''
+
+if __name__ == "__main__":
+
+
+    var_names   = ["deltaT","EF","TVeg","Fwsoil"]
+    ylabels     = ["ΔT (oC)","EF (-)","Et (mm d-1)","β (-)"]
+    ylabels_R   = ["ΔT_GW - ΔT_FD (oC)","ΔEF (-)","ΔEt (mm d-1)","Δβ (-)"]
+    ranges      = [[-0.5, 5], [0., 0.8], [0., 3.8], [0., 1.05]]
+    ranges_diff = [[-0.8, 0.], [0., 0.2], [0., 1.1], [0., 0.4]]
+  
+    Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff)

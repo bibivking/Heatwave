@@ -1,7 +1,7 @@
 
 ;MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 ; Author  : Mengyuan Mu
-; Version : 1.0 (20.06.2021)"
+; Version : 2.0 (23.06.2021)"
 ; Email   : mu.mengyuan815@gmail.com
 ;WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 
@@ -23,11 +23,12 @@ end setvalues
 
 ; ================================== Options ===================================
 year_s       = 2000
-year_e       = 2019
+year_e       = 2001;19
 operation    = "calc"    ;"calc" ; "plot"
 scale        = "SE-AU"   ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
 case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/)
+case_short_name = (/"GW","FD"/)
 var_name     = "EF" ;"TVeg" ; "GPP"
 select_region= False
 median_diff = True
@@ -246,21 +247,52 @@ do case_num = 0,case_sum-1
   ; trees
   var_val_tree = where(PFT_mask_multi .eq. 1, var_val, def_value)
 
-  ; non-trees
-  var_val      = where(PFT_mask_multi .eq. 2, var_val, def_value)
+  ; ; non-trees
+  ; var_val      = where(PFT_mask_multi .eq. 2, var_val, def_value)
 
-  loc1 = case_num
-  loc2 = case_num + case_sum
-  groups = case_sum*2+1
+  ; loc1 = case_num
+  ; loc2 = case_num + case_sum
+  ; groups = case_sum*2+1
 
-  do count = 0, dimsizes(ts_s)-1
-    print(count)
-    var_stats(count*groups+loc1, :)    = boxplot_stats_mmy(var_val(ts_s(count):ts_e(count),:,:),def_value)
-    var_stats(count*groups+loc2, :)    = boxplot_stats_mmy(var_val_tree(ts_s(count):ts_e(count),:,:),def_value)
-  end do ; count
-
+  ; do count = 0, dimsizes(ts_s)-1
+  ;   print(count)
+  ;   var_stats(count*groups+loc1, :)    = boxplot_stats_mmy(var_val(ts_s(count):ts_e(count),:,:),def_value)
+  ;   var_stats(count*groups+loc2, :)    = boxplot_stats_mmy(var_val_tree(ts_s(count):ts_e(count),:,:),def_value)
+  ; end do ; count
   delete(var_val)
+
+  ; _____________________________ Write raw data for python script ________________________________
+  print("write raw data for Python script")
+ 
+  date_3D = var_val_tree
+  do day  = 1, day_sum
+    date_3D(day-1,:,:) = day
+  end do
+  
+  var_tmp        = ndtooned(var_val_tree)
   delete(var_val_tree)
+  date_tmp       = ndtooned(date_3D)
+  print(date_tmp)
+  var_tmp@_FillValue = def_value
+  maskout_def    = ind( .not. ismissing(var_tmp))
+
+  var_1D         = var_tmp(maskout_def)
+  date_1D        = date_tmp(maskout_def)
+
+  print(dimsizes(var_1D))
+  print(var_1D(0))
+  print(dimsizes(date_1D)) 
+  print(date_1D(0))
+  ; output list 
+
+  output_filename = "./txt/"+var_name+"_"+case_short_name(case_num)+"_rawdata_4_Python.txt"
+
+  system("rm "+ output_filename)
+
+  alist = [/date_1D, var_1D/]
+
+  write_table(output_filename, "w", alist, "%6i, %10.4f")
+
 end do ; case_num
 
 if heatwave .eq. "hw-90th" then
@@ -268,19 +300,19 @@ if heatwave .eq. "hw-90th" then
 end if
 delete(PFT_mask_multi)
 
-; _____________________________ Write box stats ________________________________
-print("write out")
-option        = True
-option@row    = False
-; option@tspace = 0
+; ; _____________________________ Write box stats ________________________________
+; print("write out")
+; option        = True
+; option@row    = False
+; ; option@tspace = 0
 
-var_stats   = where( ismissing(var_stats), -9999., var_stats)
-print(var_stats)
-var_stats@_FillValue = -9999.
-option@fout = "./txt/"+var_name+"_CTL_FD_yearly_box_stats.txt"
-format      = "5f20.4"
-write_matrix (var_stats, format, option)
-delete(option@fout)
+; var_stats   = where( ismissing(var_stats), -9999., var_stats)
+; print(var_stats)
+; var_stats@_FillValue = -9999.
+; option@fout = "./txt/"+var_name+"_CTL_FD_yearly_box_stats.txt"
+; format      = "5f20.4"
+; write_matrix (var_stats, format, option)
+; delete(option@fout)
 
 exit
 end
