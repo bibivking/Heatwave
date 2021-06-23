@@ -251,7 +251,7 @@ DOLCE_def_val = D_ET->hfls@_FillValue
 
 ; Values
 DOLCE         = new((/month_tot, lat_sum_DOLCE, lon_sum_DOLCE/), float, DOLCE_def_val)
-DOLCE         = DOLCE_def_val
+DOLCE         = 0.
 DOLCE!0       = "month"
 DOLCE!1       = "lat"
 DOLCE!2       = "lon"
@@ -260,7 +260,7 @@ DOLCE&lon     = doubletofloat(D_ET->lon({C:D}))
 
 ; SD
 DOLCE_SD      = new((/month_tot, lat_sum_DOLCE, lon_sum_DOLCE/), float, DOLCE_def_val)
-DOLCE_SD      = DOLCE_def_val
+DOLCE_SD      = 0.
 DOLCE_SD!0    = "month"
 DOLCE_SD!1    = "lat"
 DOLCE_SD!2    = "lon"
@@ -285,16 +285,18 @@ do year = year_s,year_e-1
   delete(D_ET)
 end do
 
+
+if (any(isnan_ieee(DOLCE))) then
+  replace_ieeenan (DOLCE, default_value, 0)
+end if
+
+if (any(isnan_ieee(DOLCE_SD))) then
+  replace_ieeenan (DOLCE_SD, default_value, 0)
+end if
+DOLCE@_FillValue    = default_value
+DOLCE_SD@_FillValue = default_value
+
 ; Regrid DOLCE
-
-; ; Values
-; Evap_DOLCE         = new((/month_tot, lat_sum, lon_sum/), float, DOLCE_def_val)
-; Evap_DOLCE         = DOLCE_def_val
-
-; ; SD
-; Evap_DOLCE_SD      = new((/month_tot, lat_sum, lon_sum/), float, DOLCE_def_val)
-; Evap_DOLCE_SD      = DOLCE_def_val
-
 Evap_DOLCE    = linint2_Wrap(DOLCE&lon,DOLCE&lat,DOLCE,False,CABLE_lon,CABLE_lat,0)
 Evap_DOLCE_SD = linint2_Wrap(DOLCE_SD&lon,DOLCE_SD&lat,DOLCE_SD,False,CABLE_lon,CABLE_lat,0)
 printVarSummary(Evap_DOLCE)
@@ -307,32 +309,72 @@ Evap_DOLCE!1       = "lat"
 Evap_DOLCE!2       = "lon"
 Evap_DOLCE&lat     = CABLE_lat
 Evap_DOLCE&lon     = CABLE_lon
+Evap_DOLCE@_FillValue = default_value
 
 Evap_DOLCE_SD!0    = "month"
 Evap_DOLCE_SD!1    = "lat"
 Evap_DOLCE_SD!2    = "lon"
 Evap_DOLCE_SD&lat  = CABLE_lat
 Evap_DOLCE_SD&lon  = CABLE_lon
+Evap_DOLCE_SD@_FillValue = default_value
 
 ; ___________________________ Mask DOLCE ______________________________
 if PFT .eq. "tree" then
   do month = 0,month_tot -1
-    Evap_DOLCE(month,:,:) = where(PFT_mask .eq. 1 .and. .not. ismissing(Evap_DOLCE(month,:,:)),\
+    Evap_DOLCE(month,:,:)    = where(PFT_mask .eq. 1 .and. .not. ismissing(Evap_DOLCE(month,:,:)),\
                                 Evap_DOLCE(month,:,:), default_value)
     Evap_DOLCE_SD(month,:,:) = where(PFT_mask .eq. 1 .and. .not. ismissing(Evap_DOLCE_SD(month,:,:)),\
                                 Evap_DOLCE_SD(month,:,:), default_value)
   end do
 else if PFT .eq. "nontree" then
   do month = 0,month_tot -1
-    Evap_DOLCE(month,:,:) = where(PFT_mask .eq. 2 .and. .not. ismissing(Evap_DOLCE(month,:,:)),\
+    Evap_DOLCE(month,:,:)    = where(PFT_mask .eq. 2 .and. .not. ismissing(Evap_DOLCE(month,:,:)),\
                                 Evap_DOLCE(month,:,:), default_value)
     Evap_DOLCE_SD(month,:,:) = where(PFT_mask .eq. 2 .and. .not. ismissing(Evap_DOLCE_SD(month,:,:)),\
                                 Evap_DOLCE_SD(month,:,:), default_value)
   end do
 end if
 end if
+
+if (any(isnan_ieee(Evap_DOLCE))) then
+  print("Error Evap_DOLCE has NaN")
+end if
+
+if (any(isnan_ieee(Evap_DOLCE_SD))) then
+  print("Error Evap_DOLCE_SD has NaN")
+end if
+
 Evap_DOLCE@_FillValue = default_value
 Evap_DOLCE_SD@_FillValue = default_value
+
+
+; ___________________________Change Def Value__________________________________
+default_new_value = -9999.
+
+if (any(isnan_ieee(DOLCE))) then
+  replace_ieeenan (DOLCE, default_new_value, 0)
+end if
+
+if (any(isnan_ieee(DOLCE_SD))) then
+  replace_ieeenan (DOLCE_SD, default_new_value, 0)
+end if
+
+if (any(isnan_ieee(Evap_GLEAM))) then
+  replace_ieeenan (Evap_GLEAM, default_new_value, 0)
+end if
+
+if (any(isnan_ieee(Rain))) then
+  replace_ieeenan (Rain, default_new_value, 0)
+end if
+
+
+if (any(isnan_ieee(Evap))) then
+  replace_ieeenan (Evap, default_new_value, 0)
+end if
+
+if (any(isnan_ieee(Rain_mth))) then
+  replace_ieeenan (Rain_mth, default_new_value, 0)
+end if
 
 
 ; ============================= plot time series ===============================
@@ -353,10 +395,10 @@ P_E       = dim_avg_n_Wrap(Rain,(/2,3/))
 P_E       = P_E - dim_avg_n_Wrap(Evap,(/2,3/))
 P_GLEAM_E = dim_avg_n_Wrap(Rain(0,:,:,:),(/1,2/))
 P_GLEAM_E = P_GLEAM_E - dim_avg_n_Wrap(Evap_GLEAM,(/1,2/))
-print(P_GLEAM_E)
+; print(P_GLEAM_E)
 
-P_E_acl   = new((/(case_sum+1)*2,total/),float, default_value)
-P_E_acl   = default_value
+P_E_acl   = new((/(case_sum+1)*2,total/),float, default_new_value)
+P_E_acl   = default_new_value
 
 ; _________________ DOLCE ___________________
 DOLCE_E   = dim_avg_n_Wrap(Evap_DOLCE,(/1,2/))
@@ -370,11 +412,11 @@ P_DOLCE_E_minus_SD  = dim_avg_n_Wrap(Rain_mth(0,:,:,:),(/1,2/))
 P_DOLCE_E_minus_SD  = P_DOLCE_E_minus_SD - dim_avg_n_Wrap(Evap_DOLCE,(/1,2/)) - dim_avg_n_Wrap(Evap_DOLCE_SD,(/1,2/))
 
 month_total = (2009-2001+1)*12+1
-P_E_DOLCE_acl = new((/2,month_total/),float, default_value)
-P_E_DOLCE_acl = default_value
+P_E_DOLCE_acl = new((/2*3,month_total/),float, default_new_value)
+P_E_DOLCE_acl = default_new_value
 
-P_E_DOLCE_acl_SD = new((/2*2,month_total/),float, default_value)
-P_E_DOLCE_acl_SD = default_value
+P_E_DOLCE_acl_SD = new((/2*2,month_total/),float, default_new_value)
+P_E_DOLCE_acl_SD = default_new_value
 
 count = 0
 do cnt = 0, dimsizes(ts_s) -1
@@ -382,18 +424,20 @@ do cnt = 0, dimsizes(ts_s) -1
     P_E_acl(count,ts_s(cnt)-ts_s(cnt):ts_e(cnt)-ts_s(cnt)) = dim_cumsum_n_Wrap(P_E(case_num,ts_s(cnt):ts_e(cnt)), 0, 0)
     count = count + 1
   end do
-  P_E_acl(count,ts_s(cnt)-ts_s(cnt):ts_e(cnt)-ts_s(cnt)) = dim_cumsum_n_Wrap(P_GLEAM_E(ts_s(cnt):ts_e(cnt)), 0, 0)
+  P_E_acl(count,ts_s(cnt)-ts_s(cnt):ts_e(cnt)-ts_s(cnt))   = dim_cumsum_n_Wrap(P_GLEAM_E(ts_s(cnt):ts_e(cnt)), 0, 0)
   count = count + 1
-  P_E_DOLCE_acl(cnt,mth_s(cnt)-mth_s(cnt)+1:ts_e(cnt)-mth_s(cnt)+1) = \
-                                                           dim_cumsum_n_Wrap(P_DOLCE_E(mth_s(cnt):ts_e(cnt)), 0, 0)
-  P_E_DOLCE_acl_SD(cnt*2,  mth_s(cnt)-mth_s(cnt)+1:ts_e(cnt)-mth_s(cnt)+1) = \
-                                                           dim_cumsum_n_Wrap(P_DOLCE_E_plus_SD(mth_s(cnt):ts_e(cnt)), 0, 0)
-  P_E_DOLCE_acl_SD(cnt*2+1,mth_s(cnt)-mth_s(cnt)+1:ts_e(cnt)-mth_s(cnt)+1) = \
-                                                           dim_cumsum_n_Wrap(P_DOLCE_E_minus_SD(mth_s(cnt):ts_e(cnt)), 0, 0)
+  P_E_DOLCE_acl(cnt*3,   mth_s(cnt)-mth_s(cnt)+1:mth_e(cnt)-mth_s(cnt)+1) = \
+                                                           dim_cumsum_n_Wrap(P_DOLCE_E(mth_s(cnt):mth_e(cnt)), 0, 0)
+  P_E_DOLCE_acl(cnt*3+1, mth_s(cnt)-mth_s(cnt)+1:mth_e(cnt)-mth_s(cnt)+1) = \
+                                                           dim_cumsum_n_Wrap(P_DOLCE_E_plus_SD(mth_s(cnt):mth_e(cnt)), 0, 0)
+  P_E_DOLCE_acl(cnt*3+2, mth_s(cnt)-mth_s(cnt)+1:mth_e(cnt)-mth_s(cnt)+1) = \
+                                                           dim_cumsum_n_Wrap(P_DOLCE_E_minus_SD(mth_s(cnt):mth_e(cnt)), 0, 0)
 end do
 
-P_E_DOLCE_acl(:,0)    = 0.
-P_E_DOLCE_acl_SD(:,0) = P_E_DOLCE_acl_SD(:,1)
+P_E_DOLCE_acl(0,0)    = 0.
+P_E_DOLCE_acl(3,0)    = 0.
+P_E_DOLCE_acl(1:2,0)  = 0.
+P_E_DOLCE_acl(4:5,0)  = 0.
 
 r_CTL_MD = escorc(P(0,ts_s(0):ts_e(0)), E(0,ts_s(0):ts_e(0)))
 r_CTL_RD = escorc(P(0,ts_s(1):ts_e(1)), E(0,ts_s(1):ts_e(1)))
@@ -412,9 +456,15 @@ print("r_GLEAM_MD: "+r_GLEAM_MD+"  r_GLEAM_RD: "+r_GLEAM_RD)
 option        = True
 option@row    = False
 
-option@fout =  "./txt/Fig1b_time_accumulate_P-E_GLEAM_"+GLEAM_version+"_PFT-"+PFT+"_"+year_s+"-"+year_e+".txt"
-format   = total+"f15.2"
+option@fout   =  "./txt/Fig1b_time_accumulate_P-E_GLEAM_"+GLEAM_version+"_PFT-"+PFT+"_"+year_s+"-"+year_e+".txt"
+format        = total+"f20.4"
 write_matrix (P_E_acl, format, option)
+delete(option@fout)
+
+
+option@fout   =  "./txt/Fig1b_time_accumulate_P-E_DOLCE_PFT-"+PFT+"_"+year_s+"-"+year_e+".txt"
+format        = month_total+"f20.4"
+write_matrix (P_E_DOLCE_acl, format, option)
 delete(option@fout)
 
 ; ______________________________ Plotting ______________________________
@@ -519,7 +569,7 @@ res1@xyLineThicknesses  = (/ 3.5, 3.5, 3.5,  3.5, 3.5, 3.5, 3.5, 3.5/)
 res1@xyDashPatterns     = (/  0,  0,  0,   0,  0,  0,  0,  0/)
 res1@xyLineOpacities    = (/ 1., 1., 1.,  1., 1., 1., 1., 1./) ;0.5, 0.5, 0.5/)
 res1@xyLineColors       = (/"blue3","deepskyblue" /)
-plot_DOLCE   = gsn_csm_xy(wks,y,P_E_DOLCE_acl,res1)
+plot_DOLCE   = gsn_csm_xy(wks,y,P_E_DOLCE_acl(0::3,:),res1)
 overlay(plot,plot_DOLCE)
 delete(res1@xyLineThicknesses)
 delete(res1@xyDashPatterns)
@@ -536,10 +586,10 @@ res1@xyLineColor        = -1
 res1@gsnXYFillOpacities = 0.1
 
 res1@gsnXYFillColors    = "blue3"
-plot_uncert             = gsn_csm_xy (wks,y,P_E_DOLCE_acl_SD(0:1,:),res1)
+plot_uncert             = gsn_csm_xy (wks,y,P_E_DOLCE_acl(1:2,:),res1)
 overlay(plot,plot_uncert)
 res1@gsnXYFillColors    = "deepskyblue"
-plot_uncert             = gsn_csm_xy (wks,y,P_E_DOLCE_acl_SD(2:3,:),res1)
+plot_uncert             = gsn_csm_xy (wks,y,P_E_DOLCE_acl(4:5,:),res1)
 overlay(plot,plot_uncert)
 
 
@@ -578,8 +628,9 @@ textres@lgItemOrder              = (/5, 7, 3, 1, 4, 6, 2, 0/)
 lineres                          = True
 lineres@lgLineLabelFontHeightF   = 0.015                   ; font height
 lineres@lgDashIndexes            = 0
-lineres@lgLineColors             = (/"darkgreen","orange", "black","blue3",  \
-                                     "green3","gold","gray50", "deepskyblue"  /)
+lineres@lgLineColors             = (/ "darkgreen","orange","black","blue3",  \
+                                      "green3","gold","gray50","deepskyblue" \
+                                   /)
 lineres@lgLineThicknesses        = 3.5                     ; line thicknesses
 
 simple_legend_ndc(wks, genres, lineres, textres)

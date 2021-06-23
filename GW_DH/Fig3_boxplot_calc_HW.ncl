@@ -23,17 +23,17 @@ end setvalues
 
 ; ================================== Options ===================================
 year_s       = 2000
-year_e       = 2001;19
+year_e       = 2019
 operation    = "calc"    ;"calc" ; "plot"
 scale        = "SE-AU"   ;"45S-N";"30S-N";"Global" ; "50S-N" ; "SE-AU" ; "AU"
 heatwave     = "hw-90th" ; "hw-90th" ; "all-day"
 case_name    = (/"CTL-30x3+30yr/outputs-daily", "FREE_DRAIN/outputs-spinup30x3yr"/)
 case_short_name = (/"GW","FD"/)
-var_name     = "EF" ;"TVeg" ; "GPP"
+var_name     = "Fwsoil" ;"deltaT";"EF" ;"TVeg" ; "GPP"
 select_region= False
-median_diff = True
-iveg_tree_s = 1
-iveg_tree_e = 4
+median_diff  = True
+iveg_tree_s  = 1
+iveg_tree_e  = 4
 iveg_nontree_s = 5
 iveg_nontree_e = 17
 
@@ -263,27 +263,28 @@ do case_num = 0,case_sum-1
 
   ; _____________________________ Write raw data for python script ________________________________
   print("write raw data for Python script")
- 
-  date_3D = var_val_tree
+
+  date_3D = new(dimsizes(var_val_tree),integer)
+  date_3D = 0
   do day  = 1, day_sum
     date_3D(day-1,:,:) = day
   end do
-  
+
   var_tmp        = ndtooned(var_val_tree)
   delete(var_val_tree)
   date_tmp       = ndtooned(date_3D)
-  print(date_tmp)
+  ; print(date_tmp)
   var_tmp@_FillValue = def_value
   maskout_def    = ind( .not. ismissing(var_tmp))
 
   var_1D         = var_tmp(maskout_def)
   date_1D        = date_tmp(maskout_def)
 
-  print(dimsizes(var_1D))
-  print(var_1D(0))
-  print(dimsizes(date_1D)) 
-  print(date_1D(0))
-  ; output list 
+  ; print(dimsizes(var_1D))
+  ; print(var_1D(0))
+  ; print(dimsizes(date_1D))
+  ; print(date_1D)
+  ; output list
 
   output_filename = "./txt/"+var_name+"_"+case_short_name(case_num)+"_rawdata_4_Python.txt"
 

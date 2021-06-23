@@ -24,15 +24,14 @@ from sklearn.metrics import mean_squared_error
 def Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff):
 
     """
-    (a) box-whisker of fwsoil
-    (b) fwsoil vs SM
+
     """
 
     # ======================= Plot setting ============================
-    fig, axs = plt.subplots(2, 2, figsize=(10, 11))
+    fig, axs = plt.subplots(2, 2, figsize=(7, 5))
     fig.subplots_adjust(hspace=0.20)
     fig.subplots_adjust(wspace=0.12)
-
+    print(axs)
     plt.rcParams['text.usetex']     = False
     plt.rcParams['font.family']     = "sans-serif"
     plt.rcParams['font.serif']      = "Helvetica"
@@ -67,19 +66,23 @@ def Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff):
     ts_s    = [ 335, 700, 1065, 1430, 1796, 2161, 2526, 2891, 3257, 3622,
                 3987,4352, 4718, 5083, 5448, 5813, 6179, 6544, 6909]
 
-    ts_e    = [ 425, 790, 1155, 1521, 1886, 2251, 2616, 2982, 3347, 3712, 
+    ts_e    = [ 425, 790, 1155, 1521, 1886, 2251, 2616, 2982, 3347, 3712,
                 4077, 4443, 4808,5173, 5538, 5904, 6269, 6634, 6999]
+
     orders  = ['(a)','(b)','(c)','(d)']
 
     # ==================== Start ====================
     for i, var_name in enumerate(var_names):
+
+        row = i//2 # round
+        col = i%2  # mod
 
         filename_GW = "./txt/"+var_name+"_GW_rawdata_4_Python.txt"
         filename_FD = "./txt/"+var_name+"_FD_rawdata_4_Python.txt"
 
         var_GW      = pd.read_csv(filename_GW, header = None, names= ["date","GW"])
         var_FD      = pd.read_csv(filename_FD, header = None, names= ["date","FD"])
-
+        print(var_GW)
         data_len    = len(var_GW)
         var_all     = pd.DataFrame(np.zeros(data_len*2),columns=['values'])
 
@@ -96,61 +99,75 @@ def Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff):
 
         var_all['year']                        = NaN * data_len*2
 
-        year = 2001
-        for i in np.arange(len(ts_s)):
-            var_all['year'][var_all['date'] >= ts_s[i] and var_all['date'] <= ts_e[i]] = year+i
+        for k in np.arange(len(var_all)):
+            for j in np.arange(len(ts_s)):
+                if var_all['date'][k] >= ts_s[j] and var_all['date'][k] <= ts_e[j]:
+                    var_all['year'][k] = 2001+k
+
+        print(var_all['year'])
+
 
         # ========================= box-whisker ============================
-       
         # seaborn
         #sns.color_palette("Set2", 8)
         #flatui = ["orange", "dodgerblue"]
         #aaa = sns.set_palette(flatui)
         sns.boxplot(x="year", y="values", hue="case", data=var_all, palette="BrBG",
                     order=np.arange(2001,2019),  width=0.7, hue_order=['GW','FD'],
-                    ax=axs[i], showfliers=False, color=almost_black) # palette="Set2",
+                    ax=axs[i], showfliers=False, whis=0, color=almost_black) # palette="Set2",
 
-        axs[i].set_ylabel(ylabels[i])
-        axs[i].set_xlabel("")
-        axs[i].axis('tight')
-        axs[i].set_ylim(ranges[i])
-        axs[i].legend(loc='best', frameon=False)
-        axs[i].text(0.02, 0.95, orders[i], transform=axs[i].transAxes, fontsize=14, verticalalignment='top', bbox=props)
+        axs[row,col].set_ylabel(ylabels[i])
+        axs[row,col].set_xlabel("")
+        axs[row,col].axis('tight')
+        axs[row,col].set_ylim(ranges[i])
+        axs[row,col].legend(loc='best', frameon=False)
 
         #colors = cm.Set3(np.arange(0,len(case_labels)))
 
 
         # ========================= difference lines ============================
-        y = np.arange(1,19)
-        diff = ??? 
-        ax[i].scatter(y, diff,  s=1., marker='-', alpha=0.45, c="black")
+        file_metrics = "./txt/"+var_name+"_CTL_FD_yearly_box_stats.txt"
 
-        ax[i].set_xlim()
-        ax[i].set_ylim(ranges_diff[i])
-        ax[i].set_ylabel(ylabels_R[i])
+        var_median   = pd.read_fwf(file_metrics, header = None,
+                                   names= ['min','x25','median','x75','max'])
+        median_diff  = np.zeros(19)
+        print(var_median)
 
-        ax[i].legend(numpoints=1, loc='best', frameon=False)
-        ax[i].text(0.02, 0.95, orders[i], transform=ax[i].transAxes, fontsize=14, verticalalignment='top', bbox=props)
-        #plt.setp(ax2.get_yticklabels(), visible=False)
+        for l in np.arange(0,19):
+            loc1 = l*5+2 # location for GW tree
+            loc2 = l*5+3 # location for FD tree
 
+            median_diff[l] = var_median['median'][loc1] - var_median['median'][loc2]
+
+        print(median_diff)
+
+        y = np.arange(1,20)
+        print(axs[row,col])
+        axs[row,col].plot(y, median_diff,alpha=0.45, c=almost_black)
+
+        axs[row,col].set_xlim()
+        axs[row,col].set_ylim(ranges_diff[i])
+        axs[row,col].set_ylabel(ylabels_R[i])
 
         # ========================= shadings ============================
+        color = (1., 0.972549, 0.862745) # named color "cornsilk" in ncl
+        axs[row,col].axvspan(1,  9, facecolor=color, alpha=0.5)
+        axs[row,col].axvspan(17, 19, facecolor=color, alpha=0.5)
 
-
-
+        # ========================== order ========================
+        axs[row,col].text(0.02, 0.95, orders[i], fontsize=14, verticalalignment='top', bbox=props) # , transform=axs[i].transAxes
+        #plt.setp(ax2.get_yticklabels(), visible=False)
 
     fig.savefig("./plots/Fig3_revision_boxplot" , bbox_inches='tight', pad_inches=0.1)
-
-
 
 
 if __name__ == "__main__":
 
 
-    var_names   = ["deltaT","EF","TVeg","Fwsoil"]
-    ylabels     = ["ΔT (oC)","EF (-)","Et (mm d-1)","β (-)"]
-    ylabels_R   = ["ΔT_GW - ΔT_FD (oC)","ΔEF (-)","ΔEt (mm d-1)","Δβ (-)"]
-    ranges      = [[-0.5, 5], [0., 0.8], [0., 3.8], [0., 1.05]]
-    ranges_diff = [[-0.8, 0.], [0., 0.2], [0., 1.1], [0., 0.4]]
-  
+    var_names   = ["EF"]      #["deltaT","EF","TVeg","Fwsoil"]
+    ylabels     = ["EF (-)"]  #["ΔT (oC)","EF (-)","Et (mm d-1)","β (-)"]
+    ylabels_R   = ["ΔEF (-)"] #["ΔT_GW - ΔT_FD (oC)","ΔEF (-)","ΔEt (mm d-1)","Δβ (-)"]
+    ranges      = [0., 3.8] #[[-0.5, 5], [0., 0.8], [0., 3.8], [0., 1.05]]
+    ranges_diff = [0., 1.1] #[[-0.8, 0.], [0., 0.2], [0., 1.1], [0., 0.4]]
+
     Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff)

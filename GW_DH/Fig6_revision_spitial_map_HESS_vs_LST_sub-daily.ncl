@@ -865,6 +865,10 @@ gsn_panel(wks,(/plots/),(/5,2/),pres) ;(/3,4/),pres)
 
 
 ; _____________ Fig 7 _______________
+do cnt = 0, 1;9;11
+  txid1   = gsn_create_text(wks, order_name(cnt), txres)
+  annoid1 = gsn_add_annotation(plots3(cnt), txid1, amres)
+end do
 
 gsn_panel(wks,(/plots3/),(/5,2/),pres)
 

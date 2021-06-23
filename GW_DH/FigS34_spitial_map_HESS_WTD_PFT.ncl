@@ -236,8 +236,28 @@ res@lbLabelAlignment           = "BoxCenters"
 res@cnLevels = levels
 plots = gsn_csm_contour_map(wks2,PFT,res)
 
-cmp = read_colormap_file("drought_severity")
-print(cmp)
+; ________________ add order name ________________
+pres                            = True
+pres@wkWidth                    = 2500
+pres@wkHeight                   = 2500
+pres@gsnMaximize                = False
+pres@gsnPanelYWhiteSpacePercent = 0.1
+pres@gsnPanelXWhiteSpacePercent = 0.1
+
+txres                           = True
+txres@txPerimOn                 = False
+txres@txFont                    = 25
+txres@txFontHeightF             = 0.04
+amres                           = True
+amres@amParallelPosF            = -0.45    ; This is the right edge of the plot.
+amres@amOrthogonalPosF          = -0.45    ; This is the bottom edge of the plot.
+amres@amJust                    = "TopLeft"
+
+txid  = gsn_create_text(wks2, "(a)", txres)
+annoid = gsn_add_annotation(plots, txid, amres)
+gsn_panel(wks2,plots,(/1,1/),pres)
+; cmp = read_colormap_file("drought_severity")
+; print(cmp)
 
 
 end
