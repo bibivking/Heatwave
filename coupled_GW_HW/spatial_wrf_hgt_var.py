@@ -13,10 +13,10 @@ from wrf import (getvar, interplevel, get_cartopy, cartopy_xlim,
 def plot_spatial_wrf_Tair_Wind(file_path,height,timeidx):
 
     ######################################################
-    # Note that since I have updated Python, get_basemap cannot work 
+    # Note that since I have updated Python, get_basemap cannot work
     # for the new version. Thus the function cannot really work.
     ######################################################
-    
+
     from wrf import get_basemap
 
     # Open the NetCDF file
@@ -171,13 +171,13 @@ def plot_spatial_wrf_var_Wind(case_name,file_path,var_name,var_unit,height,timei
 
 if __name__ == "__main__":
 
-    path      = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/free_drain_hires_r7264/WRF_output/"
-    file_name = "wrfout_d01_2012-12-01_00:00:00"
+    path      = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/free_drain_11Jul/WRF_output/"
+    file_name = "wrfout_d01_2013-01-01_03:00:00"
     file_path = path+file_name
     var_name  = "temp"
     var_unit  = "degC"
     height    = 850
     case_name = "FD"
     val_min, val_max = -50, 50
-    for timeidx in np.arange(0,249):
+    for timeidx in np.arange(0,112):
       plot_spatial_wrf_var_Wind(case_name,file_path,var_name,var_unit,height,timeidx,val_min,val_max)

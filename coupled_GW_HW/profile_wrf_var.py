@@ -146,7 +146,7 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_
 if __name__ == "__main__":
 
     ### plot_profile_wrf_var
-    case_names = ['free_drain_hires_r7264','hires_r7264'] # the first case_name is set as control by default
+    case_names = ['free_drain_11Jul','ctl_11Jul'] # the first case_name is set as control by default
     file_name  = "wrfout_d01_2013-01-01_03:00:00"
     var_name   = "th"
     var_units  = "degC"

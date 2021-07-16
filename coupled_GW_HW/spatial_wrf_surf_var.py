@@ -390,7 +390,7 @@ if __name__ == "__main__":
     #     ims.append([plot_spatial_wrf_surf_var_diff(file_paths, case_names, var_name, val_min, var_max, timeidx)])
 
     ### plot_spatial_wrf_surf_var_diff_period_mean
-    case_names = ['free_drain_hires_r7264','hires_r7264'] # the first case_name is set as control by default
+    case_names = ['free_drain_11Jul','ctl_11Jul'] # the first case_name is set as control by default
     file_name  = "wrfout_d01_2013-01-01_03:00:00"
     var_name   = "T2"
     val_min, var_max = -5, 5
@@ -403,7 +403,9 @@ if __name__ == "__main__":
 
     timeidx_s = 0      # 12 pm at 4th - 8th Jan 2013
     timeidx_e = 14*8
-    tss       = [0, 1, 2, 3, 4, 5, 6, 7]      # 12 pm
+    tss       = [ 0,   1,   2,    3,   4,   5,   6,    7 ]
+              # 3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm, 12am
+              # 1pm, 4pm, 7pm, 10pm, 1am, 4am, 7am, 10am
     for ts in tss:
         plot_spatial_wrf_surf_var_diff_period_mean(file_paths, case_names, var_name, val_min, var_max, timeidx_s, timeidx_e, ts)
 
