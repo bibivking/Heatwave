@@ -72,10 +72,10 @@ def plot_spatial_wrf_Tair_Wind(file_path,height,timeidx):
 
     plt.show()
 
-def plot_spatial_wrf_var_Wind(case_name,file_path,var_name,var_unit,height,timeidx,val_min,val_max):
+def plot_spatial_wrf_var_Wind(case_names,file_paths,var_name,message,var_unit,height,timeidx,val_min=None,val_max=None): 
 
     # Open the NetCDF file
-    ncfile = Dataset(file_path)
+    ncfile = Dataset(file_paths[0])
 
     # Extract the pressure, geopotential height, and wind variables
     p    = getvar(ncfile, "pressure")
@@ -146,7 +146,10 @@ def plot_spatial_wrf_var_Wind(case_name,file_path,var_name,var_unit,height,timei
     # x, y = bm(to_np(lons), to_np(lats))
 
     # Add the 500 hPa geopotential height contours
-    levels =  np.arange(512, 600, 4.)
+    if height == 500:
+        levels = np.arange(512, 600, 4.)
+    elif height == 850:
+        levels = np.arange(1300, 1560, 4.)
     contours = plt.contour(to_np(lons), to_np(lats), to_np(z_hgt), levels = levels, colors="black",
                         transform=crs.PlateCarree())
     plt.clabel(contours, inline=1, fontsize=10, fmt="%i")
@@ -167,34 +170,50 @@ def plot_spatial_wrf_var_Wind(case_name,file_path,var_name,var_unit,height,timei
 
     plt.title("500hPa Geopotential Height (dm), "+str(height)+"hPa Temperature (degC) and Barbs (m s-1) timestep-"+str(timeidx))
 
-    fig.savefig("./plots/spatial_wrf_"+var_name+"_"+case_name+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
+    fig.savefig("./plots/spatial_wrf_"+message+"_"+var_name+"_"+case_names[0]+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
 
-def plot_spatial_wrf_var_Wind_diff(case_names,file_paths,var_name,var_unit,height,timeidx,val_min,val_max): ??? unfinish
+def plot_spatial_wrf_var_Wind_diff(case_names,file_paths,var_name,message,var_unit,height,timeidx,val_min=None,val_max=None): 
 
     # Open the NetCDF file
     ncfile1 = Dataset(file_paths[0])
     ncfile2 = Dataset(file_paths[1])
 
     # Extract the pressure, geopotential height, and wind variables
-    p    = getvar(ncfile1, "pressure")
-    var  = getvar(ncfile1, var_name, units=var_unit,timeidx=timeidx)
-    z    = getvar(ncfile1, "z", units="dm",timeidx=timeidx)
-    ua   = getvar(ncfile1, "ua", units="m s-1",timeidx=timeidx)
-    va   = getvar(ncfile1, "va", units="m s-1",timeidx=timeidx)
+    p1    = getvar(ncfile1, "pressure")
+    var1  = getvar(ncfile1, var_name, units=var_unit,timeidx=timeidx)
+    z1    = getvar(ncfile1, "z", units="dm",timeidx=timeidx)
+    ua1   = getvar(ncfile1, "ua", units="m s-1",timeidx=timeidx)
+    va1   = getvar(ncfile1, "va", units="m s-1",timeidx=timeidx)
+
+
+    p2    = getvar(ncfile2, "pressure")
+    var2  = getvar(ncfile2, var_name, units=var_unit,timeidx=timeidx)
+    z2    = getvar(ncfile2, "z", units="dm",timeidx=timeidx)
+    ua2   = getvar(ncfile2, "ua", units="m s-1",timeidx=timeidx)
+    va2   = getvar(ncfile2, "va", units="m s-1",timeidx=timeidx)
 
     # Interpolate geopotential height, u, and v winds to 500 hPa
-    var_hgt  = interplevel(var, p, height)
-    u_hgt    = interplevel(ua, p, height)
-    v_hgt    = interplevel(va, p, height)
-    z_hgt    = interplevel(z, p, 500)
+    var_hgt1  = interplevel(var1, p1, height)
+    u_hgt1    = interplevel(ua1, p1, height)
+    v_hgt1    = interplevel(va1, p1, height)
+    z_hgt1    = interplevel(z1, p1, height)
+
+    var_hgt2  = interplevel(var2, p2, height)
+    u_hgt2    = interplevel(ua2, p2, height)
+    v_hgt2    = interplevel(va2, p2, height)
+    z_hgt2    = interplevel(z2, p2, height)
+
+    # Calculate difference
+    var_diff = var_hgt2 - var_hgt1
+    u_diff   = u_hgt2 - u_hgt1
+    v_diff   = v_hgt2 - v_hgt1
+    z_diff   = z_hgt2 - z_hgt1
 
     # Get the lat/lon coordinates
-    lats, lons = latlon_coords(var_hgt)
+    lats, lons = latlon_coords(var_hgt1)
 
-    # Get the basemap object
-    # bm         = get_basemap(var_hgt)
     # Get the cartopy mapping object
-    cart_proj = get_cartopy(var_hgt)
+    cart_proj = get_cartopy(var_hgt1)
 
     # Create the figure
     fig = plt.figure(figsize=(12,9))
@@ -242,46 +261,49 @@ def plot_spatial_wrf_var_Wind_diff(case_names,file_paths,var_name,var_unit,heigh
     # x, y = bm(to_np(lons), to_np(lats))
 
     # Add the 500 hPa geopotential height contours
-    levels =  np.arange(512, 600, 4.)
-    contours = plt.contour(to_np(lons), to_np(lats), to_np(z_hgt), levels = levels, colors="black",
-                        transform=crs.PlateCarree())
+    # if height == 500:
+    #     levels = np.arange(-10., 10, 2.)
+    # elif height == 850:
+    levels = np.arange(-10., 10., 2.)
+    contours = plt.contour(to_np(lons), to_np(lats), to_np(z_diff), levels = levels, colors="black",
+                        transform=crs.PlateCarree())#
     plt.clabel(contours, inline=1, fontsize=10, fmt="%i")
 
-    # Add the wind speed contours
-    levels = np.arange(val_min, val_max, 5.)
-    wspd_contours = plt.contourf(to_np(lons), to_np(lats), to_np(var_hgt), levels = levels,
-                         transform=crs.PlateCarree(), cmap=get_cmap("coolwarm")) #"jet" #“rainbow”
-    plt.colorbar(wspd_contours, ax=ax, orientation="horizontal", pad=.05)
+    # Add the var contours
+    levels = np.arange(val_min, val_max, 0.1)
+    var_contours = plt.contourf(to_np(lons), to_np(lats), to_np(var_diff), levels = levels,
+                         transform=crs.PlateCarree(), cmap=get_cmap("bwr")) #"jet" #“rainbow”#"coolwarm"
+    plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)
 
     # Set the map bounds
-    ax.set_xlim(cartopy_xlim(var_hgt))
-    ax.set_ylim(cartopy_ylim(var_hgt))
+    ax.set_xlim(cartopy_xlim(var_hgt1))
+    ax.set_ylim(cartopy_ylim(var_hgt1))
 
     # Add the 500 hPa wind barbs, only plotting every 125th data point.
-    ax.quiver(to_np(lons[::5,::5]), to_np(lats[::5,::5]), to_np(u_hgt[::5, ::5]),
-             to_np(v_hgt[::5, ::5]),  transform=crs.PlateCarree()) #scale=5,
+    ax.quiver(to_np(lons[::5,::5]), to_np(lats[::5,::5]), to_np(u_diff[::5, ::5]),
+             to_np(v_diff[::5, ::5]), scale=20., transform=crs.PlateCarree()) # width=0.0002,
 
-    plt.title("500hPa Geopotential Height (dm), "+str(height)+"hPa Temperature (degC) and Barbs (m s-1) timestep-"+str(timeidx))
+    plt.title(str(height)+"hPa Geopotential Height (dm), Temperature (degC) and Barbs (m s-1) timestep-"+str(timeidx))
 
-    fig.savefig("./plots/spatial_wrf_diff_"+var_name+"_"+case_name+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
+    fig.savefig("./plots/spatial_wrf_diff_"+message+"_"+str(height)+"hPa_"+var_name+"_"+case_names[0]+"_vs_"+case_names[1]+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
 
 
 if __name__ == "__main__":
 
     case_names = ['free_drain_11Jul','ctl_11Jul'] # the first case_name is set as control by default
-    file_name  = "wrfout_d01_2013-01-01_03:00:00"
-
+    file_name  = "wrfout_d01_2012-12-01_00:00:00"
+    message    = "201212"
     var_name   = "temp"
     var_unit   = "degC"
-    height     = 850
-    case_name  = "FD"
-    val_min, val_max = -50, 50
+    heights    = [1000,850,500,300]
+    val_min, val_max = -1.5, 1.5
 
     file_paths = []
     for case_name in case_names:
-        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
+        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/"
         file_path  = path + file_name
-        file_paths.append(file_path)
-
-    for timeidx in np.arange(0,112):
-      plot_spatial_wrf_var_Wind(case_name,file_path,var_name,var_unit,height,timeidx,val_min,val_max)
+        file_paths.append(file_path) 
+    for height in heights:
+        for timeidx in np.arange(0,24):
+            print(timeidx)
+            plot_spatial_wrf_var_Wind_diff(case_names,file_paths,var_name,message,var_unit,height,timeidx,val_min,val_max)
