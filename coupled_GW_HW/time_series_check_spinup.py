@@ -10,7 +10,7 @@ from common_utils import *
 def read_LIS_CABLE(flis,var_name,var_dim,latidxs=None,lonidxs=None):
 
     data = Dataset(flis, mode='r')
-
+    
     # Replace _FillValues with NaNs:
     if var_dim == 3:
         if latidxs == None and lonidxs == None:
@@ -28,8 +28,16 @@ def read_LIS_CABLE(flis,var_name,var_dim,latidxs=None,lonidxs=None):
         var = np.nanmean(var_nans, axis=(1,2))
     elif var_dim == 4:
         var = np.nanmean(var_nans, axis=(2,3))
+
+
+    scale, units = get_var_scale(var_name)
+    if scale == -273.15:
+        var = var*1.0 + scale
+    else:
+        var = var*scale
+        
     data.close()
-    # print(var[5000])
+
     return var
 
 def calc_all_in_one(file_mark,file_path,var_name,var_dim,case_name,layer=None,latidxs=None,lonidxs=None):
@@ -45,14 +53,14 @@ def calc_all_in_one(file_mark,file_path,var_name,var_dim,case_name,layer=None,la
         if len(np.shape(var)) == 1:
             np.savetxt("./txt/"+file_mark+"_"+case_name+"_"+var_name+".txt",var)
         elif len(np.shape(var)) == 2:
-            np.savetxt("./txt/"+file_mark+"_"+case_name+"_"+var_name+"_lvl-"+layer+".txt",var[:,layer])
+            np.savetxt("./txt/"+file_mark+"_"+case_name+"_"+var_name+"_lvl-"+str(layer)+".txt",var[:,layer])
     else:
         var = read_LIS_CABLE(file_path,var_name,var_dim,latidxs=latidxs,lonidxs=lonidxs)
         if len(np.shape(var)) == 1:
             np.savetxt("./txt/"+file_mark+"_"+case_name+"_"+var_name+"_lat-"+str(latidxs[0])+"-"+str(latidxs[1])+
                    "_lon-"+str(lonidxs[0])+"-"+str(lonidxs[1])+".txt",var)
         elif len(np.shape(var)) == 2:
-            np.savetxt("./txt/"+file_mark+"_"+case_name+"_"+var_name+"_lvl-"+layer+"_lat-"+str(latidxs[0])+"-"+str(latidxs[1])+
+            np.savetxt("./txt/"+file_mark+"_"+case_name+"_"+var_name+"_lvl-"+str(layer)+"_lat-"+str(latidxs[0])+"-"+str(latidxs[1])+
                    "_lon-"+str(lonidxs[0])+"-"+str(lonidxs[1])+".txt",var[:,layer])
 
 def plot_monthly(var_name,var_dim,year_s,year_e,layer=None):
@@ -94,13 +102,13 @@ def plot_monthly(var_name,var_dim,year_s,year_e,layer=None):
                 day_s = day_e
         plot_time_series(var,var_name)
 
-def plot_all_in_one(file_mark,var_name,case_names,lvl=None,latidxs=None,lonidxs=None):
+def plot_all_in_one(file_mark,var_name,case_names,layer=None,latidxs=None,lonidxs=None):
 
     # get var shape
     txt_name = "./txt/"+file_mark+"_"+case_names[0]+"_"+var_name
     
-    if lvl != None:
-        txt_name = txt_name + "_lvl-"+layer
+    if layer != None:
+        txt_name = txt_name + "_lvl-"+str(layer)
     if latidxs!=None and lonidxs!=None:
         txt_name = txt_name +"_lat-"+str(latidxs[0])+"-"+str(latidxs[1])+"_lon-"+str(lonidxs[0])+"-"+str(lonidxs[1])
     txt_name = txt_name + ".txt"
@@ -110,36 +118,30 @@ def plot_all_in_one(file_mark,var_name,case_names,lvl=None,latidxs=None,lonidxs=
     var = np.zeros((len(case_names),len(var_tmp)))
     var_tmp = None
 
-    # get var scale 
-    scale, units = get_var_scale(var_name)
-
     # read var 
     for i, case_name in enumerate(case_names):
         txt_name = "./txt/"+file_mark+"_"+case_name+"_"+var_name
-        if lvl != None:
-            txt_name = txt_name + "_lvl-"+layer
+        if layer != None:
+            txt_name = txt_name + "_lvl-"+str(layer)
         if latidxs!=None and lonidxs!=None:
             txt_name = txt_name +"_lat-"+str(latidxs[0])+"-"+str(latidxs[1])+"_lon-"+str(lonidxs[0])+"-"+str(lonidxs[1])
         txt_name = txt_name + ".txt"
         
-        if scale == -273.15:
-            var[i,:] = np.loadtxt(txt_name,dtype='float')*1.0 + scale
-        else:
-            var[i,:] = np.loadtxt(txt_name,dtype='float')*scale
+        var[i,:] = np.loadtxt(txt_name,dtype='float')
 
     message = case_names[0]+"_vs_"+case_names[1]
-    if lvl != None:
-        message = message + "_lvl-"+layer
+    if layer != None:
+        message = message + "_lvl-"+str(layer)
     if latidxs!=None and lonidxs!=None:
         message = message + "_lat-"+str(latidxs[0])+"-"+str(latidxs[1])+"_lon-"+str(lonidxs[0])+"-"+str(lonidxs[1])
     plot_time_series(var,var_name,case_names,message) 
 
-def plot_diff_all_in_one(file_mark,var_name,case_names,lvl=None,latidxs=None,lonidxs=None):
+def plot_diff_all_in_one(file_mark,var_name,case_names,layer=None,latidxs=None,lonidxs=None):
 
     # read var txt file
     txt_name = var_name
-    if lvl != None:
-        txt_name = txt_name + "_lvl-"+layer
+    if layer != None:
+        txt_name = txt_name + "_lvl-"+str(layer)
     if latidxs!=None and lonidxs!=None:
         txt_name = txt_name +"_lat-"+str(latidxs[0])+"-"+str(latidxs[1])+"_lon-"+str(lonidxs[0])+"-"+str(lonidxs[1])
 
@@ -154,19 +156,19 @@ def plot_diff_all_in_one(file_mark,var_name,case_names,lvl=None,latidxs=None,lon
     print(var_diff.dtype)
 
     message = case_names[0]+"_vs_"+case_names[1]+"_diff"
-    if lvl != None:
-        message = message + "_lvl-"+layer
+    if layer != None:
+        message = message + "_lvl-"+str(layer)
     if latidxs!=None and lonidxs!=None:
         message = message + "_lat-"+str(latidxs[0])+"-"+str(latidxs[1])+"_lon-"+str(lonidxs[0])+"-"+str(lonidxs[1])
 
     plot_time_series(var_diff,var_name,case_names,message)
 
-def plot_value_diff_all_in_one(file_mark,var_name,case_names,lvl=None,latidxs=None,lonidxs=None):
+def plot_value_diff_all_in_one(file_mark,var_name,case_names,layer=None,latidxs=None,lonidxs=None):
 
     # read var txt file
     txt_name = var_name
-    if lvl != None:
-        txt_name = txt_name + "_lvl-"+layer
+    if layer != None:
+        txt_name = txt_name + "_lvl-"+str(layer)
     if latidxs!=None and lonidxs!=None:
         txt_name = txt_name +"_lat-"+str(latidxs[0])+"-"+str(latidxs[1])+"_lon-"+str(lonidxs[0])+"-"+str(lonidxs[1])
 
@@ -187,8 +189,8 @@ def plot_value_diff_all_in_one(file_mark,var_name,case_names,lvl=None,latidxs=No
     var[2,:] = var_diff
 
     message = case_names[0]+"_vs_"+case_names[1]+"_value-diff"
-    if lvl != None:
-        message = message + "_lvl-"+layer
+    if layer != None:
+        message = message + "_lvl-"+str(layer)
     if latidxs!=None and lonidxs!=None:
         message = message + "_lat-"+str(latidxs[0])+"-"+str(latidxs[1])+"_lon-"+str(lonidxs[0])+"-"+str(lonidxs[1])
     case_names.append("Ctl-FD")
@@ -343,15 +345,15 @@ if __name__ == "__main__":
             plot_diff_all_in_one(file_mark,file_paths,case_names,var_name,var_dim,layer)
 
     # plot actual value and diff
-    if plot_type == "value":
+    if plot_type == "value-diff":
         case_names = ['free_drain_11Jul','ctl_11Jul']
-        file_name  = "LIS.CABLE.201201-201301.nc"
+        file_name  = "LIS.CABLE.201201-201301.nc" #"LIS.CABLE.201201-201301.nc"
         file_mark  = "LIS.CABLE.201201-201301"
         latidxs    = [10,80]
         lonidxs    = [120,200]
-        layer      = 6
-        var_dim    = 3
-        var_names  =  var_3D_basic_names
+        layer      = 1
+        var_dim    = 4
+        var_names  = ["SoilMoist_inst","SoilTemp_inst"] # var_3D_basic_names
 
         file_paths = []
         for case_name in case_names:
@@ -360,7 +362,8 @@ if __name__ == "__main__":
             file_paths.append(file_path)
 
         # plot per var
-        for var_name in var_names:
-            for i in np.arange(len(file_paths)):
-                calc_all_in_one(file_mark,file_paths[i],var_name,var_dim,case_names[i],layer=layer,latidxs=latidxs,lonidxs=lonidxs)
-            plot_value_diff_all_in_one(file_mark,var_name,case_names,latidxs=latidxs,lonidxs=lonidxs)
+        for layer in np.arange(0,6):
+            for var_name in var_names:
+                for i in np.arange(len(file_paths)):
+                    calc_all_in_one(file_mark,file_paths[i],var_name,var_dim,case_names[i],layer=layer,latidxs=latidxs,lonidxs=lonidxs)
+                plot_value_diff_all_in_one(file_mark,var_name,case_names,layer=layer,latidxs=latidxs,lonidxs=lonidxs) 

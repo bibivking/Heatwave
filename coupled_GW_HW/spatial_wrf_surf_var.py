@@ -260,7 +260,7 @@ def plot_spatial_wrf_surf_var_diff_period_mean(file_paths, case_names, var_name,
     ncfile1 = Dataset(file_paths[0])
     ncfile2 = Dataset(file_paths[1])
 
-    # Get the sea level pressure
+    # Get the variable
     var_tmp1 = getvar(ncfile1,var_name,timeidx=ALL_TIMES)
     var_tmp2 = getvar(ncfile2,var_name,timeidx=ALL_TIMES)
     # print(var_tmp1)
@@ -336,7 +336,8 @@ def plot_spatial_wrf_surf_var_diff_period_mean(file_paths, case_names, var_name,
     # Add the gridlines
     ax.gridlines(color="black", linestyle="dotted")
 
-    plt.title("2m Temperature (K) of ts="+str(ts))
+    # plt.title("2m Temperature (K) of ts="+str(ts))
+    plt.title("2m Relative Humidity (%) of ts="+str(ts))
     if ts == None:
         fig.savefig("./plots/spatial_wrf_surf_diff_"+var_name+"_"+case_names[0]+"_vs_"+case_names[1]
                 +"_period-"+str(timeidx_s)+"-"+str(timeidx_e), bbox_inches='tight', pad_inches=0.1)
@@ -392,8 +393,8 @@ if __name__ == "__main__":
     ### plot_spatial_wrf_surf_var_diff_period_mean
     case_names = ['free_drain_11Jul','ctl_11Jul'] # the first case_name is set as control by default
     file_name  = "wrfout_d01_2013-01-01_03:00:00"
-    var_name   = "T2"
-    val_min, var_max = -5, 5
+    var_name   = "rh2" #"T2"
+    val_min, var_max = -10, 10
 
     file_paths = []
     for case_name in case_names:

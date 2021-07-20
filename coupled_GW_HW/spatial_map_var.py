@@ -6,57 +6,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.ticker as mticker
-from convert_units import get_var_scale
-
-def get_var_range_diff(var_name):
-
-    '''
-    Convert units
-    '''
-
-    var_s2d        = ["Rainf_f_inst","Rainf_tavg","Evap_tavg","ECanop_tavg","TVeg_tavg","ESoil_tavg","Qs_tavg","Qsb_tavg",
-                      "Snowf_tavg"]
-    var_umol_s2g_d = ["GPP_tavg"]
-    var_wm2        = ["Qle_tavg","Qh_tavg","Qg_tavg","Swnet_tavg","Lwnet_tavg","SWdown_f_inst","LWdown_f_inst"]
-    var_degc       = ["VegT_tavg","AvgSurfT_tavg","Tair_f_inst"]
-    var_percent    = ["Albedo_inst","FWsoil_tavg","SnowCover_inst","Qair_f_inst"]
-    var_ms         = ["Wind_f_inst"]
-    var_hPa        = ["Psurf_f_inst"]
-    var_mm         = ["SWE_inst"]
-    var_m          = ["SnowDepth_inst","SoilWet_inst"]
-
-    ranges         = [0.0,0.0]
-
-    if var_name in var_s2d:
-        ranges[0] = -20.
-        ranges[1] = 20.
-    elif var_name in var_umol_s2g_d:
-        ranges[0] = -20.
-        ranges[1] = 20.
-    elif var_name in var_wm2:
-        ranges[0] = -20.
-        ranges[1] = 20.
-    elif var_name in var_degc:
-        ranges[0] = -10.
-        ranges[1] = 10.
-    elif var_name in var_percent:
-        ranges[0] = -0.5
-        ranges[1] = 0.5
-    elif var_name in var_ms:
-        ranges[0] = -10.
-        ranges[1] = 10.
-    elif var_name in var_hPa:
-        ranges[0] = -50.
-        ranges[1] = 50.
-    elif var_name in var_mm:
-        ranges[0] = -100.
-        ranges[1] = 100.
-    elif var_name in var_m:
-        ranges[0] = -1.
-        ranges[1] = 1.
-    else:
-        ranges = None
-    return ranges
+from convert_units import get_var_scale, get_var_range_diff
 
 def plot_map_var(file_path, var_name):
 
@@ -199,7 +149,7 @@ def plot_map_var_ts(case_name,file_path, wrf_path, var_names, ts):
         plt.savefig('./plots/spatial_map_'+case_name+'_'+var_name+'_ts-'+str(ts)+'.png',dpi=1200)
         Var = None
 
-def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e,lvl=None):
+def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e,layer=None):
 
     # Open the NetCDF4 file (add a directory path if necessary) for reading:
 
@@ -249,15 +199,16 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_name
 
         # clevs = np.arange(np.min(Var),np.max(Var)+(np.max(Var)-np.max(Var))/20.,(np.max(Var)-np.max(Var))/20.)
         if ranges == None:
-            if len(np.shape(Var)) == 2:
+            if len(np.shape(Var)) == 2: # 3D var
                 plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.seismic) # , T2M_daily_avg
-            if len(np.shape(Var)) == 3:
-                plt.contourf(lon, lat, Var[lvl,:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.seismic) # clevs, T2M_daily_avg
+            if len(np.shape(Var)) == 3: # 4D var
+                plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.seismic) # clevs, T2M_daily_avg
         else:
             if len(np.shape(Var)) == 2:
                 plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.seismic,vmin=ranges[0], vmax=ranges[1]) # , T2M_daily_avg
             if len(np.shape(Var)) == 3:
-                plt.contourf(lon, lat, Var[lvl,:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.seismic,vmin=ranges[0], vmax=ranges[1]) # clevs, T2M_daily_avg
+                print(Var[layer,:,:])
+                plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.seismic,vmin=ranges[0], vmax=ranges[1]) # clevs, T2M_daily_avg
 
 
         cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
@@ -276,14 +227,14 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_name
         cb.set_label(units_string,size=14,rotation=270,labelpad=15)
         if is_diff:
             if len(np.shape(Var)) == 3: # 4-D var
-                plt.savefig('./plots/spatial_map_'+var_name+'-'+lvl+'_'+case_names[0]+'_vs_'+case_names[1]
+                plt.savefig('./plots/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_vs_'+case_names[1]
                             + '_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=1200)
             else:
                 plt.savefig('./plots/spatial_map_'+var_name+'_'+case_names[0]+'_vs_'+case_names[1]
                             + '_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=1200)
         else:
             if len(np.shape(Var)) == 3:
-                plt.savefig('./plots/spatial_map_'+var_name+'-'+lvl+'_'+case_names[0]+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=1200)
+                plt.savefig('./plots/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=1200)
             else:
                 plt.savefig('./plots/spatial_map_'+var_name+'_'+case_names[0]+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=1200)
         Var = None
@@ -330,7 +281,7 @@ if __name__ == "__main__":
     file_name  = "LIS.CABLE.198212-201301.nc"
     file_paths = []
     is_diff    = True #False
-    layer      = 0
+    layer      = 1
     for case_name in case_names:
         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
         file_path  = path + file_name
@@ -339,14 +290,14 @@ if __name__ == "__main__":
     # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
     wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
     d2012121   = 10524
-    ts_s       = d2012121 #-366 #+ 30 + 1
-    ts_e       = d2012121 # + 30 + 14  # 2013-01-04  #- 2012-12-01
-    var_names  = ["SoilMoist_inst","SoilTemp_inst","FWsoil_tavg"]
-    #  ['Evap_tavg',"ESoil_tavg","ECanop_tavg",'TVeg_tavg',"FWsoil_tavg","Qle_tavg","Qh_tavg","Qg_tavg",
+    ts_s       = d2012121 -1  +31 #-366 #+ 30 + 1
+    ts_e       = d2012121 -1 + 1  +31 # + 30 + 14  # 2013-01-04  #- 2012-12-01
+    var_names  = ["SoilMoist_inst","SoilTemp_inst"]
+    # ,'Evap_tavg',"ESoil_tavg","ECanop_tavg",'TVeg_tavg',"FWsoil_tavg","Qle_tavg","Qh_tavg","Qg_tavg"
     #   "Swnet_tavg","Lwnet_tavg","Snowf_tavg","Rainf_f_inst","Tair_f_inst", "Qair_f_inst",
     #   "Rainf_tavg","Qs_tavg","Qsb_tavg","AvgSurfT_tavg",
     #   "Albedo_inst","SWE_inst","SnowDepth_inst","SoilWet_inst",
     #   "CanopInt_inst","SnowCover_inst","Wind_f_inst",
     #   "Psurf_f_inst","SWdown_f_inst","LWdown_f_inst"]# "VegT_tavg","GPP_tavg",
-
-    plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e, layer)
+    for layer in np.arange(0,6):
+        plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e, layer=layer)

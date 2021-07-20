@@ -17,7 +17,10 @@ def plot_profile_wrf_var(file_path, case_name, var_name, var_units, timeidx):
     # Get the WRF variables
     z          = getvar(ncfile, "z", timeidx=timeidx)
     print(z)
-    var        = getvar(ncfile, var_name, units=var_units, timeidx=timeidx)
+    if var_units == None:
+        var        = getvar(ncfile, var_name, timeidx=timeidx)
+    else: 
+        var        = getvar(ncfile, var_name, units=var_units, timeidx=timeidx)
 
     # Set the start point and end point for the cross section
     start_point = CoordPair(lat=-30., lon=115.0)
@@ -67,8 +70,10 @@ def plot_profile_wrf_var(file_path, case_name, var_name, var_units, timeidx):
     ax.set_ylabel("Height (m)", fontsize=12)
 
     # Add titles
-    ax.set_title(var_name+" ("+var_units+") ts-"+str(timeidx), {"fontsize" : 12})
-
+    if var_units == None:
+        ax.set_title(var_name+" ts-"+str(timeidx), {"fontsize" : 12})
+    else:
+        ax.set_title(var_name+" ("+var_units+") ts-"+str(timeidx), {"fontsize" : 12})
     fig.savefig("./plots/profile_wrf_"+var_name+"_"+case_name+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
 
 def plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_units, timeidx_s, timeidx_e, ts=None):
@@ -79,8 +84,12 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_
 
     # Get the WRF variables
     z           = getvar(ncfile1, "z")
-    var_tmp1    = getvar(ncfile1, var_name, units=var_units, timeidx=ALL_TIMES)
-    var_tmp2    = getvar(ncfile2, var_name, units=var_units, timeidx=ALL_TIMES)
+    if var_units == None:
+        var_tmp1    = getvar(ncfile1, var_name, timeidx=ALL_TIMES)
+        var_tmp2    = getvar(ncfile2, var_name, timeidx=ALL_TIMES)
+    else:
+        var_tmp1    = getvar(ncfile1, var_name, units=var_units, timeidx=ALL_TIMES)
+        var_tmp2    = getvar(ncfile2, var_name, units=var_units, timeidx=ALL_TIMES)
 
     if ts == None:
         var_1 = np.mean(var_tmp1[timeidx_s:timeidx_e],axis=0)
@@ -107,7 +116,8 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_
     ax      = fig.add_subplot(1,1,1)
 
     # Make the contour plot for var
-    levels  = np.arange(-5, 6, 1)
+    # levels  = np.arange(-5, 6, 1)
+    levels  = np.arange(-40, 41, 2)
     var_contours = ax.contourf(to_np(var_cross), levels=levels, cmap=get_cmap("coolwarm"))
 
     # Add the color bar
@@ -134,7 +144,11 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_
     ax.set_ylabel("Height (m)", fontsize=12)
 
     # Add titles
-    ax.set_title(var_name+" ("+var_units+") ts-"+str(ts), {"fontsize" : 12})
+
+    if var_units == None:
+        ax.set_title(var_name+" ts-"+str(ts), {"fontsize" : 12})
+    else:
+        ax.set_title(var_name+" ("+var_units+") ts-"+str(ts), {"fontsize" : 12})
 
     if ts == None:
         fig.savefig("./plots/profile_wrf_diff_"+var_name+"_"+case_names[0]+"_vs_"+case_names[1]
@@ -148,8 +162,8 @@ if __name__ == "__main__":
     ### plot_profile_wrf_var
     case_names = ['free_drain_11Jul','ctl_11Jul'] # the first case_name is set as control by default
     file_name  = "wrfout_d01_2013-01-01_03:00:00"
-    var_name   = "th"
-    var_units  = "degC"
+    var_name   = 'rh' #"th"
+    var_units  = None #'%' #"degC"
 
     file_paths = []
     for case_name in case_names:
