@@ -10,15 +10,15 @@ import numpy as np
 
 
 ### Root distribution ###
-PFT_number = [2, 5, 6, 9, 14, 2]	
+PFT_number = [2, 5, 6, 9, 14, 2]
 rootbetas  = [0.962, 0.964, 0.943, 0.961, 0.961, 0.99]
-PFT_names  = ['''evergreen 
-broadleaf 
-forest''',"shrub","grassland","cropland","bareland","modified"]
+PFT_names  = ['''evergreen
+broadleaf
+forest''',"shrub","grassland","cropland","barren land","DR"]
 
 # Fixing random state for reproducibility
-depths        = np.arange(0,460,10) 
-root_fraction = np.zeros((len(PFT_number),len(depths))) 
+depths        = np.arange(0,460,10)
+root_fraction = np.zeros((len(PFT_number),len(depths)))
 
 for i,rootbeta in enumerate(rootbetas):
     for j,depth in enumerate(depths):
@@ -32,13 +32,13 @@ fig.subplots_adjust(wspace=0.2)
 
 plt.rcParams['text.usetex']     = False
 plt.rcParams['font.family']     = "sans-serif"
-plt.rcParams['font.serif']      = "Helvetica"
+plt.rcParams['font.serif']      = "Times New Roman"
 plt.rcParams['axes.linewidth']  = 1.5
-plt.rcParams['axes.labelsize']  = 14
-plt.rcParams['font.size']       = 14
-plt.rcParams['legend.fontsize'] = 12
-plt.rcParams['xtick.labelsize'] = 12
-plt.rcParams['ytick.labelsize'] = 14
+plt.rcParams['axes.labelsize']  = 15
+plt.rcParams['font.size']       = 15
+plt.rcParams['legend.fontsize'] = 14
+plt.rcParams['xtick.labelsize'] = 15
+plt.rcParams['ytick.labelsize'] = 15
 
 almost_black = '#262626'
 # change the tick colors also to the almost black
@@ -82,7 +82,6 @@ xticklabels    = ["0", "20", "40", "60", "80", "100"]
 ax.set(xticks=xtickslocs, xticklabels=xticklabels)
 ax.set(yticks=ytickslocs, yticklabels=yticklabels)
 
-
 ax.axis('tight')
 ax.set_ylim(0.,460)
 ax.set_ylabel("Depth (m)")
@@ -90,8 +89,7 @@ ax.set_xlim(0.,1.01)
 ax.set_xlabel("Root Fraction (%)")
 ax.invert_yaxis()
 
-ax.text(0.02, 0.95, '(b)', transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+ax.text(0.02, 0.93, '(b)', transform=ax.transAxes, fontsize=17, verticalalignment='top', bbox=props)
 ax.legend(loc='lower left',prop={'size': 12}, frameon=False)
 
 fig.savefig("./plots/FigS4_profile_root_distribution", bbox_inches='tight', pad_inches=0.1)
-

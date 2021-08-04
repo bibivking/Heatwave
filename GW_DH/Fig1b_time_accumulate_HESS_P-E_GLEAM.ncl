@@ -490,6 +490,7 @@ else if (mode .eq. "plot" .or. mode .eq. "all") then
       txt_name        =  "./txt/Fig1b_time_accumulate_P-E_DOLCE_PFT-"+PFT+"_"+year_s+"-"+year_e+".txt"
       P_E_DOLCE_acl   = asciiread(txt_name,(/6,month_total/),"float")
       P_E_DOLCE_acl@_FillValue = default_new_value
+      print(P_E_DOLCE_acl(0::3,:))
     end if
 
     ; ______________________________ Plotting ______________________________

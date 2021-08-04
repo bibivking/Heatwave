@@ -1,40 +1,74 @@
 #!/usr/bin/env python
 
-__author__  = "MU Mengyuan"
-__version__ = "1.0 (22.03.2021)"
-__email__   = "mu.mengyuan815@gmail.com"
+"""
+Example plot...
 
-import os
-import sys
-import glob
-import numpy as np
-from numpy.core.numeric import NaN
+That's all folks.
+"""
+__author__ = "Martin De Kauwe"
+__version__ = "1.0 (24.06.2021)"
+__email__ = "mdekauwe@gmail.com"
+
+
 import pandas as pd
+from datetime import date, timedelta
+import sys
 import matplotlib.pyplot as plt
-import matplotlib.colors
-import datetime as dt
-import netCDF4 as nc
-import scipy.stats as stats
+import numpy as np
 import seaborn as sns
-from matplotlib import cm
-from matplotlib import ticker
-from scipy.interpolate import griddata
-from sklearn.metrics import mean_squared_error
 
-def Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff):
 
-    """
+def read_summer_heatwave(fname, start_yr):
 
-    """
+    df = pd.read_csv(fname, header=None)
+    df.columns = ["day", "var"]
 
-    # ======================= Plot setting ============================
-    fig, axs = plt.subplots(2, 2, figsize=(7, 5))
-    fig.subplots_adjust(hspace=0.20)
-    fig.subplots_adjust(wspace=0.12)
-    print(axs)
+    # Add correct timestamps
+    start = date(start_yr,1,1)
+    dates = []
+    for i in range(len(df)):
+
+        delta = timedelta(int(df.day[i]) - 1) # days from start_yr-01-01
+        offset = start + delta
+        dates.append(offset)
+
+    df["dates"] = dates
+    #df = df.set_index('dates')
+
+    df.index = pd.to_datetime(df.dates, format = '%Y/%m/%d', utc=False)
+    df["year"] = df.index.year
+    df_summer_hw = df[np.any([ np.all( [ df.index.month == 12, df.index.year < 2019 ], axis=0),
+                               np.all( [ df.index.month <= 2,  df.index.year > 2000 ], axis=0) ], axis=0)]
+
+    for year in np.arange(2000,2019):
+        # df_summer_hw[np.all([df_summer_hw.index.month == 12, df_summer_hw.index.year == year], axis=0)]['year'] = year + 1
+        df_summer_hw['year'].loc[np.all([df_summer_hw.index.month == 12, df_summer_hw.index.year == year], axis=0)] = year + 1
+
+    print(df_summer_hw)
+    return df_summer_hw
+
+def align_yaxis(ax1, v1, ax2, v2):
+    """adjust ax2 ylimit so that v2 in ax2 is aligned to v1 in ax1"""
+    _, y1 = ax1.transData.transform((0, v1))
+    _, y2 = ax2.transData.transform((0, v2))
+    inv = ax2.transData.inverted()
+    _, dy = inv.transform((0, 0)) - inv.transform((0, y1-y2))
+    miny, maxy = ax2.get_ylim()
+    ax2.set_ylim(miny+dy, maxy+dy)
+
+def Fig3_boxplot(start_yr,var_names,ylabels,ylabels_R,ranges,ranges_diff):
+
+    # set plots
+    sns.set_style("ticks")
+    sns.set_style({"xtick.direction": "in","ytick.direction": "in"})
+    sns.set_theme(style="ticks", palette="pastel")
+
+    fig, axs = plt.subplots(2, 2, figsize=(12,7), constrained_layout = True)
+
+    # fig = plt.figure(figsize=(12,6))
     plt.rcParams['text.usetex']     = False
     plt.rcParams['font.family']     = "sans-serif"
-    plt.rcParams['font.serif']      = "Helvetica"
+    plt.rcParams['font.serif']      = "Times New Roman"
     plt.rcParams['axes.linewidth']  = 1.5
     plt.rcParams['axes.labelsize']  = 14
     plt.rcParams['font.size']       = 14
@@ -60,114 +94,115 @@ def Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff):
     props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
     #colors = cm.Set2(np.arange(0,len(case_labels)))
 
-    # ==================== Summers ===================
-            # 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,\
-            # 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
-    ts_s    = [ 335, 700, 1065, 1430, 1796, 2161, 2526, 2891, 3257, 3622,
-                3987,4352, 4718, 5083, 5448, 5813, 6179, 6544, 6909]
-
-    ts_e    = [ 425, 790, 1155, 1521, 1886, 2251, 2616, 2982, 3347, 3712,
-                4077, 4443, 4808,5173, 5538, 5904, 6269, 6634, 6999]
-
     orders  = ['(a)','(b)','(c)','(d)']
 
-    # ==================== Start ====================
     for i, var_name in enumerate(var_names):
 
         row = i//2 # round
         col = i%2  # mod
 
+        # -------------------- boxplot ---------------------
+
+        # read box values
         filename_GW = "./txt/"+var_name+"_GW_rawdata_4_Python.txt"
         filename_FD = "./txt/"+var_name+"_FD_rawdata_4_Python.txt"
 
-        var_GW      = pd.read_csv(filename_GW, header = None, names= ["date","GW"])
-        var_FD      = pd.read_csv(filename_FD, header = None, names= ["date","FD"])
-        print(var_GW)
-        data_len    = len(var_GW)
-        var_all     = pd.DataFrame(np.zeros(data_len*2),columns=['values'])
+        df_gw = read_summer_heatwave(filename_GW, start_yr)
+        df_gw['experiment'] = "GW"
+        df_fd = read_summer_heatwave(filename_FD, start_yr)
+        df_fd['experiment'] = "FD"
 
-        var_all['values'][0:data_len]          = var_GW["GW"]
-        var_all['values'][data_len:data_len*2] = var_FD["FD"]
-
-        var_all['case']                        = [''] * data_len*2
-        var_all['case'][0:data_len]            = ['GW'] * data_len
-        var_all['case'][data_len:data_len*2]   = ['FD'] * data_len
-
-        var_all['date']                        = [0] * data_len*2
-        var_all['date'][0:data_len]            = var_GW["date"]
-        var_all['date'][data_len:data_len*2]   = var_FD["date"]
-
-        var_all['year']                        = NaN * data_len*2
-
-        for k in np.arange(len(var_all)):
-            for j in np.arange(len(ts_s)):
-                if var_all['date'][k] >= ts_s[j] and var_all['date'][k] <= ts_e[j]:
-                    var_all['year'][k] = 2001+k
-
-        print(var_all['year'])
+        # make one dataframe
+        df = pd.concat([df_gw,df_fd])
+        print(df)
 
 
-        # ========================= box-whisker ============================
-        # seaborn
-        #sns.color_palette("Set2", 8)
-        #flatui = ["orange", "dodgerblue"]
-        #aaa = sns.set_palette(flatui)
-        sns.boxplot(x="year", y="values", hue="case", data=var_all, palette="BrBG",
-                    order=np.arange(2001,2019),  width=0.7, hue_order=['GW','FD'],
-                    ax=axs[i], showfliers=False, whis=0, color=almost_black) # palette="Set2",
+        axs2 = axs[row,col].twinx()
 
-        axs[row,col].set_ylabel(ylabels[i])
-        axs[row,col].set_xlabel("")
-        axs[row,col].axis('tight')
+
+        # Adding shadings
+        # fill_color = (1., 0.972549, 0.862745) # named color "cornsilk" in ncl
+        axs[row,col].fill_between([-0.5, 8.5], ranges[i][0], ranges[i][1], facecolor="gray", alpha=0.1)
+        axs[row,col].fill_between([15.5, 18.5], ranges[i][0], ranges[i][1], facecolor="gray", alpha=0.1)
+
+        # Plotting boxplot
+        sns.boxplot(x="year", y="var", data=df, ax=axs[row,col],
+                        showfliers=False, palette=["b", "r"],
+                        hue="experiment", whis=0) # ["m", "g"]
+
+        xtickslocs     = [    0,   1,      2,  3,      4,  5,      6,  7,      8,  9,
+                             10,  11,     12,  13,    14, 15,     16, 17,     18     ]
+        xticklabels    = ["2001", "", "2003", "", "2005", "", "2007", "", "2009", "",
+                          "2011", "", "2013", "", "2015", "", "2017", "", "2019"     ]
+        # plt.setp(axs[row,col].get_xticklabels(), visible=False)
+
+
+        axs[row,col].set_xlim([-1.,19.])
         axs[row,col].set_ylim(ranges[i])
-        axs[row,col].legend(loc='best', frameon=False)
+        axs[row,col].set_ylabel(ylabels[i],fontsize=14)
+        axs[row,col].yaxis.set_tick_params(labelsize=12)
 
-        #colors = cm.Set3(np.arange(0,len(case_labels)))
+        axs[row,col].set_xlabel(" ",fontsize=14)
+        axs[row,col].set(xticks=xtickslocs, xticklabels=xticklabels)
+        axs[row,col].xaxis.set_tick_params(labelsize=12,labelrotation=45)
+        # axs[row,col].xtick.label.set_rotation(45)
+        # axs[row,col].yaxis.label.set_size(14)
+        # axs[row,col].ytick.label.set_size(14)
 
 
-        # ========================= difference lines ============================
-        file_metrics = "./txt/"+var_name+"_CTL_FD_yearly_box_stats.txt"
+        if row == 0:
+            # axs[row,col].get_xaxis().set_visible(False)
+            plt.setp(axs[row,col].get_xticklabels(), visible=False)
 
-        var_median   = pd.read_fwf(file_metrics, header = None,
-                                   names= ['min','x25','median','x75','max'])
-        median_diff  = np.zeros(19)
-        print(var_median)
+        axs[row,col].text(0.01, 0.95, orders[i],transform=axs[row,col].transAxes, fontsize=16, verticalalignment='top', bbox=props) #
 
-        for l in np.arange(0,19):
-            loc1 = l*5+2 # location for GW tree
-            loc2 = l*5+3 # location for FD tree
 
-            median_diff[l] = var_median['median'][loc1] - var_median['median'][loc2]
+        # -------------------- lines ---------------------
+        # read line values
+        medians_gw = df_gw.groupby(['year'])['var'].median().values
+        medians_fd = df_fd.groupby(['year'])['var'].median().values
 
-        print(median_diff)
+        # Plotting boxplot
+        axs2.plot(medians_gw-medians_fd, ls="-", color="gray", label="GW-FD")
+        #align_yaxis(ax, 0, ax2, 0)
 
-        y = np.arange(1,20)
-        print(axs[row,col])
-        axs[row,col].plot(y, median_diff,alpha=0.45, c=almost_black)
+        axs2.set_ylim(ranges_diff[i])
+        axs2.set_ylabel(ylabels_R[i],fontsize=14)
+        axs2.yaxis.set_tick_params(labelsize=12)
+        #
+        # axs2.xaxis.label.set_size(14)
+        # axs2.xtick.label.set_size(14)
+        # set_xticklabels(ax1_x, fontsize=15)
+        # axs2.yaxis.label.set_size(14)
+        # axs2.ytick.label.set_size(14)
 
-        axs[row,col].set_xlim()
-        axs[row,col].set_ylim(ranges_diff[i])
-        axs[row,col].set_ylabel(ylabels_R[i])
+        # for ind, label in enumerate(axs[row,col].get_xticklabels()):
+        #     if ind % 2 == 0:  # every 2nd label
+        #         label.set_visible(True)
+        #         plt.setp(axs[row,col].get_xticklabels(), visible=True)
+        #         axs[row,col].set(xticks=xtickslocs, xticklabels=xticklabels)
+        #     else:
+        #         label.set_visible(False)
+        #         plt.setp(axs[row,col].get_xticklabels(), visible=True)
+        #         axs[row,col].set(xticks=xtickslocs, xticklabels=xticklabels)
 
-        # ========================= shadings ============================
-        color = (1., 0.972549, 0.862745) # named color "cornsilk" in ncl
-        axs[row,col].axvspan(1,  9, facecolor=color, alpha=0.5)
-        axs[row,col].axvspan(17, 19, facecolor=color, alpha=0.5)
+        if row == 0 and col ==0:
+            axs[row,col].legend(numpoints=1, loc="best", frameon=False) # loc=(0.7, 0.8)
+            # axs2.legend(numpoints=1, loc="best", frameon=False)
+        else:
+            axs[row,col].get_legend().remove()
 
-        # ========================== order ========================
-        axs[row,col].text(0.02, 0.95, orders[i], fontsize=14, verticalalignment='top', bbox=props) # , transform=axs[i].transAxes
-        #plt.setp(ax2.get_yticklabels(), visible=False)
-
-    fig.savefig("./plots/Fig3_revision_boxplot" , bbox_inches='tight', pad_inches=0.1)
+    fig.savefig("./plots/Fig3_revision_boxplot_HW_drght_yearly.png", bbox_inches='tight', dpi=300, pad_inches=0.1) #
 
 
 if __name__ == "__main__":
 
 
-    var_names   = ["EF"]      #["deltaT","EF","TVeg","Fwsoil"]
-    ylabels     = ["EF (-)"]  #["ΔT (oC)","EF (-)","Et (mm d-1)","β (-)"]
-    ylabels_R   = ["ΔEF (-)"] #["ΔT_GW - ΔT_FD (oC)","ΔEF (-)","ΔEt (mm d-1)","Δβ (-)"]
-    ranges      = [0., 3.8] #[[-0.5, 5], [0., 0.8], [0., 3.8], [0., 1.05]]
-    ranges_diff = [0., 1.1] #[[-0.8, 0.], [0., 0.2], [0., 1.1], [0., 0.4]]
+    var_names   = ["deltaT","EF","TVeg","Fwsoil"]
+    ylabels     = ["ΔT ($\mathregular{^o}$C)","EF (-)","Et (mm d$\mathregular{^{-1}}$)","$β$ (-)"]
+    ylabels_R   = ["ΔT$\mathregular{_{GW}}$ - ΔT$\mathregular{_{FD}}$ ($\mathregular{^o}$C)","ΔEF (-)","ΔEt (mm d$\mathregular{^{-1}}$)","Δ$β$ (-)"]
+    ranges      = [[-0.5, 5], [0., 0.8], [0., 3.8], [0., 1.05]]
+    ranges_diff = [[-0.8, 0.], [0., 0.2], [0., 1.1], [0., 0.4]]
+    start_yr    = 2000
 
-    Fig3_boxplot(var_names,ylabels,ylabels_R,ranges,ranges_diff)
+    Fig3_boxplot(start_yr,var_names,ylabels,ylabels_R,ranges,ranges_diff)
