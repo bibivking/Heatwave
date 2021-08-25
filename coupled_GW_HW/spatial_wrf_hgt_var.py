@@ -290,7 +290,7 @@ def plot_spatial_wrf_var_Wind_diff(case_names,file_paths,var_name,message,var_un
 
 if __name__ == "__main__":
 
-    case_names = ['free_drain_11Jul','ctl_11Jul'] # the first case_name is set as control by default
+    case_names = ['free_drain_25Jul','ctl_25Jul'] # the first case_name is set as control by default
     file_name  = "wrfout_d01_2012-12-01_00:00:00"
     message    = "201212"
     var_name   = "temp"

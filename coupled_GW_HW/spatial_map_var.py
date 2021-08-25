@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.ticker as mticker
-from convert_units import get_var_scale, get_var_range_diff
+from convert_units import get_land_var_scale, get_land_var_range_diff
+from common_utils import get_reverse_colormap
 
 def plot_map_var(file_path, var_name):
 
@@ -55,7 +56,7 @@ def plot_map_var(file_path, var_name):
         # ax.gridlines(linestyle='--',color='black')
         # # Plot windspeed: set contour levels, then draw the filled contours and a colorbar
         # clevs = np.arange(0,19,1)
-        # plt.contourf(lon, lat, ws_daily_avg, clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.jet)
+        # plt.contourf(lon, lat, ws_daily_avg, clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.seismic)
         #
         # plt.title('MERRA-2 Daily Average 2-meter Wind Speed, 1 June 2010', size=14)
         # cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
@@ -84,14 +85,14 @@ def plot_map_var(file_path, var_name):
         gl.ylabel_style = {'size':10, 'color':'black'}
         # Plot windspeed
         clevs = np.arange(10,50,2)
-        plt.contourf(lon, lat, Var[i,:,:], clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.jet) # T2M_daily_avg
+        plt.contourf(lon, lat, Var[i,:,:], clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.seismic) # T2M_daily_avg
         plt.title('AWAP Tmax ' + str(i-15675), size=16)
         cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
         cb.set_label('C',size=14,rotation=0,labelpad=15)
         cb.ax.tick_params(labelsize=10)
         # Overlay wind vectors
         # qv = plt.quiver(lon, lat, U10M[i,:,:], V10M[i,:,:], scale=420, color='k')
-        plt.savefig('./plots/'+var_name+'-'+str(i-15675)+'.png',dpi=1200)
+        plt.savefig('./plots/'+var_name+'-'+str(i-15675)+'.png',dpi=300)
 
 def plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, layer=None):
 
@@ -108,11 +109,11 @@ def plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, l
     for ts in tss:
         for var_name in var_names:
             print(var_name)
-            scale, units = get_var_scale(var_name)
+            scale, units = get_land_var_scale(var_name)
             if is_diff:
-                ranges = get_var_range_diff(var_name)
+                ranges = get_land_var_range_diff(var_name)
                 if scale == -273.15:
-                    Var = var2.variables[var_name][ts] - var1.variables[var_name][ts] 
+                    Var = var2.variables[var_name][ts] - var1.variables[var_name][ts]
                 else:
                     Var = (var2.variables[var_name][ts] - var1.variables[var_name][ts])*scale
             else:
@@ -139,17 +140,24 @@ def plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, l
             gl.xlabel_style = {'size':10, 'color':'black'}
             gl.ylabel_style = {'size':10, 'color':'black'}
 
-            # clevs = np.arange(np.min(Var),np.max(Var)+(np.max(Var)-np.max(Var))/20.,(np.max(Var)-np.max(Var))/20.)
+            if get_reverse_colormap(var_name) == None:
+                cmap = plt.cm.seismic
+            elif get_reverse_colormap(var_name) == True:
+                cmap = plt.cm.seismic_r
+            else:
+                cmap = plt.cm.seismic
+
             if ranges == None:
                 if len(np.shape(Var)) == 2:
-                    plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.jet) 
+                    plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=cmap)
                 elif len(np.shape(Var)) == 3:
-                    plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.jet) 
+                    plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=cmap)
             else:
+                clevs = np.linspace(ranges[0],ranges[1], num=21)
                 if len(np.shape(Var)) == 2:
-                    plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.jet,vmin=ranges[0], vmax=ranges[1]) 
+                    plt.contourf(lon, lat, Var[:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap)
                 if len(np.shape(Var)) == 3:
-                    plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.jet,vmin=ranges[0], vmax=ranges[1]) 
+                    plt.contourf(lon, lat, Var[layer,:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap)
 
             cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
 
@@ -169,15 +177,15 @@ def plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, l
             if is_diff:
                 if len(np.shape(Var)) == 3: # 4-D var
                     plt.savefig('./plots/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_vs_'+case_names[1]
-                                + '_ts-'+str(ts)+'.png',dpi=1200)
+                                + '_ts-'+str(ts)+'.png',dpi=300)
                 else:
                     plt.savefig('./plots/spatial_map_'+var_name+'_'+case_names[0]+'_vs_'+case_names[1]
-                                + '_ts-'+str(ts)+'.png',dpi=1200)
+                                + '_ts-'+str(ts)+'.png',dpi=300)
             else:
                 if len(np.shape(Var)) == 3:
-                    plt.savefig('./plots/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_ts-'+str(ts)+'.png',dpi=1200)
+                    plt.savefig('./plots/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_ts-'+str(ts)+'.png',dpi=300)
                 else:
-                    plt.savefig('./plots/spatial_map_'+var_name+'_'+case_names[0]+'_ts-'+str(ts)+'.png',dpi=1200)
+                    plt.savefig('./plots/spatial_map_'+var_name+'_'+case_names[0]+'_ts-'+str(ts)+'.png',dpi=300)
             Var = None
 
 def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e,layer=None):
@@ -196,9 +204,9 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_name
     for var_name in var_names:
 
         print(var_name)
-        scale, units = get_var_scale(var_name)
+        scale, units = get_land_var_scale(var_name)
         if is_diff:
-            ranges = get_var_range_diff(var_name)
+            ranges = get_land_var_range_diff(var_name)
             if scale == -273.15:
                 Var   = ( np.mean(var2.variables[var_name][ts_s:ts_e],axis=0)
                         - np.mean(var1.variables[var_name][ts_s:ts_e],axis=0))
@@ -228,19 +236,31 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_name
         gl.xlabel_style = {'size':10, 'color':'black'}
         gl.ylabel_style = {'size':10, 'color':'black'}
 
-        # clevs = np.arange(np.min(Var),np.max(Var)+(np.max(Var)-np.max(Var))/20.,(np.max(Var)-np.max(Var))/20.)
-        if ranges == None:
-            if len(np.shape(Var)) == 2: # 3D var
-                plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.seismic) # , T2M_daily_avg
-            if len(np.shape(Var)) == 3: # 4D var
-                plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.seismic) # clevs, T2M_daily_avg
+
+        if get_reverse_colormap(var_name) == None:
+            cmap = plt.cm.seismic
+        elif get_reverse_colormap(var_name) == True:
+            cmap = plt.cm.seismic_r
+        else:
+            cmap = plt.cm.seismic
+
+        if is_diff:
+            if ranges == None:
+                if len(np.shape(Var)) == 2:
+                    plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=cmap)
+                elif len(np.shape(Var)) == 3:
+                    plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=cmap)
+            else:
+                clevs = np.linspace(ranges[0],ranges[1], num=21)
+                if len(np.shape(Var)) == 2:
+                    plt.contourf(lon, lat, Var[:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap)
+                if len(np.shape(Var)) == 3:
+                    plt.contourf(lon, lat, Var[layer,:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap)
         else:
             if len(np.shape(Var)) == 2:
-                plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.seismic,vmin=ranges[0], vmax=ranges[1]) # , T2M_daily_avg
-            if len(np.shape(Var)) == 3:
-                print(Var[layer,:,:])
-                plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=plt.cm.seismic,vmin=ranges[0], vmax=ranges[1]) # clevs, T2M_daily_avg
-
+                plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=cmap)
+            elif len(np.shape(Var)) == 3:
+                plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=cmap)
 
         cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
 
@@ -258,16 +278,16 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_name
         cb.set_label(units_string,size=14,rotation=270,labelpad=15)
         if is_diff:
             if len(np.shape(Var)) == 3: # 4-D var
-                plt.savefig('./plots/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_vs_'+case_names[1]
-                            + '_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=1200)
+                plt.savefig('./plots/last_year_spinup/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_vs_'+case_names[1]
+                            + '_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=300)
             else:
-                plt.savefig('./plots/spatial_map_'+var_name+'_'+case_names[0]+'_vs_'+case_names[1]
-                            + '_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=1200)
+                plt.savefig('./plots/last_year_spinup/spatial_map_'+var_name+'_'+case_names[0]+'_vs_'+case_names[1]
+                            + '_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=300)
         else:
             if len(np.shape(Var)) == 3:
-                plt.savefig('./plots/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=1200)
+                plt.savefig('./plots/last_year_spinup/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=300)
             else:
-                plt.savefig('./plots/spatial_map_'+var_name+'_'+case_names[0]+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=1200)
+                plt.savefig('./plots/last_year_spinup/spatial_map_'+var_name+'_'+case_names[0]+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=300)
         Var = None
 
 if __name__ == "__main__":
@@ -278,30 +298,34 @@ if __name__ == "__main__":
                        "FWsoil_tavg","ESoil_tavg","CanopInt_inst","SnowCover_inst","GPP_tavg","Wind_f_inst",
                        "Rainf_f_inst","Tair_f_inst", "Qair_f_inst","Psurf_f_inst","SWdown_f_inst","LWdown_f_inst"]
 
-    var_2D_names =  ["Landmask_inst","Landcover_inst","Soiltype_inst","SandFrac_inst","ClayFrac_inst","SiltFrac_inst",
-                     "SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst","Hyds_inst","Bch_inst","Sucs_inst",
-                     "Elevation_inst","LAI_inst"]
+    var_landinfo_3D_names =  ["Landmask_inst","Landcover_inst","Soiltype_inst","SandFrac_inst","ClayFrac_inst","SiltFrac_inst",
+                              "SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst","Hyds_inst","Bch_inst","Sucs_inst",
+                              "Elevation_inst","LAI_inst"]
 
     var_4D_names =  ["RelSMC_inst","SoilMoist_inst","SoilTemp_inst","SmLiqFrac_inst","SmFrozFrac_inst"]
 
-    var_3D_basic_names = ['Evap_tavg',"ESoil_tavg","ECanop_tavg",'TVeg_tavg',"FWsoil_tavg","Qle_tavg","Qh_tavg","Qg_tavg"]
+    var_3D_basic_names = ['Evap_tavg',"ESoil_tavg","ECanop_tavg",'TVeg_tavg',"FWsoil_tavg","Qle_tavg","Qh_tavg","Qg_tavg","VegT_tavg","WaterTableD_tavg"]
 
 
-    # ### plot AWAP Tmax
+    ######################
+    #   Plot AWAP Tmax   #
+    ######################
+
     # path      = '/g/data/w35/Shared_data/Observations/AWAP_all_variables/daily/tmax/'
     # file_name = 'AWAP_daily_tmax_1970_2019.nc'
     # file_path = path + file_name
     # var_name  = 'tmax'
     # plot_map_var(file_path, var_name)
 
+    ############################################
+    #   plot LIS variables at timestep = ts    # 
+    ############################################
 
-    # ### plot LIS variables at timestep = ts
     # file_name  = "LIS.CABLE.198212-201301.nc"
     # d2012121   = 10524
     # ts         = d2012121 # d2012121+30 + 4  # 2013-01-04  #- 2012-12-01
     # # var_names  = ["Albedo_inst","Landcover_inst","Landmask_inst","Soiltype_inst","SandFrac_inst","ClayFrac_inst","SiltFrac_inst",
     # #               "SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst","Hyds_inst","Bch_inst","Sucs_inst","Elevation_inst","LAI_inst"]"GPP_tavg","VegT_tavg",
-
 
     # case_name  = 'ctl_11Jul'
     # path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
@@ -316,12 +340,51 @@ if __name__ == "__main__":
     # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
     # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
     # plot_map_var_ts(case_name,file_path, wrf_path, var_names, ts)
+    
+    #############################
+    #   plot plot_map_var_ts    # 
+    #############################
 
-    ### plot plot_map_var_ts
-    case_names = ['free_drain_11Jul','ctl_11Jul']
+    # case_names = ['free_drain_25Jul','ctl_25Jul']
+    # file_name  = "LIS.CABLE.198212-201301.nc"
+    # file_paths = []
+    # is_diff    = True #False
+    # for case_name in case_names:
+    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
+    #     file_path  = path + file_name
+    #     file_paths.append(file_path)
+    #
+    # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
+    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
+    #
+    # d2012121   = 10524
+    # tss        = []
+    #
+    # # 2012-11-22 ~ 2012-12-10
+    # for ts in np.arange(d2012121-10,d2012121+10):
+    #     tss.append(ts)
+    #
+    # # 2012-12-26 ~ 2013-01-14
+    # for ts in np.arange(d2012121+31-5,d2012121+31+14):
+    #     tss.append(ts)
+    #
+    # var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg","FWsoil_tavg","Qh_tavg"]
+    #             #  ["Rainf_tavg","Tair_f_inst", "Qair_f_inst"]
+    # plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss)
+    #
+    # var_names  = ["SoilMoist_inst","SoilTemp_inst"]
+    # for layer in np.arange(0,6):
+    #     plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, layer=layer)
+
+
+    ######################################
+    #   plot plot_map_var_period_mean    # 
+    ######################################
+    case_names = ['free_drain_14Aug','ctl_14Aug'] #'free_drain_25Jul',
     file_name  = "LIS.CABLE.198212-201301.nc"
     file_paths = []
     is_diff    = True #False
+    layer      = None
     for case_name in case_names:
         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
         file_path  = path + file_name
@@ -329,44 +392,36 @@ if __name__ == "__main__":
 
     # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
     wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
-    
     d2012121   = 10524
-    tss        = []
-    
-    # 2012-11-22 ~ 2012-12-10
-    for ts in np.arange(d2012121-10,d2012121+10):
-        tss.append(ts)
+    ts_s       = d2012121 -366 #+ 30 + 1
+    ts_e       = d2012121  # + 30 + 14  # 2013-01-04  #- 2012-12-01
+    var_names  = var_3D_basic_names #["WaterTableD_tavg"]#["SoilMoist_inst","SoilTemp_inst"] #var_3D_basic_names # ["SoilMoist_inst","SoilTemp_inst"]
 
-    # 2012-12-26 ~ 2013-01-14
-    for ts in np.arange(d2012121+31-5,d2012121+31+14):
-        tss.append(ts)
+    #for layer in np.arange(0,6):
+    plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e, layer=layer)
 
+    ######################################
+    #   plot plot_map_var_period_mean    # 
+    ######################################
 
-    var_names  = ["Rainf_tavg","Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg","FWsoil_tavg",
-                  "Tair_f_inst", "Qair_f_inst"]
-    plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss)
+    ############# duplicate ############## 
+    # old run vs new run
+    case_names = ['ctl_25Jul','ctl_14Aug'] #'free_drain_25Jul',
+    file_name  = "LIS.CABLE.198212-201301.nc"
+    file_paths = []
+    is_diff    = True #False
+    layer      = None
+    for case_name in case_names:
+        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
+        file_path  = path + file_name
+        file_paths.append(file_path)
 
-    var_names  = ["SoilMoist_inst","SoilTemp_inst"]
-    for layer in np.arange(0,6):
-        plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, layer=layer)
+    # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
+    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
+    d2012121   = 10524
+    ts_s       = d2012121 -366 #+ 30 + 1
+    ts_e       = d2012121  # + 30 + 14  # 2013-01-04  #- 2012-12-01
+    var_names  = var_3D_basic_names #["WaterTableD_tavg"]#["SoilMoist_inst","SoilTemp_inst"] #var_3D_basic_names # ["SoilMoist_inst","SoilTemp_inst"]
 
-    # ### plot plot_map_var_period_mean
-    # case_names = ['free_drain_11Jul','ctl_11Jul']
-    # file_name  = "LIS.CABLE.198212-201301.nc"
-    # file_paths = []
-    # is_diff    = True #False
-    # layer      = 1
-    # for case_name in case_names:
-    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
-    #     file_path  = path + file_name
-    #     file_paths.append(file_path)
-
-    # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
-    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
-    # d2012121   = 10524
-    # ts_s       = d2012121 -1  +31 #-366 #+ 30 + 1
-    # ts_e       = d2012121 -1 + 1  +31 # + 30 + 14  # 2013-01-04  #- 2012-12-01
-    # var_names  = ["SoilMoist_inst","SoilTemp_inst"]
-
-    # for layer in np.arange(0,6):
-    #     plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e, layer=layer)
+    #for layer in np.arange(0,6):
+    plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e, layer=layer)

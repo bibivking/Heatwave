@@ -347,14 +347,14 @@ if __name__ == "__main__":
 
     # plot actual value and diff
     if plot_type == "value-diff":
-        case_names = ['free_drain_14Aug','ctl_14Aug']
+        case_names = ['ctl_25Jul','ctl_14Aug']
         file_name  = "LIS.CABLE.198212-201301.nc" #"LIS.CABLE.201201-201301.nc"
         file_mark  = "LIS.CABLE.198212-201301"
-        latidxs    = [10,80]
-        lonidxs    = [120,200]
+        latidxs    = None #[10,80]
+        lonidxs    = None #[120,200]
         layer      = None
         var_dim    = 3
-        var_names  = ["SoilTemp_inst", "SoilMoist_inst"] #var_3D_basic_names #["SoilTemp_inst", "SoilMoist_inst"] #
+        var_names  = ["SoilTemp_inst", "SoilMoist_inst"] #var_3D_basic_names #
 
         file_paths = []
         for case_name in case_names:

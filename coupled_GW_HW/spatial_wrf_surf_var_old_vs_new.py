@@ -429,7 +429,7 @@ if __name__ == "__main__":
     #     ims.append([plot_spatial_wrf_surf_var_diff(file_paths, case_names, var_name, val_min, var_max, ts)])
 
     ### plot_spatial_wrf_surf_var_diff_period_mean
-    case_names = ['free_drain_14Aug','ctl_14Aug'] # the first case_name is set as control by default
+    case_names = ['ctl_25Jul','ctl_14Aug'] # the first case_name is set as control by default
     file_name  = "wrfout_d01_2013-01-01_03:00:00"
     message    = "201301"
     var_name   = "T2" #"rh2" #"T2"
@@ -453,9 +453,8 @@ if __name__ == "__main__":
     # for ts in tss:
     #     plot_spatial_wrf_surf_var_period_mean(is_diff, message, file_paths, case_names, var_name, ts_s, ts_e, ts)
 
-    tss = np.arange(190,249) #np.arange(0,249)
+    tss = np.arange(7,249)#np.arange(0,249)
     plot_spatial_wrf_surf_var(is_diff, message, file_paths, case_names, var_name, tss)
-
 
 
     # # Create the figure
