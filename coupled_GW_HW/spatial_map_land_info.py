@@ -145,6 +145,9 @@ def plot_map_landinfo_offline_CABLE(file_path, var_names):
 
 if __name__ == "__main__":
 
+    ##################################
+    #   plot plot_map_landinfo_ts    # 
+    ##################################
     var_landinfo_3D_names =  ["Landcover_inst","Soiltype_inst","SandFrac_inst","ClayFrac_inst","SiltFrac_inst",
                               "SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst","Hyds_inst","Bch_inst","Sucs_inst",
                               "Elevation_inst","LAI_inst","Albedo_inst"]
@@ -157,8 +160,8 @@ if __name__ == "__main__":
         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
         file_path  = path + file_name
         file_paths.append(file_path)
-
-    #case_name = 'ctl_25Jul' # MMY
+    
+    case_name = 'ctl_25Jul'
     # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
     wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
 
@@ -168,18 +171,11 @@ if __name__ == "__main__":
     var_names  = var_landinfo_3D_names
     plot_map_landinfo_ts(file_paths, wrf_path, case_names, var_names, ts)
 
-    # file_paths = []
-    # file_name  = "LIS.CABLE.201211-201211.d01.nc"
-    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[0]+"/WRF_output_copy/wrfout_d01_2013-01-01_03:00:00"
-    # path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[0]+"/LIS_output_zolber/"
-    # file_path  = path + file_name
-    # file_paths.append(file_path)
-    # ts         = 30
-    # var_names  = var_landinfo_3D_names
-    # plot_map_landinfo_ts(file_paths, wrf_path, case_names, var_names, ts)
-
-    # file_path = "/g/data/w35/mm3972/model/cable/src/CABLE-AUX/offline/gridinfo_AWAP_OpenLandMap_ELEV_DLCM_fix.nc"
-    # var_names  = ["iveg","isoil","sand","clay","silt",
-    #               "sfc","ssat","swilt","hyds","bch","sucs",
-    #               "LAI","Albedo"]
-    # plot_map_landinfo_offline_CABLE(file_path,var_names)
+    #############################################
+    #   plot plot_map_landinfo_offline_CABLE    # 
+    #############################################
+    file_path = "/g/data/w35/mm3972/model/cable/src/CABLE-AUX/offline/gridinfo_AWAP_OpenLandMap_ELEV_DLCM_fix.nc"
+    var_names  = ["iveg","isoil","sand","clay","silt",
+                  "sfc","ssat","swilt","hyds","bch","sucs",
+                  "LAI","Albedo",'elevation']
+    plot_map_landinfo_offline_CABLE(file_path,var_names)

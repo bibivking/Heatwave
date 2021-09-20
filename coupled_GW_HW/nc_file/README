@@ -1,0 +1,1 @@
+cdo mergetime /g/data/ub4/erai/netcdf/3hr/atmos/oper_fc_sfc/v01/tp/tp_3hrs_ERAI_historical_fc-sfc_2000????_2000????.nc tp_3hrs_ERAI_historical_fc-sfc_200001_200012.nc

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from netCDF4 import Dataset
+import netCDF4 as nc
 import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
@@ -9,7 +10,42 @@ import matplotlib.ticker as mticker
 from convert_units import get_land_var_scale, get_land_var_scale_offline
 from common_utils import get_reverse_colormap
 
-def plot_map_var_offline(file_path, var_names):
+def tree_mask(file_path,pft_var_name):
+
+    var = Dataset(file_path, mode='r')
+    if pft_var_name == "Landcover_inst":
+        pft = var.variables[pft_var_name][0,:,:]
+    elif pft_var_name == "iveg":
+        pft = var.variables[pft_var_name][:,:]
+
+    return pft
+
+def mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name):
+
+    file = nc.Dataset(file_path, mode='r')
+    lat  = file.variables[lat_name][:]
+    lon  = file.variables[lon_name][:]
+    print(lat)
+    print(lon)
+    if len(np.shape(lat)) == 1:
+        print("len(np.shape(lat)) == 1")
+        lat_spc = lat[1] - lat[0]
+        lon_spc = lon[1] - lon[0]
+        lons, lats = np.meshgrid(lon, lat)
+        mask  = (lats > (loc_lat - lat_spc/2)) & (lats < (loc_lat + lat_spc/2)) & (lons > (loc_lon - lon_spc/2)) & (lons < (loc_lon + lon_spc/2))
+    elif len(np.shape(lat)) == 2:
+        print("len(np.shape(lat)) == 2")
+        ### caution: lat=100, lon=100 is a random pixel, lis run over a small domain may not have such a point
+        lat_spc = lat[100,100] - lat[99,100]
+        lon_spc = lon[100,100] - lon[100,99]
+        print(lat_spc)
+        print(lon_spc)
+        ### caution: due to irregular space in lis, using lat/lon +lat/lon_spc/2 may includes more than 1 pixel. 
+        ### I therefore let the space divied by 2.1 rather than 2
+        mask  = (lat > (loc_lat - lat_spc/2.1)) & (lat < (loc_lat + lat_spc/2.1)) & (lon > (loc_lon - lon_spc/2.1)) & (lon < (loc_lon + lon_spc/2.1))
+    return mask
+
+def plot_map_var_offline(file_path, var_names, is_lnd=False, layer=None, is_tree=False):
 
     # Open the NetCDF4 file (add a directory path if necessary) for reading:
     var = Dataset(file_path, mode='r')
@@ -24,8 +60,13 @@ def plot_map_var_offline(file_path, var_names):
     for var_name in var_names:
         print(var_name)
         scale, units = get_land_var_scale_offline(var_name)
-        
-        Var   = np.mean(var.variables[var_name],axis=0)*scale
+
+        Var     = np.mean(var.variables[var_name],axis=0)*scale
+        def_val = var.variables[var_name]._FillValue
+        if is_tree:
+            pft = tree_mask(file_path,"iveg")
+            Var = np.where(pft <=4, Var, def_val)
+
         print(Var.shape)
 
         fig = plt.figure(figsize=(7,5))
@@ -46,24 +87,58 @@ def plot_map_var_offline(file_path, var_names):
         gl.ylabel_style = {'size':10, 'color':'black'}
         # Plot windspeed
 
-        if var_name == 'WatTable':
-            clevs = np.arange(0,15,1)
+        if is_lnd:
+            print("is_lnd"+str(is_lnd))
+            if var_name in ["iveg","isoil"]:
+                clevs = np.linspace(0.5,15.5, num=16)
+            elif var_name in ["Albedo","sfc","ssat","swilt"]:
+                clevs = np.linspace(0.0,0.5, num=21)
+            elif var_name in ["sand","clay","silt"]:
+                clevs = np.linspace(0.0,1.0, num=21)
+            elif var_name in ["LAI"]:
+                clevs = np.linspace(0.,8., num=16)
+            elif var_name in ["bch"]:
+                clevs = np.linspace(0.,13., num=26)
+            elif var_name in ["hyds"]:
+                clevs = np.linspace(0.,0.05, num=21)
+            elif var_name in ["sucs"]:
+                clevs = np.linspace(0.,1000., num=21)
+            else:
+                clevs = np.linspace(np.min(Var),np.max(Var), num=21)
         else:
-            clevs = np.arange(0,3.,0.1)
+            if var_name == 'WatTable':
+                clevs = np.arange(0,15,1)
+            elif var_name == 'SoilMoist':
+                clevs = np.arange(0,0.5,0.05)
+            else:
+                clevs = np.arange(0,5.,0.5)
 
-        plt.contourf(lons, lats, Var, clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.BrBG)#seismic) # T2M_daily_avg 
+        if len(np.shape(Var)) == 2:
+            plt.contourf(lons, lats, Var, clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.BrBG)#, extend='both')#seismic) # T2M_daily_avg
+        else:
+            plt.contourf(lons, lats, Var[layer,:,:], clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.BrBG)#, extend='both')#seismic) # T2M_daily_avg
+
         plt.title(var_name, size=16)
         cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
-        cb.set_label(units,size=14,rotation=0,labelpad=15)
+        cb.set_label(units,size=14,rotation=270,labelpad=15)
         cb.ax.tick_params(labelsize=10)
-        plt.savefig('./plots/lis_vs_offline/spatial_map_offline_'+var_name+'.png',dpi=300)
 
-def plot_map_var_lis(file_path, wrf_path, case_name, var_names):
+        if is_tree:
+            message = var_name+"_tree"
+        else:
+            message = var_name
+
+        if len(np.shape(Var)) == 2:
+            plt.savefig('./plots/lis_vs_offline/spatial_map_offline_'+message+'.png',dpi=300)
+        else:
+            plt.savefig('./plots/lis_vs_offline/spatial_map_offline_'+message+'_lvl-'+str(layer)+'.png',dpi=300)
+
+def plot_map_var_lis(file_path, wrf_path, case_name, var_names, is_lnd=False, layer=None, is_tree=False):
 
     # Open the NetCDF4 file (add a directory path if necessary) for reading:
 
     var = Dataset(file_path, mode='r')
-   
+
     # use WRF output's lat & lon, since LIS output has default value
     wrf = Dataset(wrf_path,  mode='r')
     lon = wrf.variables['XLONG'][0,:,:]
@@ -74,11 +149,12 @@ def plot_map_var_lis(file_path, wrf_path, case_name, var_names):
         print(var_name)
         scale, units = get_land_var_scale(var_name)
 
-        if scale == -273.15:
-            Var   = np.mean(var.variables[var_name],axis=0)
-        else:
-            Var   = np.mean(var.variables[var_name],axis=0)*scale
+        Var   = np.mean(var.variables[var_name],axis=0)*scale
         print(Var.shape)
+
+        if is_tree:
+            pft = tree_mask(file_path,"Landcover_inst")
+            Var = np.where(pft <= 4, Var, -9999.)
 
         # Make plots
         fig = plt.figure(figsize=(7,5))
@@ -98,19 +174,37 @@ def plot_map_var_lis(file_path, wrf_path, case_name, var_names):
         gl.xlabel_style = {'size':10, 'color':'black'}
         gl.ylabel_style = {'size':10, 'color':'black'}
 
-        # if get_reverse_colormap(var_name) == None:
-        #     cmap = plt.cm.seismic
-        # elif get_reverse_colormap(var_name) == True:
-        #     cmap = plt.cm.seismic_r
-        # else:
-        #     cmap = plt.cm.seismic
-        if var_name == 'WaterTableD_tavg':
-            clevs = np.arange(0,15,1)
+        if is_lnd:
+            print("is_lnd"+str(is_lnd))
+            if var_name in ["Landcover_inst","Soiltype_inst"]:
+                clevs = np.linspace(0.5,15.5, num=16)
+            elif var_name in ["Albedo_inst","SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst"]:
+                clevs = np.linspace(0.0,0.5, num=21)
+            elif var_name in ["SandFrac_inst","ClayFrac_inst","SiltFrac_inst"]:
+                clevs = np.linspace(0.0,1.0, num=21)
+            elif var_name in ["LAI_inst"]:
+                clevs = np.linspace(0.,7.5, num=17)
+            elif var_name in ["Bch_inst"]:
+                clevs = np.linspace(0.,13., num=27)
+            elif var_name in ["Hyds_inst"]:
+                clevs = np.linspace(0.,0.05, num=21)
+            elif var_name in ["Sucs_inst"]:
+                clevs = np.linspace(0.,1000., num=21)
+            else:
+                clevs = np.linspace(np.min(Var),np.max(Var), num=21)
         else:
-            clevs = np.arange(0,3,0.1)
+            if var_name == 'WaterTableD_tavg':
+                clevs = np.arange(0,15,1)
+            elif var_name == 'SoilMoist_inst':
+                clevs = np.arange(0,0.5,0.05)
+            else:
+                clevs = np.arange(0,5,0.5)
 
-        plt.contourf(lon, lat, Var[:,:],clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.BrBG)#seismic)
-
+        print(Var.shape)
+        if len(np.shape(Var)) == 2:
+            plt.contourf(lon, lat, Var[:,:], clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.BrBG)#seismic)
+        else:
+            plt.contourf(lon, lat, Var[layer,:,:], clevs, transform=ccrs.PlateCarree(),cmap=plt.cm.BrBG)#seismic)
         cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
 
         if units == None:
@@ -123,72 +217,129 @@ def plot_map_var_lis(file_path, wrf_path, case_name, var_names):
         cb.ax.tick_params(labelsize=10)
         cb.set_label(units_string,size=14,rotation=270,labelpad=15)
 
-        plt.savefig('./plots/lis_vs_offline/spatial_map_lis_'+var_name+'_'+case_name+'.png',dpi=300)
+        if is_tree:
+            message = var_name+'_'+case_name+"_tree"
+        else:
+            message = var_name+'_'+case_name
+
+        if len(np.shape(Var)) == 2:
+            plt.savefig('./plots/lis_vs_offline/spatial_map_lis_'+message+'.png',dpi=300)
+        else:
+            plt.savefig('./plots/lis_vs_offline/spatial_map_lis_'+message+'_lvl-'+str(layer)+'.png',dpi=300)
+
         Var = None
 
-def statistic_bar(file_path_offline, file_path_lis, wrf_path):
+def statistic_bar(file_path_offline, file_path_lis, wrf_path, is_tree=False, loc_lat=None, loc_lon=None):
 
     off_stats   = np.zeros(7)
     lis_stats   = np.zeros(7)
     scale       = 3600*24.*366.
 
-    # Read offline
+    # ================= Read offline ==================
     offline = Dataset(file_path_offline, mode='r')
 
-    def_off = offline.variables['Rainf']._FillValue
-    
-    rain_off_tmp = np.mean(offline.variables['Rainf'],axis=0)*scale  
-    off_stats[0] = np.nanmean(np.where(rain_off_tmp == def_off, np.nan, rain_off_tmp))
-    
-    evap_off_tmp = np.mean(offline.variables['Evap'],axis=0)*scale  
-    off_stats[1] = np.nanmean(np.where(evap_off_tmp == def_off, np.nan, evap_off_tmp))
+    rain_off = offline.variables['Rainf'][0,:,:]
+    if loc_lat ==None:
+        if is_tree:
+            pft = tree_mask(file_path_offline,"iveg")
+            mask_off = (rain_off >= 0.) & (pft <= 4)
+        else:
+            mask_off = (rain_off >= 0.)
 
-    tveg_off_tmp = np.mean(offline.variables['TVeg'],axis=0)*scale  
-    off_stats[2] = np.nanmean(np.where(tveg_off_tmp == def_off, np.nan, tveg_off_tmp))
-    
-    esoil_off_tmp = np.mean(offline.variables['ESoil'],axis=0)*scale  
-    off_stats[3]  = np.nanmean(np.where(esoil_off_tmp == def_off, np.nan, esoil_off_tmp))
+        rain_off_tmp = np.mean(offline.variables['Rainf'],axis=0)
+        
+        off_stats[0] = np.nanmean(np.where(rain_off_tmp[mask_off], rain_off_tmp[mask_off], np.nan))
+        
+        evap_off_tmp = np.mean(offline.variables['Evap'],axis=0)
+        off_stats[1] = np.nanmean(np.where(evap_off_tmp[mask_off], evap_off_tmp[mask_off], np.nan))
 
-    ecanop_off_tmp = np.mean(offline.variables['ECanop'],axis=0)*scale  
-    off_stats[4]   = np.nanmean(np.where(ecanop_off_tmp == def_off, np.nan, ecanop_off_tmp))
+        tveg_off_tmp = np.mean(offline.variables['TVeg'],axis=0)
+        off_stats[2] = np.nanmean(np.where(tveg_off_tmp[mask_off], tveg_off_tmp[mask_off], np.nan))
 
-    qs_off_tmp     = np.mean(offline.variables['Qs'],axis=0)*scale  
-    off_stats[5]   = np.nanmean(np.where(qs_off_tmp == def_off, np.nan, qs_off_tmp))
+        esoil_off_tmp = np.mean(offline.variables['ESoil'],axis=0)
+        off_stats[3]  = np.nanmean(np.where(esoil_off_tmp[mask_off], esoil_off_tmp[mask_off], np.nan))
 
-    qsb_off_tmp    = np.mean(offline.variables['Qsb'],axis=0)*scale  
-    off_stats[6]   = np.nanmean(np.where(qsb_off_tmp == def_off, np.nan, qsb_off_tmp))    
+        ecanop_off_tmp = np.mean(offline.variables['ECanop'],axis=0)
+        off_stats[4]   = np.nanmean(np.where(ecanop_off_tmp[mask_off], ecanop_off_tmp[mask_off], np.nan))
 
-    # Read lis-cable
+        qs_off_tmp     = np.mean(offline.variables['Qs'],axis=0)
+        off_stats[5]   = np.nanmean(np.where(qs_off_tmp[mask_off], qs_off_tmp[mask_off], np.nan))
+
+        qsb_off_tmp    = np.mean(offline.variables['Qsb'],axis=0)
+        off_stats[6]   = np.nanmean(np.where(qsb_off_tmp[mask_off], qsb_off_tmp[mask_off], np.nan))
+    else:
+        print(offline.variables['Rainf'])
+        off_stats[0] = np.mean(offline.variables['Rainf'],axis=0)
+        off_stats[1] = np.mean(offline.variables['Evap'],axis=0)
+        off_stats[2] = np.mean(offline.variables['TVeg'],axis=0)
+        off_stats[3] = np.mean(offline.variables['ESoil'],axis=0)
+        off_stats[4] = np.mean(offline.variables['ECanop'],axis=0)
+        off_stats[5] = np.mean(offline.variables['Qs'],axis=0)
+        off_stats[6] = np.mean(offline.variables['Qsb'],axis=0)
+        
+    # ================= Read lis-cable =================
     lis     = Dataset(file_path_lis, mode='r')
     wrf     = Dataset(wrf_path,  mode='r')
 
     # mask: keep SE Aus
     lon     = wrf.variables['XLONG'][0,:,:]
     lat     = wrf.variables['XLAT'][0,:,:]
-    mask    = (lon >= 140) & (lon <= 154) & (lat >= -40) & (lat <= -28) 
+    rain    = lis.variables['Rainf_tavg'][0,:,:]
+    if loc_lat ==None:
+        if is_tree:
+            pft = tree_mask(file_path_lis,"Landcover_inst")
+            mask    = (lon >= 140) & (lon <= 154) & (lat >= -40) & (lat <= -28) & (rain >= 0.) & (pft <= 4)
+        else:
+            mask    = (lon >= 140) & (lon <= 154) & (lat >= -40) & (lat <= -28) & (rain >= 0.)
 
-    def_lis = lis.variables['Rainf_tavg']._FillValue
-    
-    rain_lis_tmp = np.mean(lis.variables['Rainf_tavg'],axis=0)*scale
-    lis_stats[0] = np.nanmean(np.where(rain_lis_tmp[mask] == def_lis, np.nan, rain_lis_tmp[mask]))
-    
-    evap_lis_tmp = np.mean(lis.variables['Evap_tavg'],axis=0)*scale
-    lis_stats[1] = np.nanmean(np.where(evap_lis_tmp[mask] == def_lis, np.nan, evap_lis_tmp[mask]))
+        rain_lis_tmp = np.mean(lis.variables['Rainf_tavg'],axis=0)
+        lis_stats[0] = np.nanmean(np.where(rain_lis_tmp[mask], rain_lis_tmp[mask], np.nan))
 
-    tveg_lis_tmp = np.mean(lis.variables['TVeg_tavg'],axis=0)*scale  
-    lis_stats[2] = np.nanmean(np.where(tveg_lis_tmp[mask] == def_lis, np.nan, tveg_lis_tmp[mask]))
-    
-    esoil_lis_tmp = np.mean(lis.variables['ESoil_tavg'],axis=0)*scale  
-    lis_stats[3]  = np.nanmean(np.where(esoil_lis_tmp[mask] == def_lis, np.nan, esoil_lis_tmp[mask]))
+        evap_lis_tmp = np.mean(lis.variables['Evap_tavg'],axis=0)
+        lis_stats[1] = np.nanmean(np.where(evap_lis_tmp[mask], evap_lis_tmp[mask], np.nan))
 
-    ecanop_lis_tmp = np.mean(lis.variables['ECanop_tavg'],axis=0)*scale  
-    lis_stats[4]   = np.nanmean(np.where(ecanop_lis_tmp[mask] == def_lis, np.nan, ecanop_lis_tmp[mask]))
+        tveg_lis_tmp = np.mean(lis.variables['TVeg_tavg'],axis=0)
+        lis_stats[2] = np.nanmean(np.where(tveg_lis_tmp[mask], tveg_lis_tmp[mask], np.nan))
 
-    qs_lis_tmp     = np.mean(lis.variables['Qs_tavg'],axis=0)*scale  
-    lis_stats[5]   = np.nanmean(np.where(qs_lis_tmp[mask] == def_lis, np.nan, qs_lis_tmp[mask]))
+        esoil_lis_tmp = np.mean(lis.variables['ESoil_tavg'],axis=0)
+        lis_stats[3]  = np.nanmean(np.where(esoil_lis_tmp[mask], esoil_lis_tmp[mask], np.nan))
 
-    qsb_lis_tmp    = np.mean(lis.variables['Qsb_tavg'],axis=0)*scale  
-    lis_stats[6]   = np.nanmean(np.where(qsb_lis_tmp[mask] == def_lis, np.nan, qsb_lis_tmp[mask]))    
+        ecanop_lis_tmp = np.mean(lis.variables['ECanop_tavg'],axis=0)
+        lis_stats[4]   = np.nanmean(np.where(ecanop_lis_tmp[mask], ecanop_lis_tmp[mask], np.nan))
+
+        qs_lis_tmp     = np.mean(lis.variables['Qs_tavg'],axis=0)
+        lis_stats[5]   = np.nanmean(np.where(qs_lis_tmp[mask], qs_lis_tmp[mask], np.nan))
+
+        qsb_lis_tmp    = np.mean(lis.variables['Qsb_tavg'],axis=0)
+        lis_stats[6]   = np.nanmean(np.where(qsb_lis_tmp[mask], qsb_lis_tmp[mask], np.nan))
+
+    else:
+        mask     = mask_by_lat_lon(file_path_lis, loc_lat, loc_lon, "lat", "lon")
+        print(mask)
+        rain_lis_tmp = np.mean(lis.variables['Rainf_tavg'],axis=0)
+        print(rain_lis_tmp)
+        lis_stats[0] = rain_lis_tmp[mask]
+
+        evap_lis_tmp = np.mean(lis.variables['Evap_tavg'],axis=0)
+        lis_stats[1] = evap_lis_tmp[mask]
+
+        tveg_lis_tmp = np.mean(lis.variables['TVeg_tavg'],axis=0)
+        lis_stats[2] = tveg_lis_tmp[mask]
+
+        esoil_lis_tmp = np.mean(lis.variables['ESoil_tavg'],axis=0)
+        lis_stats[3]  = esoil_lis_tmp[mask]
+
+        ecanop_lis_tmp = np.mean(lis.variables['ECanop_tavg'],axis=0)
+        lis_stats[4]   = ecanop_lis_tmp[mask]
+        
+        qs_lis_tmp     = np.mean(lis.variables['Qs_tavg'],axis=0)
+        lis_stats[5]   = qs_lis_tmp[mask]
+
+        qsb_lis_tmp    = np.mean(lis.variables['Qsb_tavg'],axis=0)
+        lis_stats[6]   = qsb_lis_tmp[mask]
+
+    off_stats = off_stats*scale
+    lis_stats = lis_stats*scale
 
     # plotting
     labels = ['Rain', 'Evap', 'TVeg', 'Esoil', 'Ecan','Qs','Qsb']
@@ -207,13 +358,18 @@ def statistic_bar(file_path_offline, file_path_lis, wrf_path):
     ax.set_xticklabels(labels)
     ax.legend()
 
-    ax.bar_label(rects1, padding=3)
-    ax.bar_label(rects2, padding=3)
+    # ax.bar_label(rects1, padding=3)
+    # ax.bar_label(rects2, padding=3)
 
     fig.tight_layout()
+    message = ""
 
-    plt.savefig('./plots/lis_vs_offline/water_balance_lis_vs_off_statistic.png',dpi=300)
-
+    if is_tree:
+        message = message + "_tree"
+    if loc_lat != None:
+        message = message + "_lat="+str(loc_lat) + "_lon="+str(loc_lon)
+    
+    plt.savefig('./plots/lis_vs_offline/water_balance_lis_vs_off_statistic'+message+'.png',dpi=300)
 
 if __name__ == "__main__":
 
@@ -222,32 +378,57 @@ if __name__ == "__main__":
 
     var_offline_names  = ['Rainf','Evap','ESoil','ECanop','TVeg','Qs','Qsb','WatTable','Qle','Qh','Qg']
 
-    ##########################
-    #   Plot offline CABLE   #
-    ##########################
+    var_LIS_soil_names     = ["SoilMoist_inst"]
 
-    path      = '/g/data/w35/mm3972/model/cable/runs/test_para_chg_dpt/uniform_6layer/outputs/'
-    file_name = 'cable_out_2000_SE_Aus.nc'
-    file_path = path + file_name
-    plot_map_var_offline(file_path, var_offline_names)
+    var_offline_soil_names = ["SoilMoist"]
+
+    var_LIS_landinfo_names =  [ "SandFrac_inst","ClayFrac_inst","SiltFrac_inst",
+                                "SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst","Hyds_inst","Bch_inst","Sucs_inst",
+                                "LAI_inst" ]#,"Albedo_inst","Elevation_inst"] "Landcover_inst","Soiltype_inst",
+
+    var_offline_landinfo_names = ["sand","clay","silt","sfc","ssat","swilt","hyds","bch","sucs", "LAI"] #"iveg","isoil",'elev',"Albedo"
+
+    # ##########################
+    # #   Plot offline CABLE   #
+    # # ##########################
+    # is_tree   = False
+    # is_lnd    = False
+    # path      = '/g/data/w35/mm3972/model/cable/runs/test_para_chg_dpt/uniform_6layer/outputs/'
+    # file_name = 'cable_out_2000_SE_Aus.nc'
+    # file_path = path + file_name
+    # var_names = var_offline_names #var_offline_soil_names #var_offline_names #var_offline_landinfo_names #var_offline_soil_names # var_offline_names # var_offline_soil_names
+    # plot_map_var_offline(file_path, var_names, is_lnd=is_lnd, is_tree=is_tree )
+    # var_names = var_offline_soil_names
+    # for layer in np.arange(6):
+    #    plot_map_var_offline(file_path, var_names, is_lnd=is_lnd, is_tree=is_tree, layer=layer)
+
 
     ##############################
-    #   plot plot_map_var_lis    # 
+    #   plot plot_map_var_lis    #
     ##############################
-    case_name  = 'ctl_23Aug'
-    file_name  = "LIS.CABLE.200001-200012.nc"
-    layer      = None
-    path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_23Aug/LIS_output/"
-    file_path  = path + file_name
-    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_14Aug/WRF_output_copy/wrfout_d01_2013-01-01_03:00:00"
-    var_names  = var_LIS_names 
+    # is_tree    = False
+    # is_lnd     = False
+    # case_name  = 'ctl_15Sep'
+    # file_name  = "LIS.CABLE.200001-200012.nc"
+    # layer      = None
+    # path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_15Sep/LIS_output/"
+    # file_path  = path + file_name
+    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_14Aug/WRF_output_copy/wrfout_d01_2013-01-01_03:00:00"
+    # var_names  = var_LIS_soil_names #var_LIS_names #var_LIS_landinfo_names #var_LIS_soil_names # var_LIS_names # var_LIS_soil_names
+    # # plot_map_var_lis(file_path, wrf_path, case_name, var_names, is_lnd=is_lnd, is_tree=is_tree)
+    # for layer in np.arange(6):
+    #    plot_map_var_lis(file_path, wrf_path, case_name, var_names, is_lnd=is_lnd, is_tree=is_tree, layer=layer)
 
-    plot_map_var_lis(file_path, wrf_path, case_name, var_names)
+    ##############################
+    #   plot statistic_bar    #
+    ##############################
+    is_tree           = False 
 
-    ##############################
-    #   plot statistic_bar    # 
-    ##############################
-    file_path_offline = '/g/data/w35/mm3972/model/cable/runs/test_para_chg_dpt/uniform_6layer/outputs/cable_out_2000_SE_Aus.nc'
-    file_path_lis     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_23Aug/LIS_output/LIS.CABLE.200001-200012.nc'
+    loc_lat           = -34 #-24.255707     
+    loc_lon           = 145  #135.95001    
+    
+    # file_path_offline = '/g/data/w35/mm3972/model/cable/runs/test_para_chg_dpt/uniform_6layer_fix_satfrac/outputs/cable_out_2000_SE_Aus.nc'
+    file_path_offline = '/g/data/w35/mm3972/model/cable/runs/pixel_comp_lis/outputs/ERAI_05hr_pixel_met_from_LIS-CABLE_satfrac_fixed_output.nc'
+    file_path_lis     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_15Sep/LIS_output_large_domain_daily/LIS.CABLE.200001-200012.nc'
     wrf_path          = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_14Aug/WRF_output_copy/wrfout_d01_2013-01-01_03:00:00"
-    statistic_bar(file_path_offline, file_path_lis, wrf_path)
+    statistic_bar(file_path_offline, file_path_lis, wrf_path, is_tree=is_tree, loc_lat=loc_lat, loc_lon=loc_lon)

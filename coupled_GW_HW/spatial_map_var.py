@@ -377,28 +377,28 @@ if __name__ == "__main__":
     #     plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, layer=layer)
 
 
-    ######################################
-    #   plot plot_map_var_period_mean    # 
-    ######################################
-    case_names = ['free_drain_14Aug','ctl_14Aug'] #'free_drain_25Jul',
-    file_name  = "LIS.CABLE.198212-201301.nc"
-    file_paths = []
-    is_diff    = True #False
-    layer      = None
-    for case_name in case_names:
-        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
-        file_path  = path + file_name
-        file_paths.append(file_path)
+    # ######################################
+    # #   plot plot_map_var_period_mean    # 
+    # ######################################
+    # case_names = ['free_drain_14Aug','ctl_14Aug'] #'free_drain_25Jul',
+    # file_name  = "LIS.CABLE.198212-201301.nc"
+    # file_paths = []
+    # is_diff    = True #False
+    # layer      = None
+    # for case_name in case_names:
+    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
+    #     file_path  = path + file_name
+    #     file_paths.append(file_path)
 
-    # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
-    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
-    d2012121   = 10524
-    ts_s       = d2012121 -366 #+ 30 + 1
-    ts_e       = d2012121  # + 30 + 14  # 2013-01-04  #- 2012-12-01
-    var_names  = var_3D_basic_names #["WaterTableD_tavg"]#["SoilMoist_inst","SoilTemp_inst"] #var_3D_basic_names # ["SoilMoist_inst","SoilTemp_inst"]
+    # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
+    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
+    # d2012121   = 10524
+    # ts_s       = d2012121 -366 #+ 30 + 1
+    # ts_e       = d2012121  # + 30 + 14  # 2013-01-04  #- 2012-12-01
+    # var_names  = var_3D_basic_names #["WaterTableD_tavg"]#["SoilMoist_inst","SoilTemp_inst"] #var_3D_basic_names # ["SoilMoist_inst","SoilTemp_inst"]
 
-    #for layer in np.arange(0,6):
-    plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e, layer=layer)
+    # #for layer in np.arange(0,6):
+    # plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e, layer=layer)
 
     ######################################
     #   plot plot_map_var_period_mean    # 
@@ -406,8 +406,8 @@ if __name__ == "__main__":
 
     ############# duplicate ############## 
     # old run vs new run
-    case_names = ['ctl_25Jul','ctl_14Aug'] #'free_drain_25Jul',
-    file_name  = "LIS.CABLE.198212-201301.nc"
+    case_names = ['ctl_23Aug','ctl_8Sep'] #'free_drain_25Jul',
+    file_name  = "LIS.CABLE.200001-200012.nc"#"LIS.CABLE.198212-201301.nc"
     file_paths = []
     is_diff    = True #False
     layer      = None
@@ -419,8 +419,8 @@ if __name__ == "__main__":
     # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
     wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
     d2012121   = 10524
-    ts_s       = d2012121 -366 #+ 30 + 1
-    ts_e       = d2012121  # + 30 + 14  # 2013-01-04  #- 2012-12-01
+    ts_s       = 0 #+ 30 + 1 # d2012121
+    ts_e       = 366  # + 30 + 14  # 2013-01-04  #- 2012-12-01 # d2012121
     var_names  = var_3D_basic_names #["WaterTableD_tavg"]#["SoilMoist_inst","SoilTemp_inst"] #var_3D_basic_names # ["SoilMoist_inst","SoilTemp_inst"]
 
     #for layer in np.arange(0,6):

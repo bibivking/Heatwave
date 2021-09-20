@@ -12,4 +12,4 @@
 
 source activate science
 cd /g/data/w35/mm3972/scripts/Heatwave/coupled_GW_HW
-python spatial_map_LIS_vs_Offline.py
+python time_series_check_spinup.py
