@@ -40,7 +40,7 @@ def mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name):
         lon_spc = lon[100,100] - lon[100,99]
         print(lat_spc)
         print(lon_spc)
-        ### caution: due to irregular space in lis, using lat/lon +lat/lon_spc/2 may includes more than 1 pixel. 
+        ### caution: due to irregular space in lis, using lat/lon +lat/lon_spc/2 may includes more than 1 pixel.
         ### I therefore let the space divied by 2.1 rather than 2
         mask  = (lat > (loc_lat - lat_spc/2.1)) & (lat < (loc_lat + lat_spc/2.1)) & (lon > (loc_lon - lon_spc/2.1)) & (lon < (loc_lon + lon_spc/2.1))
     return mask
@@ -247,9 +247,9 @@ def statistic_bar(file_path_offline, file_path_lis, wrf_path, is_tree=False, loc
             mask_off = (rain_off >= 0.)
 
         rain_off_tmp = np.mean(offline.variables['Rainf'],axis=0)
-        
+
         off_stats[0] = np.nanmean(np.where(rain_off_tmp[mask_off], rain_off_tmp[mask_off], np.nan))
-        
+
         evap_off_tmp = np.mean(offline.variables['Evap'],axis=0)
         off_stats[1] = np.nanmean(np.where(evap_off_tmp[mask_off], evap_off_tmp[mask_off], np.nan))
 
@@ -276,7 +276,7 @@ def statistic_bar(file_path_offline, file_path_lis, wrf_path, is_tree=False, loc
         off_stats[4] = np.mean(offline.variables['ECanop'],axis=0)
         off_stats[5] = np.mean(offline.variables['Qs'],axis=0)
         off_stats[6] = np.mean(offline.variables['Qsb'],axis=0)
-        
+
     # ================= Read lis-cable =================
     lis     = Dataset(file_path_lis, mode='r')
     wrf     = Dataset(wrf_path,  mode='r')
@@ -331,7 +331,7 @@ def statistic_bar(file_path_offline, file_path_lis, wrf_path, is_tree=False, loc
 
         ecanop_lis_tmp = np.mean(lis.variables['ECanop_tavg'],axis=0)
         lis_stats[4]   = ecanop_lis_tmp[mask]
-        
+
         qs_lis_tmp     = np.mean(lis.variables['Qs_tavg'],axis=0)
         lis_stats[5]   = qs_lis_tmp[mask]
 
@@ -368,8 +368,48 @@ def statistic_bar(file_path_offline, file_path_lis, wrf_path, is_tree=False, loc
         message = message + "_tree"
     if loc_lat != None:
         message = message + "_lat="+str(loc_lat) + "_lon="+str(loc_lon)
-    
+
     plt.savefig('./plots/lis_vs_offline/water_balance_lis_vs_off_statistic'+message+'.png',dpi=300)
+
+def time_series_single_pixel(file_path_offline, file_path_lis, varname_off, varname_lis, loc_lat=None, loc_lon=None):
+
+    offline    = Dataset(file_path_offline, mode='r')
+    times_off  = offline.variables['time']
+    ntime_off  = len(times_off)
+
+    lis        = Dataset(file_path_lis, mode='r')
+    times_lis  = offline.variables['time']
+    ntime_lis  = len(times_lis)
+    var_lis    = np.zeros(ntime_lis)
+    # print(np.shape(var_lis))
+    mask     = mask_by_lat_lon(file_path_lis, loc_lat, loc_lon, "lat", "lon")
+
+    for i in np.arange(len(varname_off)):
+        scale, units = get_land_var_scale_offline(varname_off[i])
+        var_off   = offline.variables[varname_off[i]][:,0,0]*scale
+        for j in np.arange(ntime_lis):
+            scale, units = get_land_var_scale(varname_lis[i])
+            var_lis[j] = np.mean(lis.variables[varname_lis[i]][j][mask])*scale
+
+        x1 = np.arange(ntime_off)
+        x2 = np.arange(ntime_lis)
+
+        fig, ax = plt.subplots()
+        ax.plot(x1, var_off, c = "blue",   label='Off')
+        ax.plot(x2, var_lis, c = "orange", label='Lis')
+
+        # ax.set_ylabel('mm')
+        ax.set_title(varname_off[i])
+        ax.set_xticks(x1[::1440])
+        ax.set_xticklabels(np.arange(1,366,30))
+        ax.legend()
+
+        fig.tight_layout()
+        message = varname_off[i]
+        if loc_lat != None:
+            message = message + "_lat="+str(loc_lat) + "_lon="+str(loc_lon)
+
+        plt.savefig('./plots/lis_vs_offline/time_series_lis_vs_off_'+message+'.png',dpi=300)
 
 if __name__ == "__main__":
 
@@ -377,6 +417,10 @@ if __name__ == "__main__":
                           'Qs_tavg','Qsb_tavg','WaterTableD_tavg','Qle_tavg','Qh_tavg','Qg_tavg']
 
     var_offline_names  = ['Rainf','Evap','ESoil','ECanop','TVeg','Qs','Qsb','WatTable','Qle','Qh','Qg']
+
+    var_LIS_met_names  = ['Rainf_f_inst','Snowf_tavg','Qair_f_inst','Wind_f_inst','Psurf_f_inst','SWdown_f_inst','LWdown_f_inst','Tair_f_inst']
+
+    var_offline_met_names  = ['Rainf','Snowf','Qair','Wind','PSurf','SWdown','LWdown','Tair']
 
     var_LIS_soil_names     = ["SoilMoist_inst"]
 
@@ -422,13 +466,23 @@ if __name__ == "__main__":
     ##############################
     #   plot statistic_bar    #
     ##############################
-    is_tree           = False 
+    # is_tree           = False
 
-    loc_lat           = -34 #-24.255707     
-    loc_lon           = 145  #135.95001    
-    
-    # file_path_offline = '/g/data/w35/mm3972/model/cable/runs/test_para_chg_dpt/uniform_6layer_fix_satfrac/outputs/cable_out_2000_SE_Aus.nc'
+    # loc_lat           = -34 #-24.255707
+    # loc_lon           = 145  #135.95001
+
+    # # file_path_offline = '/g/data/w35/mm3972/model/cable/runs/test_para_chg_dpt/uniform_6layer_fix_satfrac/outputs/cable_out_2000_SE_Aus.nc'
+    # file_path_offline = '/g/data/w35/mm3972/model/cable/runs/pixel_comp_lis/outputs/ERAI_05hr_pixel_met_from_LIS-CABLE_satfrac_fixed_output.nc'
+    # file_path_lis     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_15Sep/LIS_output_large_domain_daily/LIS.CABLE.200001-200012.nc'
+    # wrf_path          = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_14Aug/WRF_output_copy/wrfout_d01_2013-01-01_03:00:00"
+    # statistic_bar(file_path_offline, file_path_lis, wrf_path, is_tree=is_tree, loc_lat=loc_lat, loc_lon=loc_lon)
+
+
+    ########################################
+    #   plot time_series_single_pixel      #
+    ########################################
     file_path_offline = '/g/data/w35/mm3972/model/cable/runs/pixel_comp_lis/outputs/ERAI_05hr_pixel_met_from_LIS-CABLE_satfrac_fixed_output.nc'
-    file_path_lis     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_15Sep/LIS_output_large_domain_daily/LIS.CABLE.200001-200012.nc'
-    wrf_path          = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_14Aug/WRF_output_copy/wrfout_d01_2013-01-01_03:00:00"
-    statistic_bar(file_path_offline, file_path_lis, wrf_path, is_tree=is_tree, loc_lat=loc_lat, loc_lon=loc_lon)
+    file_path_lis     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/ctl_15Sep/LIS_output/LIS.CABLE.200001-200012.nc'
+    loc_lat           = -34 #-24.255707
+    loc_lon           = 145  #135.95001
+    time_series_single_pixel(file_path_offline, file_path_lis, var_offline_names, var_LIS_names, loc_lat=loc_lat, loc_lon=loc_lon)
