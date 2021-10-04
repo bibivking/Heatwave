@@ -13,4 +13,4 @@
 source activate science
 cd /g/data/w35/mm3972/scripts/Heatwave/coupled_GW_HW
 
-python spatial_map_var.py
+python spatial_wrf_surf_var.py

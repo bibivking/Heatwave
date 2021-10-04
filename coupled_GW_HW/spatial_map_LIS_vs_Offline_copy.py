@@ -504,7 +504,7 @@ if __name__ == "__main__":
     # ##########################
     is_tree   = False
     is_lnd    = False
-    path      = '/g/data/w35/mm3972/model/cable/runs/test_para_chg_dpt/uniform_6layer_fix_satfrac_mmy_trunk/outputs'
+    path      = '/g/data/w35/mm3972/model/cable/runs/test_para_chg_dpt/uniform_6layer_fix_satfrac_mmy_trunk/outputs/'
     file_name = 'cable_out_2000_SE_Aus.nc'
     file_path = path + file_name
     var_names = var_offline_names #var_offline_soil_names #var_offline_names #var_offline_landinfo_names #var_offline_soil_names # var_offline_names # var_offline_soil_names

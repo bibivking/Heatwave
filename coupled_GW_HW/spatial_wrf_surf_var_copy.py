@@ -414,29 +414,12 @@ if __name__ == "__main__":
     Local  1pm, 4pm, 7pm, 10pm, 1am, 4am, 7am, 10am
     '''
 
-    # ###################################
-    #   plot_spatial_wrf_surf_var_diff  #
-    # ###################################
-    is_diff    = True
-    var_name   = "T2"
-    val_min, var_max = -14, 14
-
-    for case_num in np.arange(case_sum):
-        file_paths = []
-        for case_name in case_names[case_num]:
-            path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/"
-            file_path  = path + file_names[case_num]
-            file_paths.append(file_path)
-
-        tss = np.arange(0*8, 28*8, 8) # day 0-- day 28, local time 1pm
-
-        plot_spatial_wrf_surf_var(is_diff, messages[case_num], file_paths, case_names[case_num], var_name, tss)
-    #
-    # # ###############################################
-    # #   plot_spatial_wrf_surf_var_diff_period_mean  #
-    # # ###############################################
-    # var_name   = "T2" #"rh2" #"T2"
-    # is_diff    = True #False
+    # # ###################################
+    # #   plot_spatial_wrf_surf_var_diff  #
+    # # ###################################
+    # is_diff    = True
+    # var_name   = "T2"
+    # val_min, var_max = -14, 14
     #
     # for case_num in np.arange(case_sum):
     #     file_paths = []
@@ -445,14 +428,31 @@ if __name__ == "__main__":
     #         file_path  = path + file_names[case_num]
     #         file_paths.append(file_path)
     #
-    #     # day 6-28
-    #     ts_s = 5*8
-    #     ts_e = 28*8
+    #     tss = np.arange(0*8, 28*8, 8) # day 0-- day 28, local time 1pm
     #
-    #     tss  = [ 0,   1,   2,    3,   4,   5,   6,   7 ]
-    #     for ts in tss:
-    #         plot_spatial_wrf_surf_var_period_mean(is_diff, messages[case_num], file_paths, case_names[case_num],
-    #                                               var_name, ts_s, ts_e, ts)
+    #     plot_spatial_wrf_surf_var(is_diff, messages[case_num], file_paths, case_names[case_num], var_name, tss)
+    #
+    # ###############################################
+    #   plot_spatial_wrf_surf_var_diff_period_mean  #
+    # ###############################################
+    var_name   = "T2" #"rh2" #"T2"
+    is_diff    = True #False
+
+    for case_num in np.arange(case_sum):
+        file_paths = []
+        for case_name in case_names[case_num]:
+            path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/"
+            file_path  = path + file_names[case_num]
+            file_paths.append(file_path)
+
+        # day 6-28
+        ts_s = 5*8
+        ts_e = 28*8
+
+        tss  = [ 0,   1,   2,    3,   4,   5,   6,   7 ]
+        for ts in tss:
+            plot_spatial_wrf_surf_var_period_mean(is_diff, messages[case_num], file_paths, case_names[case_num],
+                                                  var_name, ts_s, ts_e, ts)
 
     # ==================== Old Operation (before Oct 2021) =====================
 
