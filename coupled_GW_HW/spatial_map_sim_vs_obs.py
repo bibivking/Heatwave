@@ -7,9 +7,18 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+from scipy.interpolate import griddata
 import matplotlib.ticker as mticker
 from convert_units import get_land_var_scale, get_land_var_scale_offline
 from common_utils import get_reverse_colormap
+
+def get_scale(var_name):
+    mm_s2mm_yr = ['Qs','Qsb','Rainf','Evap','ESoil','ECanop','TVeg']
+    if var_name in mm_s2mm_yr:
+        scale = 24.*3600.*365
+    else:
+        scale = 1.
+    return scale
 
 def tree_mask(file_path,pft_var_name):
 
@@ -54,7 +63,7 @@ def mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name):
     print(np.shape(mask))
     return mask
 
-def read_obs_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon_name=None):
+def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon_name=None):
 
     '''
     Read observation data, output time coordinate and variable array
@@ -106,60 +115,6 @@ def read_obs_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None,
 
     return time,Var
 
-def read_off_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon_name=None):
-
-    '''
-    Read observation data, output time coordinate and variable array
-    '''
-
-    print(var_name)
-
-    off_file   = Dataset(file_path, mode='r')
-    time_tmp   = nc.num2date(off_file.variables['time'][:],off_file.variables['time'].units,
-                 only_use_cftime_datetimes=False, only_use_python_datetimes=True)
-    time       = time_tmp - datetime(2000,1,1)
-    ntime      = len(time)
-
-    if loc_lat == None:
-        Var_tmp = off_file.variables[var_name][:]
-        def_val = off_file.variables[var_name]._FillValue
-        Var = np.where(Var_tmp == def_val, np.nan, Var_tmp)
-    else:
-        # selected region
-        if var_name == lat_name or var_name == lon_name:
-            # read lat or lon
-            mask = mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name)
-            lat  = off_file.variables[lat_name]
-            lon  = off_file.variables[lon_name]
-            if len(np.shape(lat)) == 1:
-                lons, lats = np.meshgrid(lon, lat)
-                if var_name == lat_name:
-                    Var = np.where(mask,lats,np.nan)
-                if var_name == lon_name:
-                    Var = np.where(mask,lons,np.nan)
-                print(np.shape(Var))
-            elif len(np.shape(lat)) == 2:
-                Var_tmp = np.where(mask, off_file.variables[var_name][:], np.nan)
-                def_val = off_file.variables[var_name]._FillValue
-                Var = np.where(Var_tmp == def_val, np.nan, Var_tmp)
-                print(np.shape(Var))
-        else:
-            # read var except lat or lat
-            mask = mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name)
-            mask_multi = [ mask ] * ntime
-            if var_name in ['E','Ei','Es','Et']:
-                # change GLEAM's coordinates from (time, lon, lat) to (time, lat, lon)
-                tmp = np.moveaxis(off_file.variables[var_name], -1, 1)
-            else:
-                tmp = off_file.variables[var_name][:]
-
-            Var_tmp = np.where(mask_multi,tmp,np.nan)
-            print(np.shape(Var_tmp))
-            def_val = off_file.variables[var_name]._FillValue
-            Var = np.where(Var_tmp == def_val, np.nan, Var_tmp)
-
-    return time,Var
-
 def spital_var(time,Var,year_s,year_e):
 
     Year_s = datetime(year_s,1,1)   - datetime(2000,1,1)
@@ -181,18 +136,32 @@ def time_series_var(time,Var,year_s,year_e):
 
     return Time,var
 
-def plot_spital_map(file_path, var_name, year_s, year_e, loc_lat=None, loc_lon=None, lat_name=None, lon_name=None, message=None):
+def plot_spital_map(file_paths, var_names, year_s, year_e, loc_lat=None, loc_lon=None, lat_names=None, lon_names=None, message=None):
 
     print("======== In plot_spital_map =========")
 
     # Open the NetCDF4 file (add a directory path if necessary) for reading:
+    time1, Var1  = read_var(file_paths[0], var_names[0], loc_lat, loc_lon, lat_names[0], lon_names[0])
+    time1, lats1 = read_var(file_paths[0], lat_names[0], loc_lat, loc_lon, lat_names[0], lon_names[0])
+    time1, lons1 = read_var(file_paths[0], lon_names[0], loc_lat, loc_lon, lat_names[0], lon_names[0])
+    scale        = get_scale(var_names[0])
+    var1         = spital_var(time1,Var1,year_s,year_e)*scale
 
-    time, Var  = read_obs_var(file_path, var_name, loc_lat, loc_lon, lat_name, lon_name)
-    time, lats = read_obs_var(file_path, lat_name, loc_lat, loc_lon, lat_name, lon_name)
-    time, lons = read_obs_var(file_path, lon_name, loc_lat, loc_lon, lat_name, lon_name)
+    print('var1')
+    print(var1)
 
-    var       = spital_var(time,Var,year_s,year_e)
-    print(var)
+    if len(file_paths) != 1:
+        time2, Var2  = read_var(file_paths[1], var_names[1], loc_lat, loc_lon, lat_names[1], lon_names[1])
+        time2, lats2 = read_var(file_paths[1], lat_names[1], loc_lat, loc_lon, lat_names[1], lon_names[1])
+        time2, lons2 = read_var(file_paths[1], lon_names[1], loc_lat, loc_lon, lat_names[1], lon_names[1])
+        scale        = get_scale(var_names[1])
+        var2         = spital_var(time2,Var2,year_s,year_e)*scale
+        print('var2')
+        print(var2)
+        var2_regrid  = griddata((lats2[:,0],lons[0,:]), var2, (lats1, lons1), method='nearest') # 'linear' 'cubic'
+        var          = var2_regrid - var1
+    else:
+        var          = var1
 
     fig = plt.figure(figsize=(7,5))
     ax = plt.axes(projection=ccrs.PlateCarree())
@@ -222,21 +191,16 @@ def plot_spital_map(file_path, var_name, year_s, year_e, loc_lat=None, loc_lon=N
     gl.ylabel_style = {'size':10, 'color':'black'}
     # Plot windspeed
 
-    if var_name in ['Qs','Qsb','Rainf','Evap','ESoil','ECanop','TVeg']:
-        scale = 24.*3600.*365
-    else:
-        scale = 1.
-
     # clevs = np.linspace( np.min(var),np.max(var), num=20)
-    plt.contourf(lons, lats, var*scale,  transform=ccrs.PlateCarree(),cmap=plt.cm.BrBG) # clevs,
-    plt.title(var_name, size=16)
+    plt.contourf(lons1, lats1, var,  transform=ccrs.PlateCarree(),cmap=plt.cm.BrBG) # clevs,
+    plt.title(var_names[0], size=16)
     cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
     # cb.set_label(units,size=14,rotation=270,labelpad=15)
     cb.ax.tick_params(labelsize=10)
     if message == None:
-        message = var_name
+        message = var_names[0]
     else:
-        message = message + "_" + var_name
+        message = message + "_" + var_names[0]
     plt.savefig('./plots/Oct2021/spatial_map_obs_'+message+'.png',dpi=300)
 
 def plot_spital_map_diff(file_path1, file_path2, var_name, year_s, year_e, loc_lat=None, loc_lon=None, lat_name=None, lon_name=None, message=None):
@@ -245,10 +209,10 @@ def plot_spital_map_diff(file_path1, file_path2, var_name, year_s, year_e, loc_l
 
     # Open the NetCDF4 file (add a directory path if necessary) for reading:
 
-    time, Var1 = read_obs_var(file_path1, var_name, loc_lat, loc_lon, lat_name, lon_name)
-    time, Var2 = read_obs_var(file_path2, var_name, loc_lat, loc_lon, lat_name, lon_name)
-    time, lats = read_obs_var(file_path1, lat_name, loc_lat, loc_lon, lat_name, lon_name)
-    time, lons = read_obs_var(file_path1, lon_name, loc_lat, loc_lon, lat_name, lon_name)
+    time, Var1 = read_var(file_path1, var_name, loc_lat, loc_lon, lat_name, lon_name)
+    time, Var2 = read_var(file_path2, var_name, loc_lat, loc_lon, lat_name, lon_name)
+    time, lats = read_var(file_path1, lat_name, loc_lat, loc_lon, lat_name, lon_name)
+    time, lons = read_var(file_path1, lon_name, loc_lat, loc_lon, lat_name, lon_name)
 
     var       = spital_var(time,Var2,year_s,year_e)-spital_var(time,Var1,year_s,year_e)
     print(var)
@@ -303,7 +267,7 @@ def plot_time_series(file_paths, var_names, year_s, year_e, loc_lat=None, loc_lo
     print("======== In plot_time_series =========")
 
     fig, ax = plt.subplots()
-    Time1, Var1 = read_obs_var(file_paths[0], var_names[0], loc_lat, loc_lon, lat_name[0], lon_name[0])
+    Time1, Var1 = read_var(file_paths[0], var_names[0], loc_lat, loc_lon, lat_name[0], lon_name[0])
     time1, var1 = time_series_var(Time1,Var1,year_s,year_e)
     t1 = []
     for i in np.arange(len(time1)):
@@ -314,9 +278,11 @@ def plot_time_series(file_paths, var_names, year_s, year_e, loc_lat=None, loc_lo
         scale = 1.
     print("var1*scale")
     print(var1*scale)
-    ax.plot(t1, var1*scale, c = "blue", label="var1", alpha=0.5)
+
+    ax.plot(t1, var1*scale, c = "blue", label="GW", alpha=0.5)
+
     if len(file_paths) > 1:
-        Time2, Var2 = read_obs_var(file_paths[1], var_names[1], loc_lat, loc_lon, lat_name[1], lon_name[1])
+        Time2, Var2 = read_var(file_paths[1], var_names[1], loc_lat, loc_lon, lat_name[1], lon_name[1])
         time2, var2 = time_series_var(Time2,Var2,year_s,year_e)
         t2 = []
         for i in np.arange(len(time2)):
@@ -328,9 +294,10 @@ def plot_time_series(file_paths, var_names, year_s, year_e, loc_lat=None, loc_lo
 
         print("var2*scale")
         print(var2*scale)
-        ax.plot(t2, var2*scale, c = "red", label="var2", alpha=0.5)
+        ax.plot(t2, var2*scale, c = "red", label="FD", alpha=0.5)
 
-    # Time2, Var2 = read_obs_var(file_paths[1], var_names[1], loc_lat, loc_lon, lat_name[1], lon_name[1])
+    # ax.set_xlim([np.min(var1*scale,var2*scale), np.max(var1*scale,var2*scale)])
+    # Time2, Var2 = read_var(file_paths[1], var_names[1], loc_lat, loc_lon, lat_name[1], lon_name[1])
     # time2, var2 = time_series_var(Time2,Var2,year_s,year_e)
     # var = np.zeros((2,len(var1)))
     # var[0,:] = var1
@@ -347,12 +314,12 @@ def plot_time_series(file_paths, var_names, year_s, year_e, loc_lat=None, loc_lo
     if loc_lat != None:
         message = message + "_lat="+str(loc_lat[0]) +"-"+str(loc_lat[1]) + "_lon="+str(loc_lon[0])+"-"+str(loc_lon[1])
 
-    plt.savefig('./plots/Oct2021/time_series_lis_vs_off_'+message+'.png',dpi=300)
+    plt.savefig('./plots/Oct2021/time_series_lis_vs_off_'+message+'_FD.png',dpi=300)
 
 if __name__ == "__main__":
 
     # #######################
-    #   plot_spital_map     #
+    #     path setting      #
     # #######################
 
     DOLCE_path = "/g/data/w35/mm3972/data/DOLCE/v3/"
@@ -362,52 +329,58 @@ if __name__ == "__main__":
     GRACE_path = "/g/data/w35/mm3972/data/GRACE/GRACE_JPL_RL06/GRACE_JPLRL06M_MASCON/"
     GRACE_file = GRACE_path + "GRCTellus.JPL.200204_202004.GLO.RL06M.MSCNv02CRI.nc"
 
-    GW_off_path   = "/g/data/w35/mm3972/model/cable/runs/sanaa_run/test_fix_satfrac_10km/outputs/"
-    GW_off_file   = GW_off_path + "cable_out_2000-2019.nc"
+    GW_off_path = "/g/data/w35/mm3972/model/cable/runs/sanaa_run/test_fix_satfrac_10km/outputs/"
+    GW_off_file = GW_off_path + "cable_out_2000-2019.nc"
 
-    FD_off_path   = "/g/data/w35/mm3972/model/cable/runs/sanaa_run/test_fix_satfrac_10km_fd/outputs/"
-    FD_off_file   = FD_off_path + "cable_out_2000-2019.nc"
+    FD_off_path = "/g/data/w35/mm3972/model/cable/runs/sanaa_run/test_fix_satfrac_10km_fd/outputs/"
+    FD_off_file = FD_off_path + "cable_out_2000-2019.nc"
+
+    # #######################
+    #   plot_spital_map     #
+    # #######################
 
     year_s     = 2000
     year_e     = 2019
     loc_lat    = [-40,-28]
     loc_lon    = [140,154]
-    #
-    # var_names   = ['Fwsoil','Qs','Qsb','WatTable','Qle','Qh','Qg','GWMoist','Rainf','Evap','ESoil','ECanop','TVeg']
-    # lat_name   = "latitude"#"lat"
-    # lon_name   = "longitude"#"lon"
+
+    file_paths  = [GLEAM_file, GW_off_file]
+    var_names   = ['E','Evap']
+    # ['Fwsoil','Qs','Qsb','WatTable','Qle','Qh','Qg','GWMoist','Rainf','Evap','ESoil','ECanop','TVeg']
+    lat_names   = ["lat","latitude",]#"lat"
+    lon_names   = ["lon","longitude",]#"lon"
     # for var_name in var_names:
-    #     plot_spital_map_diff(FD_off_file, GW_off_file, var_name, year_s, year_e,
-    #                      loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name,
-    #                      message="GW-FD")
-    #     # plot_spital_map( FD_off_file, var_name, year_s, year_e,
-    #     #                  loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name,
-    #     #                  message="FD")
+    message     = "GW-GLEAM"
+    plot_spital_map(file_paths, var_names, year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_names=lat_names,
+                    lon_names=lon_names,message=message)
+
+        # plot_spital_map(FD_off_file, GW_off_file, var_name, year_s, year_e,
+        #                      loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name,
+        #                      message="GW-FD")
 
     # var_name   = "E" #"E"#'lwe_thickness'#'E'
     # lat_name   = "lat"
     # lon_name   = "lon"
-    # plot_spital_map(GLEAM_file, var_name, year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name)
 
-    file_path  = [GW_off_file, FD_off_file]
-    lat_name   = ["latitude","latitude"]
-    lon_name   = ["longitude","longitude"]
-
-    var_names  = [ ["GWMoist","GWMoist"],
-                   ["Evap","Evap"],
-                   ["TVeg","TVeg"],
-                   ["ESoil","ESoil"],
-                   ["ECanop","ECanop"],
-                   ["Qs","Qs"],
-                   ["Qsb","Qsb"],
-                   ["Rainf","Rainf"],
-                   ["WatTable","WatTable"],
-                   ["Qle","Qle"],
-                   ["Qh","Qh"],
-                   ["Qg","Qg"],
-                   ["RadT","RadT"],
-                   ["VegT","VegT"],
-                   ["Fwsoil","Fwsoil"]]
-
-    for var_num in np.arange(len(var_names)):
-        plot_time_series(file_path, var_names[var_num], year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name)
+    # file_paths = [GW_off_file, FD_off_file]#, FD_off_file]
+    # lat_name   = ["latitude","latitude"]
+    # lon_name   = ["longitude","longitude"]
+    #
+    # var_names  = [ ["GWMoist","GWMoist"],
+    #                ["Evap","Evap"],
+    #                ["TVeg","TVeg"],
+    #                ["ESoil","ESoil"],
+    #                ["ECanop","ECanop"],
+    #                ["Qs","Qs"],
+    #                ["Qsb","Qsb"],
+    #                ["Rainf","Rainf"],
+    #                ["WatTable","WatTable"],
+    #                ["Qle","Qle"],
+    #                ["Qh","Qh"],
+    #                ["Qg","Qg"],
+    #                ["RadT","RadT"],
+    #                ["VegT","VegT"],
+    #                ["Fwsoil","Fwsoil"]]
+    #
+    # for var_num in np.arange(len(var_names)):
+    #     plot_time_series(file_paths, var_names[var_num], year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name)

@@ -254,7 +254,12 @@ def plot_spital_map_diff(file_path1, file_path2, var_name, year_s, year_e,
 
     var1       = spital_var(time1,Var1,year_s,year_e)
     var2       = spital_var(time1,Var2,year_s,year_e)
+    print("var1")
+    print(var1)
+    print("var2")
+    print(var2)
     var        = var2-var1
+    print("var")
     print(var)
 
     fig = plt.figure(figsize=(7,5))
@@ -291,7 +296,7 @@ def plot_spital_map_diff(file_path1, file_path2, var_name, year_s, year_e,
         scale = 1.
 
     # clevs = np.linspace( np.min(var),np.max(var), num=20)
-    plt.contourf(lons, lats, var*scale,  transform=ccrs.PlateCarree(),cmap=plt.cm.BrBG) # clevs,
+    plt.contourf(lons1, lats1, var*scale,  transform=ccrs.PlateCarree(),cmap=plt.cm.BrBG) # clevs,
     plt.title(var_name, size=16)
     cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
     # cb.set_label(units,size=14,rotation=270,labelpad=15)

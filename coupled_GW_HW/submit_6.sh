@@ -3,7 +3,7 @@
 #PBS -m ae
 #PBS -P w35
 #PBS -q hugemem
-#PBS -l walltime=5:00:00
+#PBS -l walltime=0:30:00
 #PBS -l mem=1470GB
 #PBS -l ncpus=1
 #PBS -j oe
