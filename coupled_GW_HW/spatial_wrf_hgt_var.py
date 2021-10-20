@@ -72,7 +72,7 @@ def plot_spatial_wrf_Tair_Wind(file_path,height,timeidx):
 
     plt.show()
 
-def plot_spatial_wrf_var_Wind(case_names,file_paths,var_name,message,var_unit,height,timeidx,val_min=None,val_max=None): 
+def plot_spatial_wrf_var_Wind(case_names,file_paths,var_name,message,var_unit,height,timeidx,val_min=None,val_max=None):
 
     # Open the NetCDF file
     ncfile = Dataset(file_paths[0])
@@ -172,7 +172,7 @@ def plot_spatial_wrf_var_Wind(case_names,file_paths,var_name,message,var_unit,he
 
     fig.savefig("./plots/spatial_wrf_"+message+"_"+var_name+"_"+case_names[0]+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
 
-def plot_spatial_wrf_var_Wind_diff(case_names,file_paths,var_name,message,var_unit,height,timeidx,val_min=None,val_max=None): 
+def plot_spatial_wrf_var_Wind_diff(case_names,file_paths,var_name,message,var_unit,height,timeidx,val_min=None,val_max=None):
 
     # Open the NetCDF file
     ncfile1 = Dataset(file_paths[0])
@@ -287,7 +287,6 @@ def plot_spatial_wrf_var_Wind_diff(case_names,file_paths,var_name,message,var_un
 
     fig.savefig("./plots/spatial_wrf_diff_"+message+"_"+str(height)+"hPa_"+var_name+"_"+case_names[0]+"_vs_"+case_names[1]+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
 
-
 if __name__ == "__main__":
 
     case_names = ['free_drain_25Jul','ctl_25Jul'] # the first case_name is set as control by default
@@ -302,7 +301,7 @@ if __name__ == "__main__":
     for case_name in case_names:
         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/"
         file_path  = path + file_name
-        file_paths.append(file_path) 
+        file_paths.append(file_path)
     for height in heights:
         for timeidx in np.arange(0,24):
             print(timeidx)

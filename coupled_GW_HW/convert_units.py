@@ -91,7 +91,7 @@ def get_land_var_scale_offline(var_name):
 
     if var_name in var_s2d:
         scale = s2d#*mmd2wm2
-        units = "mm d-1"#"W/m2" 
+        units = "mm d-1"#"W/m2"
     elif var_name in var_umol_s2g_d:
         scale = umol_s2g_d
         units = "gC m-2 d-1"
@@ -181,26 +181,6 @@ def get_land_var_range_diff(var_name):
     elif var_name in var_mm2m:
         ranges[0] = -10.
         ranges[1] = 10.
-    else:
-        ranges = None
-    return ranges
-
-def get_wrf_var_range_diff(var_name):
-
-    '''
-    Get range
-    '''
-
-    var_degc       = ["T2"]
-    var_percent    = ["rh2"]
-    ranges         = [0.0,0.0]
-
-    if var_name in var_degc:
-        ranges[0] = -2.
-        ranges[1] = 2.
-    elif var_name in var_percent:
-        ranges[0] = -50.
-        ranges[1] = 50.
     else:
         ranges = None
     return ranges

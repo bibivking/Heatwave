@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+'''
+Plot spitial map of land diagnosis and parameters from LIS-CABLE
+1. per time step
+2. time period average
+'''
+
 from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
@@ -94,7 +100,7 @@ def plot_map_var(file_path, var_name):
         # qv = plt.quiver(lon, lat, U10M[i,:,:], V10M[i,:,:], scale=420, color='k')
         plt.savefig('./plots/'+var_name+'-'+str(i-15675)+'.png',dpi=300)
 
-def plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, layer=None):
+def plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, layer=None, message=None):
 
     # Open the NetCDF4 file (add a directory path if necessary) for reading:
     var1 = Dataset(file_paths[0], mode='r')
@@ -125,7 +131,8 @@ def plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, l
             # Make plots
             fig = plt.figure(figsize=(9,5))
             ax = plt.axes(projection=ccrs.PlateCarree())
-            ax.set_extent([110,155,-45,-10])
+            # ax.set_extent([110,155,-45,-10])
+            ax.set_extent([135,155,-40,-25])
             ax.coastlines(resolution="50m",linewidth=1)
 
             # Add gridlines
@@ -133,8 +140,10 @@ def plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, l
             gl.xlabels_top  = False
             gl.ylabels_right= False
             gl.xlines       = True
-            gl.xlocator     = mticker.FixedLocator([110,115,120,125,130,135,140,145,150,155])
-            gl.ylocator     = mticker.FixedLocator([-45,-40,-35,-30,-25,-20,-15,-10])
+            # gl.xlocator     = mticker.FixedLocator([110,115,120,125,130,135,140,145,150,155])
+            # gl.ylocator     = mticker.FixedLocator([-45,-40,-35,-30,-25,-20,-15,-10])
+            gl.xlocator     = mticker.FixedLocator([135,140,145,150,155])
+            gl.ylocator     = mticker.FixedLocator([-40,-35,-30,-25])
             gl.xformatter   = LONGITUDE_FORMATTER
             gl.yformatter   = LATITUDE_FORMATTER
             gl.xlabel_style = {'size':10, 'color':'black'}
@@ -147,17 +156,24 @@ def plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, l
             else:
                 cmap = plt.cm.seismic
 
-            if ranges == None:
-                if len(np.shape(Var)) == 2:
-                    plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=cmap)
-                elif len(np.shape(Var)) == 3:
-                    plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=cmap)
-            else:
-                clevs = np.linspace(ranges[0],ranges[1], num=21)
-                if len(np.shape(Var)) == 2:
-                    plt.contourf(lon, lat, Var[:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap)
-                if len(np.shape(Var)) == 3:
-                    plt.contourf(lon, lat, Var[layer,:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap)
+            if var_name in ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg","Qs_tavg","Qsb_tavg","Rainf_tavg"]:
+                clevs = np.linspace(-5.,5., num=11)
+            elif var_name in ["Qh_tavg","Qle_tavg","Qg_tavg"]:
+                clevs = np.linspace(-80.,80., num=11)
+            elif var_name in ["SoilMoist_inst","Qair_f_inst"]:
+                clevs = np.linspace(-0.3,0.3, num=11)
+            elif var_name in ["AvgSurfT_tavg","VegT_tavg","Tair_f_inst","SoilTemp_inst"]:
+                clevs = np.linspace(-4.,4., num=11)
+            elif var_name in ["FWsoil_tavg"]:
+                clevs = np.linspace(-0.5,0.5, num=11)
+            elif var_name in ["WaterTableD_tavg"]:
+                clevs = np.linspace(-10.,10., num=21)
+
+
+            if len(np.shape(Var)) == 2:
+                plt.contourf(lon, lat, Var[:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap, extend='both')
+            if len(np.shape(Var)) == 3:
+                plt.contourf(lon, lat, Var[layer,:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap, extend='both')
 
             cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
 
@@ -174,21 +190,18 @@ def plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, l
             cb.ax.tick_params(labelsize=10)
             cb.set_label(units_string,size=14,rotation=270,labelpad=15)
 
-            if is_diff:
-                if len(np.shape(Var)) == 3: # 4-D var
-                    plt.savefig('./plots/Oct2021/land_var/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_vs_'+case_names[1]
-                                + '_ts-'+str(ts)+'.png',dpi=300)
-                else:
-                    plt.savefig('./plots/Oct2021/land_var/spatial_map_'+var_name+'_'+case_names[0]+'_vs_'+case_names[1]
-                                + '_ts-'+str(ts)+'.png',dpi=300)
+            if message == None:
+                txt = var_name
             else:
-                if len(np.shape(Var)) == 3:
-                    plt.savefig('./plots/Oct2021/land_var/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_ts-'+str(ts)+'.png',dpi=300)
-                else:
-                    plt.savefig('./plots/Oct2021/land_var/spatial_map_'+var_name+'_'+case_names[0]+'_ts-'+str(ts)+'.png',dpi=300)
+                txt = message + "_" + var_name
+
+            if len(np.shape(Var)) == 3:
+                plt.savefig('./plots/19Oct/land_var/spatial_map_'+txt+'_lvl-'+str(layer)+'_ts-'+str(ts)+'.png',dpi=300)
+            else:
+                plt.savefig('./plots/19Oct/land_var/spatial_map_'+txt+'_ts-'+str(ts)+'.png',dpi=300)
             Var = None
 
-def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e,layer=None):
+def plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s, ts_e, layer=None, message=None):
 
     # Open the NetCDF4 file (add a directory path if necessary) for reading:
 
@@ -221,7 +234,8 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_name
         # Make plots
         fig = plt.figure(figsize=(9,5))
         ax = plt.axes(projection=ccrs.PlateCarree())
-        ax.set_extent([110,155,-45,-10])
+        # ax.set_extent([110,155,-45,-10])
+        ax.set_extent([135,155,-40,-25])
         ax.coastlines(resolution="50m",linewidth=1)
 
         # Add gridlines
@@ -229,8 +243,10 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_name
         gl.xlabels_top = False
         gl.ylabels_right = False
         gl.xlines = True
-        gl.xlocator = mticker.FixedLocator([110,115,120,125,130,135,140,145,150,155])
-        gl.ylocator = mticker.FixedLocator([-45,-40,-35,-30,-25,-20,-15,-10])
+        # gl.xlocator     = mticker.FixedLocator([110,115,120,125,130,135,140,145,150,155])
+        # gl.ylocator     = mticker.FixedLocator([-45,-40,-35,-30,-25,-20,-15,-10])
+        gl.xlocator     = mticker.FixedLocator([135,140,145,150,155])
+        gl.ylocator     = mticker.FixedLocator([-40,-35,-30,-25])
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
         gl.xlabel_style = {'size':10, 'color':'black'}
@@ -245,17 +261,22 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_name
             cmap = plt.cm.seismic
 
         if is_diff:
-            if ranges == None:
-                if len(np.shape(Var)) == 2:
-                    plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=cmap)
-                elif len(np.shape(Var)) == 3:
-                    plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=cmap)
-            else:
-                clevs = np.linspace(ranges[0],ranges[1], num=21)
-                if len(np.shape(Var)) == 2:
-                    plt.contourf(lon, lat, Var[:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap)
-                if len(np.shape(Var)) == 3:
-                    plt.contourf(lon, lat, Var[layer,:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap)
+            if var_name in ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg","Qs_tavg","Qsb_tavg","Rainf_tavg"]:
+                clevs = np.linspace(-5.,5., num=11)
+            elif var_name in ["Qh_tavg","Qle_tavg","Qg_tavg"]:
+                clevs = np.linspace(-50.,50., num=11)
+            elif var_name in ["SoilMoist_inst","Qair_f_inst"]:
+                clevs = np.linspace(-0.3,0.3, num=11)
+            elif var_name in ["AvgSurfT_tavg","VegT_tavg","Tair_f_inst","SoilTemp_inst"]:
+                clevs = np.linspace(-4.,4., num=11)
+            elif var_name in ["FWsoil_tavg"]:
+                clevs = np.linspace(-0.5,0.5, num=11)
+            elif var_name in ["WaterTableD_tavg"]:
+                clevs = np.linspace(-10.,10., num=21)
+            if len(np.shape(Var)) == 2:
+                plt.contourf(lon, lat, Var[:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap, extend='both')
+            if len(np.shape(Var)) == 3:
+                plt.contourf(lon, lat, Var[layer,:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap, extend='both')
         else:
             if len(np.shape(Var)) == 2:
                 plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=cmap)
@@ -276,18 +297,16 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_name
 
         cb.ax.tick_params(labelsize=10)
         cb.set_label(units_string,size=14,rotation=270,labelpad=15)
-        if is_diff:
-            if len(np.shape(Var)) == 3: # 4-D var
-                plt.savefig('./plots/Oct2021/land_var/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_vs_'+case_names[1]
-                            + '_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=300)
-            else:
-                plt.savefig('./plots/Oct2021/land_var/spatial_map_'+var_name+'_'+case_names[0]+'_vs_'+case_names[1]
-                            + '_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=300)
+        if message == None:
+            txt = var_name
         else:
-            if len(np.shape(Var)) == 3:
-                plt.savefig('./plots/Oct2021/land_var/spatial_map_'+var_name+'_lvl-'+str(layer)+'_'+case_names[0]+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=300)
-            else:
-                plt.savefig('./plots/Oct2021/land_var/spatial_map_'+var_name+'_'+case_names[0]+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=300)
+            txt = message + "_" + var_name
+
+        if len(np.shape(Var)) == 3:
+            plt.savefig('./plots/19Oct/land_var/spatial_map_'+txt+'_lvl-'+str(layer)+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=300)
+        else:
+            plt.savefig('./plots/19Oct/land_var/spatial_map_'+txt+'_ts-'+str(ts_s)+'_'+str(ts_e)+'.png',dpi=300)
+
         Var = None
 
 if __name__ == "__main__":
@@ -308,21 +327,100 @@ if __name__ == "__main__":
     var_3D_basic_names = ['Evap_tavg',"ESoil_tavg","ECanop_tavg",'TVeg_tavg',"FWsoil_tavg","Qle_tavg","Qh_tavg","Qg_tavg","VegT_tavg","WaterTableD_tavg"]
 
     # =============================== Operation ================================
-    case_names = [  ["fd_feb2009","gw_feb2009"],
-                    ["fd_feb2011","gw_feb2011"],
-                    ["fd_jan2013","gw_jan2013"],
-                    ["fd_jan2014","gw_jan2014"],
-                    ["fd_feb2017","gw_feb2017"],
-                    ["fd_jan2019","gw_jan2019"] ] # ["fd_feb2009","gw_feb2009"],
-    file_names = [  "LIS.CABLE.200902-200902.d01.nc",
-                    "LIS.CABLE.201102-201102.d01.nc",
-                    "LIS.CABLE.201301-201301.d01.nc",
-                    "LIS.CABLE.201401-201401.d01.nc",
-                    "LIS.CABLE.201702-201702.d01.nc",
-                    "LIS.CABLE.201901-201901.d01.nc" ] # "LIS.CABLE.200902-200902.d01.nc",
+    case_names = [  "hw2009_15Oct","hw2011_15Oct",
+                    "hw2013_15Oct","hw2019_15Oct" ] # ["hw2014_15Oct","hw2017_15Oct"]
+
+    file_names = [  "LIS.CABLE.20090122-20090213",
+                    "LIS.CABLE.20110124-20110211",
+                    "LIS.CABLE.20121226-20130114",
+                    "LIS.CABLE.20190106-20190130" ] # "LIS.CABLE.200902-200902.d01.nc",
 
     case_sum   = len(file_names)
-    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/fd_feb2009/WRF_output/wrfout_d01_2009-02-01_00:00:00"
+    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_15Oct/gw_rst_20090113/WRF_output/wrfout_d01_2009-01-13_11:00:00"
+
+    # ############################
+    #   plot plot_map_var_ts    #
+    # ############################
+    # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
+    is_diff    = True #False
+
+    for case_num in np.arange(case_sum):
+
+        file_paths = []
+
+        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+        file_path  = path + file_names[case_num]+"_fd.nc"
+        file_paths.append(file_path)
+        file_path  = path + file_names[case_num]+"_gw.nc"
+        file_paths.append(file_path)
+        print(file_paths)
+
+        tss        = [0]
+        message    = case_names[case_num]+"_GW-FD"
+
+        var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg",
+                        "Qh_tavg","Qle_tavg","FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
+                        "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
+
+        plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, message=message)
+
+        var_names  = ["SoilMoist_inst","SoilTemp_inst"]
+        for layer in np.arange(0,6):
+            plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, layer=layer, message=message)
+
+    ######################################
+    #   plot plot_map_var_period_mean    #
+    ######################################
+
+    is_diff    = True #False
+    layer      = None
+    var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg",
+                  "Qh_tavg","Qle_tavg","FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
+                  "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
+    # var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg",
+    #               "Qh_tavg","Qle_tavg","Qg_tavg","Qs_tavg","Qsb_tavg",
+    #               "FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
+    #               "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
+
+    ts_s       = [ 6*48, 6*48, 6*48, 6*48]
+    ts_e       = [ 17*48, 13*48, 14*48, 20*48 ]
+
+    for case_num in np.arange(case_sum):
+        print(ts_s)
+        print(ts_e)
+        file_paths = []
+
+        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+        file_path  = path + file_names[case_num]+"_fd.nc"
+        file_paths.append(file_path)
+        file_path  = path + file_names[case_num]+"_gw.nc"
+        file_paths.append(file_path)
+        print(file_paths)
+
+        message    = case_names[case_num]+"_GW-FD"
+        plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s[case_num], ts_e[case_num], layer=layer, message=message)
+
+        var_names  = ["SoilMoist_inst","SoilTemp_inst"]
+        for layer in np.arange(0,6):
+            plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s[case_num], ts_e[case_num], layer=layer, message=message)
+
+    # ==================== Old Operation (before Oct 2021) =====================
+    #
+    # case_names = [  ["fd_feb2009","gw_feb2009"],
+    #                 ["fd_feb2011","gw_feb2011"],
+    #                 ["fd_jan2013","gw_jan2013"],
+    #                 ["fd_jan2014","gw_jan2014"],
+    #                 ["fd_feb2017","gw_feb2017"],
+    #                 ["fd_jan2019","gw_jan2019"] ] # ["fd_feb2009","gw_feb2009"],
+    # file_names = [  "LIS.CABLE.200902-200902.d01.nc",
+    #                 "LIS.CABLE.201102-201102.d01.nc",
+    #                 "LIS.CABLE.201301-201301.d01.nc",
+    #                 "LIS.CABLE.201401-201401.d01.nc",
+    #                 "LIS.CABLE.201702-201702.d01.nc",
+    #                 "LIS.CABLE.201901-201901.d01.nc" ] # "LIS.CABLE.200902-200902.d01.nc",
+    #
+    # case_sum   = len(file_names)
+    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/fd_feb2009/WRF_output/wrfout_d01_2009-02-01_00:00:00"
     #
     # # ############################
     # #   plot plot_map_var_ts    #
@@ -356,32 +454,32 @@ if __name__ == "__main__":
     #     var_names  = ["SoilMoist_inst","SoilTemp_inst"]
     #     for layer in np.arange(0,6):
     #         plot_map_var_ts(is_diff, file_paths, wrf_path, case_names[case_num], var_names, tss, layer=layer)
+    #
+    # ######################################
+    # #   plot plot_map_var_period_mean    #
+    # ######################################
+    # is_diff    = True #False
+    # layer      = None
+    # var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg",
+    #               "Qh_tavg","Qle_tavg","Qg_tavg","Qs_tavg","Qsb_tavg",
+    #               "FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
+    #               "Rainf_tavg", "Qair_f_inst"]
+    #
+    # for case_num in np.arange(case_sum):
+    #     file_paths = []
+    #     for case_name in case_names[case_num]:
+    #         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
+    #         file_path  = path + file_names[case_num]
+    #         file_paths.append(file_path)
+    #
+    #     # from day 6 to day 28
+    #     ts_s       = 5*8
+    #     ts_e       = 28*8
+    #
+    #     #for layer in np.arange(0,6):
+    #     plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names[case_num], var_names, ts_s, ts_e, layer=layer)
 
-    ######################################
-    #   plot plot_map_var_period_mean    #
-    ######################################
-    is_diff    = True #False
-    layer      = None
-    var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg",
-                  "Qh_tavg","Qle_tavg","Qg_tavg","Qs_tavg","Qsb_tavg",
-                  "FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
-                  "Rainf_tavg", "Qair_f_inst"]
 
-    for case_num in np.arange(case_sum):
-        file_paths = []
-        for case_name in case_names[case_num]:
-            path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
-            file_path  = path + file_names[case_num]
-            file_paths.append(file_path)
-            
-        # from day 6 to day 28
-        ts_s       = 5*8
-        ts_e       = 28*8
-
-        #for layer in np.arange(0,6):
-        plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names[case_num], var_names, ts_s, ts_e, layer=layer)
-
-    # ==================== Old Operation (before Oct 2021) =====================
     ######################
     #   Plot AWAP Tmax   #
     ######################

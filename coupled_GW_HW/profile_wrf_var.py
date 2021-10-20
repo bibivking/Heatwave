@@ -19,7 +19,7 @@ def plot_profile_wrf_var(file_path, case_name, var_name, var_units, timeidx):
     print(z)
     if var_units == None:
         var        = getvar(ncfile, var_name, timeidx=timeidx)
-    else: 
+    else:
         var        = getvar(ncfile, var_name, units=var_units, timeidx=timeidx)
 
     # Set the start point and end point for the cross section
@@ -74,9 +74,9 @@ def plot_profile_wrf_var(file_path, case_name, var_name, var_units, timeidx):
         ax.set_title(var_name+" ts-"+str(timeidx), {"fontsize" : 12})
     else:
         ax.set_title(var_name+" ("+var_units+") ts-"+str(timeidx), {"fontsize" : 12})
-    fig.savefig("./plots/profile_wrf_"+var_name+"_"+case_name+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
+    fig.savefig("./plots/19Oct/wrf_prof/profile_wrf_"+var_name+"_"+case_name+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
 
-def plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_units, timeidx_s, timeidx_e, ts=None):
+def plot_profile_wrf_var_diff_period_mean(file_paths, var_name, var_units, ts_s, ts_e, ts=None, message=None):
 
     # Open the NetCDF file
     ncfile1     = Dataset(file_paths[0])
@@ -92,18 +92,20 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_
         var_tmp2    = getvar(ncfile2, var_name, units=var_units, timeidx=ALL_TIMES)
 
     if ts == None:
-        var_1 = np.mean(var_tmp1[timeidx_s:timeidx_e],axis=0)
-        var_2 = np.mean(var_tmp2[timeidx_s:timeidx_e],axis=0)
+        var_1 = np.mean(var_tmp1[ts_s:ts_e],axis=0)
+        var_2 = np.mean(var_tmp2[ts_s:ts_e],axis=0)
     else:
-        print(var_tmp1[timeidx_s+ts:timeidx_e+ts:8])
-        var_1 = np.mean(var_tmp1[timeidx_s+ts:timeidx_e+ts:8],axis=0)
-        var_2 = np.mean(var_tmp2[timeidx_s+ts:timeidx_e+ts:8],axis=0)
+        print(var_tmp1[ts_s+ts:ts_e+ts:8])
+        var_1 = np.mean(var_tmp1[ts_s+ts:ts_e+ts:8],axis=0)
+        var_2 = np.mean(var_tmp2[ts_s+ts:ts_e+ts:8],axis=0)
 
     var         = var_2 - var_1
 
     # Set the start point and end point for the cross section
-    start_point = CoordPair(lat=-30., lon=115.0)
-    end_point   = CoordPair(lat=-30., lon=161.0)
+    # start_point = CoordPair(lat=-30., lon=115.0)
+    # end_point   = CoordPair(lat=-30., lon=161.0)
+    start_point = CoordPair(lat=-30., lon=135.0)
+    end_point   = CoordPair(lat=-30., lon=155.0)
 
     # Compute the vertical cross-section interpolation.  Also, include the
     # lat/lon points along the cross-section in the metadata by setting latlon
@@ -116,8 +118,10 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_
     ax      = fig.add_subplot(1,1,1)
 
     # Make the contour plot for var
-    # levels  = np.arange(-5, 6, 1)
-    levels  = np.arange(-40, 41, 2)
+    if var_name == "th":
+        levels  = np.arange(-1, 1, 0.2)
+    elif var_name == "rh":
+        levels  = np.arange(-40, 41, 2)
     var_contours = ax.contourf(to_np(var_cross), levels=levels, cmap=get_cmap("coolwarm"))
 
     # Add the color bar
@@ -149,31 +153,50 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_
         ax.set_title(var_name+" ts-"+str(ts), {"fontsize" : 12})
     else:
         ax.set_title(var_name+" ("+var_units+") ts-"+str(ts), {"fontsize" : 12})
-
-    if ts == None:
-        fig.savefig("./plots/profile_wrf_diff_"+var_name+"_"+case_names[0]+"_vs_"+case_names[1]
-                +"_period-"+str(timeidx_s)+"-"+str(timeidx_e), bbox_inches='tight', pad_inches=0.1)
+    if message == None:
+        message = var_name
     else:
-        fig.savefig("./plots/profile_wrf_diff_"+var_name+"_"+case_names[0]+"_vs_"+case_names[1]
-                +"_period-"+str(timeidx_s)+"-"+str(timeidx_e)+"_ts-"+str(ts), bbox_inches='tight', pad_inches=0.1)
+        message = message+"_"+var_name
+    if ts == None:
+        fig.savefig("./plots/19Oct/wrf_prof/profile_wrf_diff_"+message
+                +"_tss-"+str(ts_s)+"-"+str(ts_e), bbox_inches='tight', pad_inches=0.1)
+    else:
+        fig.savefig("./plots/19Oct/wrf_prof/profile_wrf_diff_"+message
+                +"_tss-"+str(ts_s)+"-"+str(ts_e)+"_ts-"+str(ts), bbox_inches='tight', pad_inches=0.1)
 
 if __name__ == "__main__":
 
-    ### plot_profile_wrf_var
-    case_names = ['free_drain_25Jul','ctl_25Jul'] # the first case_name is set as control by default
-    file_name  = "wrfout_d01_2013-01-01_03:00:00"
-    var_name   = 'rh' #"th"
-    var_units  = None #'%' #"degC"
 
-    file_paths = []
-    for case_name in case_names:
-        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/"
-        file_path  = path + file_name
+    case_names = [  "hw2009_15Oct","hw2011_15Oct",
+                    "hw2013_15Oct","hw2019_15Oct" ] # ["hw2014_15Oct","hw2017_15Oct"]
+
+    file_names = [  "wrfout_20090122-20090213",
+                    "wrfout_20110124-20110211",
+                    "wrfout_20121226-20130114",
+                    "wrfout_20190106-20190130" ]
+
+    case_sum   = len(file_names)
+
+    ts_s       = [ 6*24, 6*24, 6*24, 6*24]
+    ts_e       = [ 17*24, 13*24, 14*24, 20*24 ]
+
+    var_name   = 'th' #"th" #"rh"
+    var_units  = "degC" #None #'%' #"degC"
+
+    ##########################################
+    # plot_profile_wrf_var_diff_period_mean  #
+    ##########################################
+
+    for case_num in np.arange(case_sum):
+        file_paths = []
+
+        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+        file_path  = path + file_names[case_num]+"_fd"
+        file_paths.append(file_path)
+        file_path  = path + file_names[case_num]+"_gw"
         file_paths.append(file_path)
 
-
-    timeidx_s = 0      # 12 pm at 4th - 8th Jan 2013
-    timeidx_e = 14*8
-    tss       = [0, 1, 2, 3, 4, 5, 6, 7]      # 12 pm
-    for ts in tss:
-        plot_profile_wrf_var_diff_period_mean(file_paths, case_names, var_name, var_units, timeidx_s, timeidx_e, ts)
+        tss       = np.arange(24) # 1 pm
+        message   = case_names[case_num]+"_GW-FD"
+        for ts in tss:
+            plot_profile_wrf_var_diff_period_mean(file_paths, var_name, var_units, ts_s[case_num], ts_e[case_num], ts, message=message)

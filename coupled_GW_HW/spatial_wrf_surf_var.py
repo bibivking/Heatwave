@@ -10,8 +10,7 @@ import cartopy.crs as crs
 from cartopy.feature import NaturalEarthFeature
 from wrf import (to_np, getvar, smooth2d, get_cartopy, cartopy_xlim,
                         cartopy_ylim, latlon_coords, ALL_TIMES)
-from convert_units import get_wrf_var_range_diff
-from common_utils import get_reverse_colormap
+from common_utils import get_reverse_colormap, get_wrf_var_range_diff
 
 def plot_spatial_wrf_surf_press(file_path, case_name, ts):
 
@@ -166,7 +165,7 @@ def plot_spatial_wrf_surf_var_animation(file_path, case_name, var_name,val_min, 
 
     return ax
 
-def plot_spatial_wrf_surf_var(is_diff, message, file_paths, case_names, var_name, tss):
+def plot_spatial_wrf_surf_var(is_diff,file_paths, var_name, tss, message=None):
 
     # Open the NetCDF file
     ncfile1 = Dataset(file_paths[0])
@@ -235,11 +234,11 @@ def plot_spatial_wrf_surf_var(is_diff, message, file_paths, case_names, var_name
 
         if ranges == None:
             plt.contourf(to_np(lons), to_np(lats), to_np(Var),
-                            transform=crs.PlateCarree(), cmap=cmap)
+                            transform=crs.PlateCarree(), cmap=cmap, extend='both')
         else:
             clevs = np.linspace(ranges[0],ranges[1], num=21)
             plt.contourf(to_np(lons), to_np(lats), to_np(Var), levels=clevs,
-                            transform=crs.PlateCarree(), cmap=cmap)
+                            transform=crs.PlateCarree(), cmap=cmap, extend='both')
 
         # Add a color bar
         plt.colorbar(ax=ax, shrink=.98)
@@ -251,8 +250,8 @@ def plot_spatial_wrf_surf_var(is_diff, message, file_paths, case_names, var_name
         # Add the gridlines
         ax.gridlines(color="black", linestyle="dotted")
 
-        time_name = ["10am", "1pm", "4pm", "7pm", "10pm", "1am", "4am", "7am"]
-        plt.title(var_name+" "+message+" day="+str(ts//8+1)+" "+time_name[ts%8])
+        # time_name = ["10am", "1pm", "4pm", "7pm", "10pm", "1am", "4am", "7am"]
+        # plt.title(var_name+" "+message+" day="+str(ts//8+1)+" "+time_name[ts%8])
 
         # if message == "201212":
             # time_name = ["10am", "1pm", "4pm", "7pm", "10pm", "1am", "4am", "7am"]
@@ -260,17 +259,18 @@ def plot_spatial_wrf_surf_var(is_diff, message, file_paths, case_names, var_name
         # elif message == "201301":
         #     time_name = ["1pm", "4pm", "7pm", "10pm", "1am", "4am", "7am", "10am"]
         #     plt.title(var_name+" "+message+" day="+str(ts//8+1)+" "+time_name[ts%8])
-
-        if is_diff:
-            fig.savefig("./plots/Oct2021/wrf_surf/spatial_wrf_surf_diff_"+message+"_"+var_name+"_"+case_names[0]+"_vs_"+case_names[1]
-                    +"_"+str(ts), bbox_inches='tight', pad_inches=0.1)
+        if message == None:
+            message = var_name
         else:
-            fig.savefig("./plots/Oct2021/wrf_surf/spatial_wrf_surf_"+message+"_"+var_name+"_"+case_names[0]
-                    +"_"+str(ts), bbox_inches='tight', pad_inches=0.1)
+            message = message+"_"+var_name
+        if is_diff:
+            fig.savefig("./plots/19Oct/wrf_surf/spatial_wrf_surf_diff_"+message+"_"+str(ts), bbox_inches='tight', pad_inches=0.1)
+        else:
+            fig.savefig("./plots/19Oct/wrf_surf/spatial_wrf_surf_"+message+"_"+str(ts), bbox_inches='tight', pad_inches=0.1)
 
         Var = None
 
-def plot_spatial_wrf_surf_var_period_mean(is_diff, message, file_paths, case_names, var_name, ts_s, ts_e, ts = None):
+def plot_spatial_wrf_surf_var_period_mean(is_diff, file_paths, var_name, ts_s, ts_e, ts = None, message=None):
 
     # Open the NetCDF file
     ncfile1 = Dataset(file_paths[0])
@@ -287,10 +287,10 @@ def plot_spatial_wrf_surf_var_period_mean(is_diff, message, file_paths, case_nam
         if is_diff:
             var2 = np.mean(var_tmp2[ts_s:ts_e],axis=0)
     else:
-        print(var_tmp1[ts_s+ts:ts_e+ts:8])
-        var1 = np.mean(var_tmp1[ts_s+ts:ts_e+ts:8],axis=0)
+        print(var_tmp1[ts_s+ts:ts_e+ts:24])
+        var1 = np.mean(var_tmp1[ts_s+ts:ts_e+ts:24],axis=0)
         if is_diff:
-            var2 = np.mean(var_tmp2[ts_s+ts:ts_e+ts:8],axis=0)
+            var2 = np.mean(var_tmp2[ts_s+ts:ts_e+ts:24],axis=0)
 
     if is_diff:
         Var = var2 - var1
@@ -350,11 +350,11 @@ def plot_spatial_wrf_surf_var_period_mean(is_diff, message, file_paths, case_nam
 
     if ranges == None:
         plt.contourf(to_np(lons), to_np(lats), to_np(Var),
-                        transform=crs.PlateCarree(), cmap=cmap)
+                        transform=crs.PlateCarree(), cmap=cmap, extend='both')
     else:
         clevs = np.linspace(ranges[0],ranges[1], num=21)
         plt.contourf(to_np(lons), to_np(lats), to_np(Var), levels=clevs,
-                        transform=crs.PlateCarree(), cmap=cmap)
+                        transform=crs.PlateCarree(), cmap=cmap, extend='both')
 
     # Add a color bar
     plt.colorbar(ax=ax, shrink=.98)
@@ -370,18 +370,16 @@ def plot_spatial_wrf_surf_var_period_mean(is_diff, message, file_paths, case_nam
     # plt.title("2m Relative Humidity (%) of ts="+str(ts))
     plt.title(var_name+" ts="+str(ts))
 
-    if is_diff:
-        diff_flag   = "_diff_"
-        case_string = case_names[0]+"_vs_"+case_names[1]
+    if message == None:
+        message = var_name
     else:
-        diff_flag = "_"
-        case_string = case_names[0]
+        message = message + "_"+var_name
 
     if ts == None:
-        fig.savefig("./plots/Oct2021/wrf_surf/spatial_wrf_surf"+diff_flag+message+"_"+var_name+"_"+case_string
+        fig.savefig("./plots/19Oct/wrf_surf/spatial_wrf_surf"+message
                 +"_period-"+str(ts_s)+"-"+str(ts_e), bbox_inches='tight', pad_inches=0.1)
     else:
-        fig.savefig("./plots/Oct2021/wrf_surf/spatial_wrf_surf"+diff_flag+message+"_"+var_name+"_"+case_string
+        fig.savefig("./plots/19Oct/wrf_surf/spatial_wrf_surf"+message
                 +"_period-"+str(ts_s)+"-"+str(ts_e)+"_ts-"+str(ts), bbox_inches='tight', pad_inches=0.1)
     Var = None
 
@@ -391,19 +389,15 @@ if __name__ == "__main__":
     sys.setrecursionlimit(50000)
 
     # =============================== Operation ================================
-    case_names = [  ["fd_feb2009","gw_feb2009"],
-                    ["fd_feb2011","gw_feb2011"],
-                    ["fd_jan2013","gw_jan2013"],
-                    ["fd_jan2014","gw_jan2014"],
-                    ["fd_feb2017","gw_feb2017"],
-                    ["fd_jan2019","gw_jan2019"] ]
-    file_names = [  "wrfout_d01_2009-02-01_00:00:00",
-                    "wrfout_d01_2011-02-01_00:00:00",
-                    "wrfout_d01_2013-01-01_00:00:00",
-                    "wrfout_d01_2014-01-01_00:00:00",
-                    "wrfout_d01_2017-02-01_00:00:00",
-                    "wrfout_d01_2019-01-01_00:00:00" ]
-    messages   = [ "feb2009","feb2011","jan2013","jan2014","feb2017","jan2019"]
+
+    case_names = [  "hw2009_15Oct","hw2011_15Oct",
+                    "hw2013_15Oct","hw2019_15Oct" ] # ["hw2014_15Oct","hw2017_15Oct"]
+
+    file_names = [  "wrfout_20090122-20090213",
+                    "wrfout_20110124-20110211",
+                    "wrfout_20121226-20130114",
+                    "wrfout_20190106-20190130" ]
+
     case_sum   = len(file_names)
     '''
     1. wrfout_d01_2012-12-01_00:00:00
@@ -419,40 +413,43 @@ if __name__ == "__main__":
     # ###################################
     is_diff    = True
     var_name   = "T2"
-    val_min, var_max = -14, 14
 
     for case_num in np.arange(case_sum):
         file_paths = []
-        for case_name in case_names[case_num]:
-            path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/"
-            file_path  = path + file_names[case_num]
-            file_paths.append(file_path)
 
-        tss = np.arange(0*8, 28*8, 8) # day 0-- day 28, local time 1pm
+        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+        file_path  = path + file_names[case_num]+"_fd"
+        file_paths.append(file_path)
+        file_path  = path + file_names[case_num]+"_gw"
+        file_paths.append(file_path)
 
-        plot_spatial_wrf_surf_var(is_diff, messages[case_num], file_paths, case_names[case_num], var_name, tss)
-    #
-    # # ###############################################
-    # #   plot_spatial_wrf_surf_var_diff_period_mean  #
-    # # ###############################################
-    # var_name   = "T2" #"rh2" #"T2"
-    # is_diff    = True #False
-    #
-    # for case_num in np.arange(case_sum):
-    #     file_paths = []
-    #     for case_name in case_names[case_num]:
-    #         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/"
-    #         file_path  = path + file_names[case_num]
-    #         file_paths.append(file_path)
-    #
-    #     # day 6-28
-    #     ts_s = 5*8
-    #     ts_e = 28*8
-    #
-    #     tss  = [ 0,   1,   2,    3,   4,   5,   6,   7 ]
-    #     for ts in tss:
-    #         plot_spatial_wrf_surf_var_period_mean(is_diff, messages[case_num], file_paths, case_names[case_num],
-    #                                               var_name, ts_s, ts_e, ts)
+        tss = [0] #np.arange(0*8, 28*8, 8) # day 0-- day 28, local time 1pm
+
+        message   = case_names[case_num]+"_GW-FD"
+        plot_spatial_wrf_surf_var(is_diff, file_paths, var_name, tss, message=message)
+
+    # ###############################################
+    #   plot_spatial_wrf_surf_var_diff_period_mean  #
+    # ###############################################
+    var_name   = "T2" #"rh2" #"T2"
+    is_diff    = True #False
+
+    ts_s       = [ 6*24, 6*24, 6*24, 6*24]
+    ts_e       = [ 17*24, 13*24, 14*24, 20*24 ]
+    for case_num in np.arange(case_sum):
+        file_paths = []
+
+        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+        file_path  = path + file_names[case_num]+"_fd"
+        file_paths.append(file_path)
+        file_path  = path + file_names[case_num]+"_gw"
+        file_paths.append(file_path)
+
+        message = case_names[case_num]+"_GW-FD"
+
+        tss  = np.arange(24) # 1 pm
+        for ts in tss:
+            plot_spatial_wrf_surf_var_period_mean(is_diff,file_paths,var_name, ts_s[case_num], ts_e[case_num], ts, message)
 
     # ==================== Old Operation (before Oct 2021) =====================
 
