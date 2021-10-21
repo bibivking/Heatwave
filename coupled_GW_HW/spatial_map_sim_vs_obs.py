@@ -53,8 +53,11 @@ def calc_cable_tws(file_path, loc_lat, loc_lon, lat_name, lon_name):
 
     for i in np.arange(6):
         TWS = TWS + SoilMoist[:,i,:,:]*Soil_thickness[i]*1000
+    
+    year_2004       = datetime(2004,1,1)
+    year_2009       = datetime(2009,12,31)
 
-    TWS_0409 = spital_var(time1,TWS,2004,2009)
+    TWS_0409 = spital_var(time1,TWS,year_2004,year_2009)
     print('np.shape(TWS_0409)')
     print(np.shape(TWS_0409))
     TWS      = TWS - TWS_0409
@@ -142,7 +145,7 @@ def plot_time_series( file_paths, var_names, year_s, year_e, loc_lat=None, loc_l
         time1, var1 = time_series_var(Time1, Var1*10., year_s, year_e)
     else:
         Time1, Var1 = read_var(file_paths[0], var_names[0], loc_lat, loc_lon, lat_names[0], lon_names[0])
-        time1, var1 = time_series_var(Time1, Var1, year_s, year_e)
+        time1, var1 = time_series_var(Time1, Var1, year_s, year_e) # np.cumsum()
 
     t1 = []
     for i in np.arange(len(time1)):
@@ -166,7 +169,7 @@ def plot_time_series( file_paths, var_names, year_s, year_e, loc_lat=None, loc_l
             time2, var2 = time_series_var(Time2, Var2*10., year_s, year_e)
         else:
             Time2, Var2 = read_var(file_paths[1], var_names[1], loc_lat, loc_lon, lat_names[1], lon_names[1])
-            time2, var2 = time_series_var(Time2, Var2, year_s, year_e)
+            time2, var2 = time_series_var(Time2, Var2, year_s, year_e) #np.cumsum()
         t2 = []
         for i in np.arange(len(time2)):
             t2.append(time2[i].days)
@@ -189,7 +192,7 @@ def plot_time_series( file_paths, var_names, year_s, year_e, loc_lat=None, loc_l
             time3, var3 = time_series_var(Time3, Var3*10., year_s, year_e)
         else:
             Time3, Var3 = read_var(file_paths[2], var_names[2], loc_lat, loc_lon, lat_names[2], lon_names[2])
-            time3, var3 = time_series_var(Time3, Var3, year_s, year_e)
+            time3, var3 = time_series_var(Time3, Var3, year_s, year_e) # np.cumsum()
         t3 = []
         for i in np.arange(len(time3)):
             t3.append(time3[i].days)
@@ -200,7 +203,7 @@ def plot_time_series( file_paths, var_names, year_s, year_e, loc_lat=None, loc_l
 
         print("var3*scale")
         print(var3*scale)
-        ax.plot(t3, var3*scale, c = "red", label="SP3", alpha=0.5)
+        ax.plot(t3, var3*scale, c = "red", label="FD", alpha=0.5)
 
     # ax.set_xlim([np.min(var1*scale,var2*scale), np.max(var1*scale,var2*scale)])
     # Time2, Var2 = read_var(file_paths[1], var_names[1], loc_lat, loc_lon, lat_name[1], lon_name[1])
@@ -233,8 +236,8 @@ if __name__ == "__main__":
 
     DOLCE_path = "/g/data/w35/mm3972/data/DOLCE/v3/"
     DOLCE_file = DOLCE_path+"DOLCE_v3_2000-2018.nc"
-    GLEAM_path = "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_5/v3-5a/yearly/"
-    GLEAM_file = GLEAM_path + "E_1980-2020_GLEAM_v3.5a_YR.nc"
+    GLEAM_path = "/g/data/w35/Shared_data/Observations/Global_ET_products/GLEAM_v3_5/v3-5a/monthly/"
+    GLEAM_file = GLEAM_path + "E_1980-2020_GLEAM_v3.5a_MO.nc"
     GRACE_path = "/g/data/w35/mm3972/data/GRACE/GRACE_JPL_RL06/GRACE_JPLRL06M_MASCON/"
     GRACE_file = GRACE_path + "GRCTellus.JPL.200204_202004.GLO.RL06M.MSCNv02CRI.nc"
 
@@ -253,29 +256,50 @@ if __name__ == "__main__":
     SP3_off_file = SP3_off_path + "cable_out_1970-1999.nc"
 
     # #######################
-    #   plot_spital_map     #
+    #        variable       #
     # #######################
 
-    year_s     = datetime(2000,1,1)
-    year_e     = datetime(2019,12,31)
-    loc_lat    = [-40,-28]
-    loc_lon    = [140,154]
+    var_of_interest = [ ["GWMoist","GWMoist"],
+                        ["Evap","Evap"],
+                        ["TVeg","TVeg"],
+                        ["ESoil","ESoil"],
+                        ["ECanop","ECanop"],
+                        ["Qs","Qs"],
+                        ["Qsb","Qsb"],
+                        ["Rainf","Rainf"],
+                        ["WatTable","WatTable"],
+                        ["Qle","Qle"],
+                        ["Qh","Qh"],
+                        ["Qg","Qg"],
+                        ["RadT","RadT"],
+                        ["VegT","VegT"],
+                        ["Fwsoil","Fwsoil"]]
 
-    file_paths = [FD_off_file, GW_off_file]
 
-    # var_names   = ['Fwsoil','Qs','Qsb','WatTable','Qle','Qh','Qg','GWMoist','Rainf','Evap','ESoil','ECanop','TVeg']
-    var_names  = [ ["TVeg","TVeg"],
-                   ["WatTable","WatTable"],
-                   ["Qle","Qle"],
-                   ["Fwsoil","Fwsoil"]]
+    # # #######################
+    # #   plot_spital_map     #
+    # # #######################
 
-    lat_names   = ["latitude","latitude"]#"lat"
-    lon_names   = ["longitude","longitude"]#"lon"
-    message     = "GW-FD"
+    # year_s     = datetime(2000,1,1)
+    # year_e     = datetime(2019,12,31)
+    # loc_lat    = [-40,-28]
+    # loc_lon    = [140,154]
 
-    for var_name in var_names:
-        plot_spital_map(file_paths, var_name, year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_names=lat_names,
-                        lon_names=lon_names,message=message)
+    # file_paths = [FD_off_file, GW_off_file]
+
+    # # var_names   = ['Fwsoil','Qs','Qsb','WatTable','Qle','Qh','Qg','GWMoist','Rainf','Evap','ESoil','ECanop','TVeg']
+    # var_names  = [ ["Fwsoil","Fwsoil"],
+    #                ["RadT","RadT"]     ]
+    #             #    ["TVeg","TVeg"],
+    #             #    ["WatTable","WatTable"],
+    #             #    ["Qle","Qle"],
+    # lat_names   = ["latitude","latitude"]#"lat"
+    # lon_names   = ["longitude","longitude"]#"lon"
+    # message     = "GW-FD"
+
+    # for var_name in var_names:
+    #     plot_spital_map(file_paths, var_name, year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_names=lat_names,
+    #                     lon_names=lon_names,message=message)
 
     # file_paths  = [SP1_off_file]
     # message     = "SP1"
@@ -292,57 +316,57 @@ if __name__ == "__main__":
     # plot_spital_map(file_paths, var_names, year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_names=lat_names,
     #                 lon_names=lon_names,message=message)
 
-    # var_names  = [ ["GWMoist","GWMoist"],
-    #                ["Evap","Evap"],
-    #                ["TVeg","TVeg"],
-    #                ["ESoil","ESoil"],
-    #                ["ECanop","ECanop"],
-    #                ["Qs","Qs"],
-    #                ["Qsb","Qsb"],
-    #                ["Rainf","Rainf"],
-    #                ["WatTable","WatTable"],
-    #                ["Qle","Qle"],
-    #                ["Qh","Qh"],
-    #                ["Qg","Qg"],
-    #                ["RadT","RadT"],
-    #                ["VegT","VegT"],
-    #                ["Fwsoil","Fwsoil"]]
+    ####################################
+    #         plot_time_series         #
+    ####################################
 
-    # year_s       = datetime(2000,1,1)
-    # year_e       = datetime(2019,12,31)
-    # loc_lat      = [-40,-28]
-    # loc_lon      = [140,154]
-    #
-    # var_names_2D = [ ["GWMoist","GWMoist"],
-    #                ["Evap","Evap"],
-    #                ["TVeg","TVeg"],
-    #                ["ESoil","ESoil"],
-    #                ["ECanop","ECanop"],
-    #                ["Qs","Qs"],
-    #                ["Qsb","Qsb"],
-    #                ["Rainf","Rainf"],
-    #                ["WatTable","WatTable"],
-    #                ["Qle","Qle"],
-    #                ["Qh","Qh"],
-    #                ["Qg","Qg"],
-    #                ["RadT","RadT"],
-    #                ["VegT","VegT"],
-    #                ["Fwsoil","Fwsoil"]]
+    year_s       = datetime(2000,1,1)
+    year_e       = datetime(2019,12,31)
+    loc_lat      = [-40,-28]
+    loc_lon      = [140,154]
+
+    # var_names       = [ ["GWMoist","GWMoist"],
+    #                     ["Evap","Evap"],
+    #                     ["TVeg","TVeg"],
+    #                     ["ESoil","ESoil"],
+    #                     ["ECanop","ECanop"],
+    #                     ["Qs","Qs"],
+    #                     ["Qsb","Qsb"],
+    #                     ["WatTable","WatTable"],
+    #                     ["Qle","Qle"],
+    #                     ["Qh","Qh"],
+    #                     ["Qg","Qg"],
+    #                     ["RadT","RadT"],
+    #                     ["VegT","VegT"],
+    #                     ["Fwsoil","Fwsoil"]]
+
     # file_paths  = [GW_off_file, FD_off_file]
-    #
-    # print(np.shape(var_names_2D)[0])
-    # for i in np.arange(np.shape(var_names_2D)[0]):
-    #     var_names = var_names_2D[i]
+    
+    # for var_name in var_names:
     #     lat_names = ["latitude","latitude"]
     #     lon_names = ["longitude","longitude"]
     #     message   = "GW_vs_FD"
-    #     plot_time_series(file_paths, var_names, year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon,
+    #     plot_time_series(file_paths, var_name, year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon,
     #                      lat_names=lat_names, lon_names=lon_names, message=message)
-    #
+
     # file_paths= [GRACE_file, GW_off_file, FD_off_file]
     # var_names = ["lwe_thickness","TWS","TWS"]
+
+    # GLEAM_vs_CABLE
+    file_paths= [GLEAM_file, GW_off_file, FD_off_file]
+    var_names = ["E","Evap","Evap"]    
+    lat_names = ["lat","latitude","latitude"]
+    lon_names = ["lon","longitude","longitude"]
+    message   = "GLEAM_vs_CABLE"
+    plot_time_series(file_paths, var_names, year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon,
+                     lat_names=lat_names, lon_names=lon_names, message=message)
+
+    # DOLCE_vs_CABLE
+    # file_paths= [DOLCE_file, GW_off_file, FD_off_file]
+    # var_names = ["hfls","Qle","Qle"]    
     # lat_names = ["lat","latitude","latitude"]
     # lon_names = ["lon","longitude","longitude"]
-    # message   = "GRACE_vs_CABLE"
+    # message   = "DOLCE_vs_CABLE"
     # plot_time_series(file_paths, var_names, year_s, year_e, loc_lat=loc_lat, loc_lon=loc_lon,
     #                  lat_names=lat_names, lon_names=lon_names, message=message)
+                 

@@ -156,24 +156,28 @@ def plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, layer=None, m
             else:
                 cmap = plt.cm.seismic
 
-            if var_name in ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg","Qs_tavg","Qsb_tavg","Rainf_tavg"]:
-                clevs = np.linspace(-5.,5., num=11)
-            elif var_name in ["Qh_tavg","Qle_tavg","Qg_tavg"]:
-                clevs = np.linspace(-80.,80., num=11)
-            elif var_name in ["SoilMoist_inst","Qair_f_inst"]:
-                clevs = np.linspace(-0.3,0.3, num=11)
-            elif var_name in ["AvgSurfT_tavg","VegT_tavg","Tair_f_inst","SoilTemp_inst"]:
-                clevs = np.linspace(-4.,4., num=11)
-            elif var_name in ["FWsoil_tavg"]:
-                clevs = np.linspace(-0.5,0.5, num=11)
-            elif var_name in ["WaterTableD_tavg"]:
-                clevs = np.linspace(-10.,10., num=21)
-
-
-            if len(np.shape(Var)) == 2:
-                plt.contourf(lon, lat, Var[:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap, extend='both')
-            if len(np.shape(Var)) == 3:
-                plt.contourf(lon, lat, Var[layer,:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap, extend='both')
+            if is_diff:
+                if var_name in ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg","Qs_tavg","Qsb_tavg","Rainf_tavg"]:
+                    clevs = np.linspace(-5.,5., num=11)
+                elif var_name in ["Qh_tavg","Qle_tavg","Qg_tavg"]:
+                    clevs = np.linspace(-80.,80., num=11)
+                elif var_name in ["SoilMoist_inst","Qair_f_inst"]:
+                    clevs = np.linspace(-0.3,0.3, num=11)
+                elif var_name in ["AvgSurfT_tavg","VegT_tavg","Tair_f_inst","SoilTemp_inst"]:
+                    clevs = np.linspace(-4.,4., num=11)
+                elif var_name in ["FWsoil_tavg"]:
+                    clevs = np.linspace(-0.5,0.5, num=11)
+                elif var_name in ["WaterTableD_tavg"]:
+                    clevs = np.linspace(-10.,10., num=21)
+                if len(np.shape(Var)) == 2:
+                    plt.contourf(lon, lat, Var[:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap, extend='both')
+                if len(np.shape(Var)) == 3:
+                    plt.contourf(lon, lat, Var[layer,:,:], levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap, extend='both')
+            else:
+                if len(np.shape(Var)) == 2:
+                    plt.contourf(lon, lat, Var[:,:], transform=ccrs.PlateCarree(),cmap=cmap, extend='both')
+                if len(np.shape(Var)) == 3:
+                    plt.contourf(lon, lat, Var[layer,:,:], transform=ccrs.PlateCarree(),cmap=cmap, extend='both')
 
             cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
 
@@ -342,21 +346,21 @@ if __name__ == "__main__":
     #   plot plot_map_var_ts    #
     # ############################
     # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
-    is_diff    = True #False
+    is_diff    = False #False
 
     for case_num in np.arange(case_sum):
 
         file_paths = []
 
         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
-        file_path  = path + file_names[case_num]+"_fd.nc"
+        file_path  = path + file_names[case_num]+"_gw.nc"
         file_paths.append(file_path)
         file_path  = path + file_names[case_num]+"_gw.nc"
         file_paths.append(file_path)
         print(file_paths)
 
         tss        = [0]
-        message    = case_names[case_num]+"_GW-FD"
+        message    = case_names[case_num]+"_GW"
 
         var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg",
                         "Qh_tavg","Qle_tavg","FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
@@ -372,7 +376,7 @@ if __name__ == "__main__":
     #   plot plot_map_var_period_mean    #
     ######################################
 
-    is_diff    = True #False
+    is_diff    = False #False
     layer      = None
     var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg",
                   "Qh_tavg","Qle_tavg","FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
@@ -391,13 +395,13 @@ if __name__ == "__main__":
         file_paths = []
 
         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
-        file_path  = path + file_names[case_num]+"_fd.nc"
+        file_path  = path + file_names[case_num]+"_gw.nc"
         file_paths.append(file_path)
         file_path  = path + file_names[case_num]+"_gw.nc"
         file_paths.append(file_path)
         print(file_paths)
 
-        message    = case_names[case_num]+"_GW-FD"
+        message    = case_names[case_num]+"_GW"
         plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s[case_num], ts_e[case_num], layer=layer, message=message)
 
         var_names  = ["SoilMoist_inst","SoilTemp_inst"]

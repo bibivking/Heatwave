@@ -69,8 +69,8 @@ def mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name):
     elif len(np.shape(lat)) == 2:
         print("len(np.shape(lat)) == 2")
         ### caution: lat=100, lon=100 is a random pixel, lis run over a small domain may not have such a point
-        lat_spc = lat[100,100] - lat[99,100]
-        lon_spc = lon[100,100] - lon[100,99]
+        lat_spc = lat[50,50] - lat[49,50]
+        lon_spc = lon[50,50] - lon[50,49]
         print(lat_spc)
         print(lon_spc)
         ### caution: due to irregular space in lis, using lat/lon +lat/lon_spc/2 may includes more than 1 pixel.
@@ -91,8 +91,10 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
 
     obs_file   = Dataset(file_path, mode='r')
     time_tmp   = nc.num2date(obs_file.variables['time'][:],obs_file.variables['time'].units,
-                 only_use_cftime_datetimes=False, only_use_python_datetimes=True)
-    time       = time_tmp - datetime(2000,1,1)
+                 only_use_cftime_datetimes=False, only_use_python_datetimes=True)    
+
+    time       = time_tmp - datetime(2000,1,1,0,0,0)
+
     ntime      = len(time)
 
     if loc_lat == None:
@@ -166,8 +168,8 @@ def read_wrf_var(file_path, var_name, var_unit, height, loc_lat=None, loc_lon=No
 # ========================= Spitial & temporal Average =========================
 def spital_var(time,Var,time_s,time_e):
 
-    Time_s = time_s - datetime(2000,1,1)
-    Time_e = time_e - datetime(2000,1,1)
+    Time_s = time_s - datetime(2000,1,1,0,0,0)
+    Time_e = time_e - datetime(2000,1,1,0,0,0)
     time_cood = (time>=Time_s) & (time<Time_e)
 
     print('===== np.shape(Var[time_cood,:,:]) =====')
@@ -182,8 +184,8 @@ def spital_var(time,Var,time_s,time_e):
 
 def spital_ERAI_tp(time,Var,time_s,time_e):
 
-    Time_s = time_s - datetime(2000,1,1)
-    Time_e = time_e - datetime(2000,1,1)
+    Time_s = time_s - datetime(2000,1,1,0,0,0)
+    Time_e = time_e - datetime(2000,1,1,0,0,0)
 
     is_12_24 = []
     for i in np.arange(len(time)):
@@ -197,8 +199,8 @@ def spital_ERAI_tp(time,Var,time_s,time_e):
 
 def time_series_var(time,Var,time_s,time_e):
 
-    Time_s = time_s - datetime(2000,1,1)
-    Time_e = time_e - datetime(2000,1,1)
+    Time_s = time_s - datetime(2000,1,1,0,0,0)
+    Time_e = time_e - datetime(2000,1,1,0,0,0)
 
     var_tmp  = Var[(time>=Time_s) & (time<=Time_e),:,:]
     var      = np.nanmean(var_tmp,axis=(1,2))
@@ -247,8 +249,8 @@ def get_wrf_var_range_diff(var_name):
         ranges[0] = -2.
         ranges[1] = 2.
     elif var_name in var_percent:
-        ranges[0] = -50.
-        ranges[1] = 50.
+        ranges[0] = -20.
+        ranges[1] = 20.
     else:
         ranges = None
     return ranges

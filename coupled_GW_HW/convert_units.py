@@ -27,7 +27,7 @@ def get_land_var_scale(var_name):
     mm2m           = 0.001    # 1 mm = 0.001 m
 
     if var_name in var_s2d:
-        scale = s2d#*mmd2wm2
+        scale = s2d #*mmd2wm2
         units = "mm d-1" #"W/m2" #"mm d-1"
     elif var_name in var_umol_s2g_d:
         scale = umol_s2g_d

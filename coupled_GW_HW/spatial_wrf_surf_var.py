@@ -412,7 +412,7 @@ if __name__ == "__main__":
     #   plot_spatial_wrf_surf_var_diff  #
     # ###################################
     is_diff    = True
-    var_name   = "T2"
+    var_name   = "rh2"
 
     for case_num in np.arange(case_sum):
         file_paths = []
@@ -431,7 +431,7 @@ if __name__ == "__main__":
     # ###############################################
     #   plot_spatial_wrf_surf_var_diff_period_mean  #
     # ###############################################
-    var_name   = "T2" #"rh2" #"T2"
+    var_name   = "rh2" #"rh2" #"T2"
     is_diff    = True #False
 
     ts_s       = [ 6*24, 6*24, 6*24, 6*24]

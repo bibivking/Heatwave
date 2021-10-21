@@ -12,4 +12,4 @@
 
 source activate science
 cd /g/data/w35/mm3972/scripts/Heatwave/coupled_GW_HW
-python time_series_check_spinup_old_vs_new.py
+python spatial_wrf_surf_var.py
