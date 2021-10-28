@@ -23,15 +23,58 @@ end setvalues
 
 
 ; ================================== Options ===================================
-year_s    = 2012
-year_e    = 2013
+; 2009
+hw_event  = "hw2009_15Oct"
+year_s    = 2008
+year_e    = 2009
+doy_s     = 335 ; 1 Dec
+doy_e     = 58  ; 28 Feb
 
-filename_hw = "/g/data/w35/mm3972/scripts/ehfheatwaves/HW_Event_Indicator_1970-2019.nc"
+; ; 2011
+; hw_event  = "hw2011_15Oct"
+; year_s    = 2011
+; year_e    = 2011
+; doy_s     = 0   ; 1 Jan
+; doy_e     = 58  ; 28 Feb
+
+; ; 2013
+; hw_event  = "hw2013_15Oct"
+; year_s    = 2012
+; year_e    = 2013
+; doy_s     = 336 ; 1 Dec
+; doy_e     = 30  ; 31 Jan
+
+; ; 2019
+; hw_event  = "hw2019_15Oct"
+; year_s    = 2018
+; year_e    = 2019
+; doy_s     = 335 ; 1 Dec
+; doy_e     = 58  ; 28 Feb
+
+; ===================================== Path ====================================
+filename_hw = "/g/data/w35/mm3972/scripts/ehfheatwaves/nc_file/SE_AUS/HW_Event_Indicator_1970-2019.nc"
 f    = addfile (filename_hw,"r")
 
-time_s    = (year_s-1970)*365 + 10 + 335 ; 2012-12-01
-time_e    = (year_e-1970)*365 + 11 + 30  ; 2013-01-31
-tmp       = f->event(time_s:time_e,:,:)
+time_s = doy_s
+time_e = doy_e
+
+do year = 1970, year_s-1
+  if ( mod(year,4) .eq. 0) then
+      time_s = time_s + 366
+  else
+      time_s = time_s + 365
+  end if
+end do
+
+do year = 1970, year_e-1
+  if ( mod(year,4) .eq. 0) then
+      time_e = time_e + 366
+  else
+      time_e = time_e + 365
+  end if
+end do
+
+tmp = f->event(time_s:time_e,:,:)
 print(tmp&time)
 
 ; ================================= Plotting ===================================
@@ -75,14 +118,30 @@ res@gsnMaximize         = True
 res@gsnLeftString       = ""
 res@gsnRightString      = ""
 
-pic1 = "./plots/Check_heatwave"
-wks1 = gsn_open_wks("pdf",pic1)
-gsn_define_colormap(wks1,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
+pic = "./plots/19Oct/Heatwave_cover_" + hw_event
+wks = gsn_open_wks("pdf",pic)
+gsn_define_colormap(wks,"WhiteBlueGreenYellowRed") ;"ViBlGrWhYeOrRe") ;"BlueYellowRed")
 
 levels = fspan(0,1,21)
 res@cnLevels = levels
+
+if mod(year_s,4) .eq. 0 then
+  leap_doy = 366
+else
+  leap_doy = 365
+end if
+counter = 0
 do time = 0, dimsizes(tmp(:,0,0))-1
-  res@txString = "timestep-"+time
-  plots = gsn_csm_contour(wks1,tmp(time,:,:),res)
+  print(time)
+  if ((doy_s + time) .ge. leap_doy-1) then
+    counter = counter + 1
+    res@gsnLeftString = year_e+" "+ counter
+    print(res@gsnLeftString)
+  else
+    res@gsnLeftString = year_s+" "+ (doy_s + time+1)
+    print(res@gsnLeftString)
+  end if
+  plots = gsn_csm_contour(wks,tmp(time,:,:),res)
 end do
+
 end
