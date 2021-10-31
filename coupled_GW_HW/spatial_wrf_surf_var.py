@@ -3,6 +3,7 @@
 import sys
 import numpy as np
 from netCDF4 import Dataset
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
 import matplotlib.animation as animation
@@ -10,7 +11,7 @@ import cartopy.crs as crs
 from cartopy.feature import NaturalEarthFeature
 from wrf import (to_np, getvar, smooth2d, get_cartopy, cartopy_xlim,
                         cartopy_ylim, latlon_coords, ALL_TIMES)
-from common_utils import get_reverse_colormap, get_wrf_var_range_diff
+from common_utils import *
 
 def plot_spatial_wrf_surf_press(file_path, case_name, ts):
 
@@ -383,181 +384,230 @@ def plot_spatial_wrf_surf_var_period_mean(is_diff, file_paths, var_name, ts_s, t
                 +"_period-"+str(ts_s)+"-"+str(ts_e)+"_ts-"+str(ts), bbox_inches='tight', pad_inches=0.1)
     Var = None
 
+def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, loc_lon=None, message=None):
+
+    # Open the NetCDF file
+    encoding = 'utf-8' # Times in WRF output is btype, convert to string
+
+    ncfile1  = Dataset(file_paths[0])
+    ntime    = len(ncfile1.variables['Times'][:,0])
+    time_tmp = []
+
+    for i in np.arange(ntime):
+        time_temp = datetime.strptime(str(ncfile1.variables['Times'][i,:], encoding),'%Y-%m-%d_%H:%M:%S')
+        time_tmp.append(time_temp - datetime(2000,1,1))
+
+    time = np.array(time_tmp)
+
+    # to get lat and lon
+    p1       = getvar(ncfile1, "pressure", timeidx=ALL_TIMES)
+
+    # Extract the pressure, geopotential height, and wind variables
+    Var1  = read_wrf_surf_var(file_paths[0], var_name, loc_lat, loc_lon)
+
+    if var_name in ['temp']:
+        var1  = spital_var(time,Var1,time_s,time_e)
+    else:
+        scale = get_scale(var_name)
+        var1  = spital_var(time,Var1,time_s,time_e)*scale
+
+
+    if len(file_paths) > 1:
+        Var2  = read_wrf_surf_var(file_paths[1], var_name, loc_lat, loc_lon)
+
+        if var_name in ['temp']:
+            var2  = spital_var(time,Var2,time_s,time_e)
+        else:
+            scale = get_scale(var_name)
+            var2  = spital_var(time,Var2,time_s,time_e)*scale
+
+        # Calculate difference
+        var = var2 - var1
+    else:
+        # Calculate difference
+        var = var1
+
+    # Get the lat/lon coordinates
+    lats, lons = latlon_coords(p1)
+
+    # Get the cartopy mapping object
+    cart_proj = get_cartopy(p1)
+
+    # Create the figure
+    fig = plt.figure(figsize=(12,9))
+    fig.subplots_adjust(hspace=0.3)
+    fig.subplots_adjust(wspace=0.2)
+
+    plt.rcParams['text.usetex']     = False
+    plt.rcParams['font.family']     = "sans-serif"
+    plt.rcParams['font.serif']      = "Helvetica"
+    plt.rcParams['axes.linewidth']  = 1.5
+    plt.rcParams['axes.labelsize']  = 14
+    plt.rcParams['font.size']       = 14
+    plt.rcParams['legend.fontsize'] = 12
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 14
+
+    almost_black = '#262626'
+    # change the tick colors also to the almost black
+    plt.rcParams['ytick.color']     = almost_black
+    plt.rcParams['xtick.color']     = almost_black
+
+    # change the text colors also to the almost black
+    plt.rcParams['text.color']      = almost_black
+
+    # Change the default axis colors from black to a slightly lighter black,
+    # and a little thinner (0.5 instead of 1)
+    plt.rcParams['axes.edgecolor']  = almost_black
+    plt.rcParams['axes.labelcolor'] = almost_black
+
+    # set the box type of sequence number
+    props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
+    # choose colormap
+
+    # Set the GeoAxes to the projection used by WRF
+    ax = plt.axes(projection=cart_proj)
+
+    # Download and add the states and coastlines
+    states = NaturalEarthFeature(category="cultural", scale="50m",
+                                         facecolor="none",
+                                         name="admin_1_states_provinces_shp")
+    ax.add_feature(states, linewidth=.5, edgecolor="black")
+    ax.coastlines('50m', linewidth=0.8)
+
+    # start plotting
+    if loc_lat == None:
+        ax.set_extent([135,155,-40,-25])
+    else:
+        ax.set_extent([loc_lon[0],loc_lon[1],loc_lat[0],loc_lat[1]])
+
+
+    # gaussian_filter(z,sigma=3)
+
+    # Add the var contours
+    # levels = np.arange(-20., 20., 2.)
+    var_contours = plt.contourf(to_np(lons), to_np(lats), to_np(var),
+                   transform=crs.PlateCarree(), cmap=get_cmap("bwr"),extend='both') #levels = levels,,"jet" #“rainbow”#"coolwarm"
+    plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)
+
+    # Set the map bounds
+    ax.set_xlim(cartopy_xlim(p1))
+    ax.set_ylim(cartopy_ylim(p1))
+
+
+    plt.title(var_name)
+
+    if message == None:
+        message = var_name
+    else:
+        message = message+"_"+var_name
+
+    fig.savefig('./plots/19Oct/wrf_surf/spatial_wrf_surf_'+message , bbox_inches='tight', pad_inches=0.1)
+
+
 if __name__ == "__main__":
 
-    print(sys.getrecursionlimit())
-    sys.setrecursionlimit(50000)
+    #######################################################
+    # Decks to run:
+    #    plot_spital_map
+    #######################################################
 
-    # =============================== Operation ================================
+    var_3D = [  'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
+                'rh2',  # 2m Relative Humidity
+                'T2',   # 2m Temperature
+                'td2',  # 2m Dew Point Temperature
+                'slp',  # Sea Level Pressure
+                'ter',  # Model Terrain Height
+                'ctt',  # Cloud Top Temperature
+                'mdbz', # Maximum Reflectivity
+                'pw',   # Precipitable Water
+                'cloudfrac', # Cloud Fraction
+                'updraft_helicity' # Updraft Helicity
+              ]
+    var_names         = ['PMSL','PRCP','RAINC','RAINNC','PSFC','U10','V10','SFCEVP','TSK','PBLH','QVAPOR','QICE']
 
-    case_names = [  "hw2009_15Oct","hw2011_15Oct",
-                    "hw2013_15Oct","hw2019_15Oct" ] # ["hw2014_15Oct","hw2017_15Oct"]
+    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_15Oct/ensemble_avg'
+    cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_20090122-20090213_gw'  # atmo output of wrf-cable run
+    cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_20090122-20090213_fd'  # atmo output of wrf-cable run
 
-    file_names = [  "wrfout_20090122-20090213",
-                    "wrfout_20110124-20110211",
-                    "wrfout_20121226-20130114",
-                    "wrfout_20190106-20190130" ]
+    file_paths        = [cpl_atmo_file_fd, cpl_atmo_file_gw]
 
-    case_sum   = len(file_names)
-    '''
-    1. wrfout_d01_2012-12-01_00:00:00
-    UTC   12am, 3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm
-    Local 10am, 1pm, 4pm, 7pm, 10pm, 1am, 4am, 7am
-    2. wrfout_d01_2013-01-01_03:00:00
-    UTC    3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm, 12am
-    Local  1pm, 4pm, 7pm, 10pm, 1am, 4am, 7am, 10am
-    '''
+    CLDFRA,QVAPOR
+    for j, var_name in enumerate(var_names):
 
-    # ###################################
-    #   plot_spatial_wrf_surf_var_diff  #
-    # ###################################
-    is_diff    = True
-    var_name   = "rh2"
+        for i in np.arange(0,23):
+            time_s = datetime(2009,1,22,0,0,0,0) + timedelta(days=int(i))
+            time_e = datetime(2009,1,23,0,0,0,0) + timedelta(days=int(i))
 
-    for case_num in np.arange(case_sum):
-        file_paths = []
-
-        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
-        file_path  = path + file_names[case_num]+"_fd"
-        file_paths.append(file_path)
-        file_path  = path + file_names[case_num]+"_gw"
-        file_paths.append(file_path)
-
-        tss = [0] #np.arange(0*8, 28*8, 8) # day 0-- day 28, local time 1pm
-
-        message   = case_names[case_num]+"_GW-FD"
-        plot_spatial_wrf_surf_var(is_diff, file_paths, var_name, tss, message=message)
-
-    # ###############################################
-    #   plot_spatial_wrf_surf_var_diff_period_mean  #
-    # ###############################################
-    var_name   = "rh2" #"rh2" #"T2"
-    is_diff    = True #False
-
-    ts_s       = [ 6*24, 6*24, 6*24, 6*24]
-    ts_e       = [ 17*24, 13*24, 14*24, 20*24 ]
-    for case_num in np.arange(case_sum):
-        file_paths = []
-
-        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
-        file_path  = path + file_names[case_num]+"_fd"
-        file_paths.append(file_path)
-        file_path  = path + file_names[case_num]+"_gw"
-        file_paths.append(file_path)
-
-        message = case_names[case_num]+"_GW-FD"
-
-        tss  = np.arange(24) # 1 pm
-        for ts in tss:
-            plot_spatial_wrf_surf_var_period_mean(is_diff,file_paths,var_name, ts_s[case_num], ts_e[case_num], ts, message)
-
-    # ==================== Old Operation (before Oct 2021) =====================
-
-    # ################################
-    #   plot_spatial_wrf_surf_press  #
-    # ################################
-    # path      = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hires_r7264/WRF_output/"
-    # file_name = "wrfout_d01_2012-12-01_00:00:00"
-    # file_path = path+file_name
-    # case_name = "GW"
-    # ims = []
-    # for ts in np.arange(0,249):
-    #     ims.append([plot_spatial_wrf_surf_press(file_path,case_name,ts)])
-    # print(ims)
-
-    # ##############################
-    #   plot_spatial_wrf_surf_var  #
-    # ##############################
-    # path      = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hires_r7264/WRF_output/"
-    # file_name = "wrfout_d01_2012-12-01_00:00:00"
-    # file_path = path+file_name
-    # case_name = "GW"
-    # var_name  = "T2"
-    # val_min, var_max = 10, 50
-
-    # ims = []
-    # for ts in np.arange(0,249):
-    #     ims.append([plot_spatial_wrf_surf_var(file_path, case_name, var_name, val_min, var_max, ts)])
-    # print(ims)
+            message = "Couple_GW-FD_"+str(time_s)+"-"+str(time_e)
+            plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, message=message)
 
 
-    # ###################################
-    #   plot_spatial_wrf_surf_var_diff  #
-    # ###################################
+    #######################################################
+    # Decks to run:
+    #    plot_spatial_wrf_surf_press
+    #    plot_spatial_wrf_surf_var
+    #    plot_spatial_wrf_surf_var_period_mean
+    #######################################################
 
-    # case_names = ['free_drain_hires_r7264','hires_r7264'] # the first case_name is set as control by default
-    # file_name  = "wrfout_d01_2013-01-01_03:00:00"
-    # var_name   = "T2"
-    # val_min, var_max = -14, 14
+    # if False:
+    #     case_names = [  "hw2009_15Oct","hw2011_15Oct",
+    #                     "hw2013_15Oct","hw2019_15Oct" ] # ["hw2014_15Oct","hw2017_15Oct"]
 
-    # file_paths = []
-    # for case_name in case_names:
-    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/"
-    #     file_path  = path + file_name
-    #     file_paths.append(file_path)
-    # print(file_paths)
-    # ims = []
-    # tss = [3+8*3, 3+8*4, 3+8*5, 3+8*6, 3+8*7] # 12 pm at 4th - 8th Jan 2013
-    # for ts in tss:
-    #     ims.append([plot_spatial_wrf_surf_var_diff(file_paths, case_names, var_name, val_min, var_max, ts)])
+    #     file_names = [  "wrfout_20090122-20090213",
+    #                     "wrfout_20110124-20110211",
+    #                     "wrfout_20121226-20130114",
+    #                     "wrfout_20190106-20190130" ]
 
+    #     case_sum   = len(file_names)
+    #     '''
+    #     1. wrfout_d01_2012-12-01_00:00:00
+    #     UTC   12am, 3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm
+    #     Local 10am, 1pm, 4pm, 7pm, 10pm, 1am, 4am, 7am
+    #     2. wrfout_d01_2013-01-01_03:00:00
+    #     UTC    3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm, 12am
+    #     Local  1pm, 4pm, 7pm, 10pm, 1am, 4am, 7am, 10am
+    #     '''
 
-    # ###############################################
-    #   plot_spatial_wrf_surf_var_diff_period_mean  #
-    # ###############################################
-    #
-    # case_names = ['free_drain_14Aug','ctl_14Aug'] # the first case_name is set as control by default
-    # file_name  = "wrfout_d01_2013-01-01_03:00:00"
-    # message    = "201301"
-    # var_name   = "T2" #"rh2" #"T2"
-    # is_diff    = True #False
-    # file_paths = []
-    # for case_name in case_names:
-    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/"
-    #     file_path  = path + file_name
-    #     file_paths.append(file_path)
-    #
-    # # ts_s = 0      # 12 pm at 4th - 8th Jan 2013
-    # # ts_e = 14*8
-    #
-    # # tss     = [ 0,   1,   2,    3,   4,   5,   6,   7 ]
-    # #  ### wrfout_d01_2012-12-01_00:00:00
-    # #  # UTC   12am, 3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm
-    # #  # Local 10am, 1pm, 4pm, 7pm, 10pm, 1am, 4am, 7am
-    # #  ### wrfout_d01_2013-01-01_03:00:00
-    # #  # UTC    3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm, 12am
-    # #  # Local  1pm, 4pm, 7pm, 10pm, 1am, 4am, 7am, 10am
-    # # for ts in tss:
-    # #     plot_spatial_wrf_surf_var_period_mean(is_diff, message, file_paths, case_names, var_name, ts_s, ts_e, ts)
-    #
-    # tss = np.arange(190,249) #np.arange(0,249)
-    # plot_spatial_wrf_surf_var(is_diff, message, file_paths, case_names, var_name, tss)
-    #
-    #
-    #
-    # # # Create the figure
-    # # fig = plt.figure(figsize=(12,6))
-    # # fig.subplots_adjust(hspace=0.3)
-    # # fig.subplots_adjust(wspace=0.2)
-    #
-    # # plt.rcParams['text.usetex']     = False
-    # # plt.rcParams['font.family']     = "sans-serif"
-    # # plt.rcParams['font.serif']      = "Helvetica"
-    # # plt.rcParams['axes.linewidth']  = 1.5
-    # # plt.rcParams['axes.labelsize']  = 14
-    # # plt.rcParams['font.size']       = 14
-    # # plt.rcParams['legend.fontsize'] = 12
-    # # plt.rcParams['xtick.labelsize'] = 12
-    # # plt.rcParams['ytick.labelsize'] = 14
-    #
-    # # almost_black = '#262626'
-    # # # change the tick colors also to the almost black
-    # # plt.rcParams['ytick.color']     = almost_black
-    # # plt.rcParams['xtick.color']     = almost_black
-    #
-    # # # change the text colors also to the almost black
-    # # plt.rcParams['text.color']      = almost_black
-    #
-    # # ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
-    # #       repeat_delay=1000)
-    # # ani.save("spatial_wrf_slp_"+case_name+".mp4")
+    #     # ###################################
+    #     #   plot_spatial_wrf_surf_var_diff  #
+    #     # ###################################
+    #     is_diff    = True
+    #     var_name   = "rh2"
+
+    #     for case_num in np.arange(case_sum):
+    #         file_paths = []
+
+    #         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+    #         file_path  = path + file_names[case_num]+"_fd"
+    #         file_paths.append(file_path)
+    #         file_path  = path + file_names[case_num]+"_gw"
+    #         file_paths.append(file_path)
+
+    #         tss = [0] #np.arange(0*8, 28*8, 8) # day 0-- day 28, local time 1pm
+
+    #         message   = case_names[case_num]+"_GW-FD"
+    #         plot_spatial_wrf_surf_var(is_diff, file_paths, var_name, tss, message=message)
+
+    #     # ###############################################
+    #     #   plot_spatial_wrf_surf_var_diff_period_mean  #
+    #     # ###############################################
+    #     var_name   = "rh2" #"rh2" #"T2"
+    #     is_diff    = True #False
+
+    #     ts_s       = [ 6*24, 6*24, 6*24, 6*24]
+    #     ts_e       = [ 17*24, 13*24, 14*24, 20*24 ]
+    #     for case_num in np.arange(case_sum):
+    #         file_paths = []
+
+    #         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+    #         file_path  = path + file_names[case_num]+"_fd"
+    #         file_paths.append(file_path)
+    #         file_path  = path + file_names[case_num]+"_gw"
+    #         file_paths.append(file_path)
+
+    #         message = case_names[case_num]+"_GW-FD"
+
+    #         tss  = np.arange(24) # 1 pm
+    #         for ts in tss:
+    #             plot_spatial_wrf_surf_var_period_mean(is_diff,file_paths,var_name, ts_s[case_num], ts_e[case_num], ts, message)

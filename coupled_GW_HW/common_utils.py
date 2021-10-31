@@ -154,21 +154,67 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
                 Var = Var_tmp
     return time,Var
 
-def read_wrf_var(file_path, var_name, var_unit, height, loc_lat=None, loc_lon=None):
+def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None):
 
     print("read "+var_name+" from wrf output")
-    wrf_file = Dataset(file_path)
 
-    Var      = getvar(wrf_file, var_name, units=var_unit,timeidx=ALL_TIMES)
+    var_3D = [  'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
+                'rh2',  # 2m Relative Humidity
+                'T2',   # 2m Temperature
+                'td2',  # 2m Dew Point Temperature
+                'slp',  # Sea Level Pressure
+                'ter',  # Model Terrain Height
+                'ctt',  # Cloud Top Temperature
+                'mdbz', # Maximum Reflectivity
+                'pw',   # Precipitable Water
+                'cloudfrac', # Cloud Fraction
+                'updraft_helicity' # Updraft Helicity
+                ]
+
+    wrf_file = Dataset(file_path)
     p        = getvar(wrf_file, "pressure",timeidx=ALL_TIMES)
-    var_tmp  = interplevel(Var, p, height)
-    ntime    = len(p[:,0,0,0])
+    if var_name in var_3D:
+        var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
+    else:
+        var_tmp  = wrf_file.variables[var_name][:]
+
     if loc_lat == None:
         var  = var_tmp
     else:
-        mask = mask_by_lat_lon(file_path, loc_lat, loc_lon, 'XLAT', 'XLONG')
+        ### need to fix, not work
+        ntime  = len(p[:,0,0,0])
+        mask   = mask_by_lat_lon(file_path, loc_lat, loc_lon, 'XLAT', 'XLONG')
+        # np.savetxt("check",mask)
         mask_multi = [ mask ] * ntime
-        var = np.where(mask_multi,var_tmp,np.nan)
+        var    = np.where(mask_multi,var_tmp,np.nan)
+
+    return var
+
+def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=None, loc_lon=None):
+
+    print("read "+var_name+" from wrf output")
+    wrf_file = Dataset(file_path)
+    p        = getvar(wrf_file, "pressure",timeidx=ALL_TIMES)
+
+    if var_unit == None:
+        Var      = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
+    else:
+        Var      = getvar(wrf_file, var_name, units=var_unit, timeidx=ALL_TIMES)
+
+    if height == None:
+        var_tmp  = Var
+    else:
+        var_tmp  = interplevel(Var, p, height)
+
+    if loc_lat == None:
+        var  = var_tmp
+    else:
+        ### need to fix, not work
+        ntime  = len(p[:,0,0,0])
+        mask   = mask_by_lat_lon(file_path, loc_lat, loc_lon, 'XLAT', 'XLONG')
+        # np.savetxt("check",mask)
+        mask_multi = [ mask ] * ntime
+        var    = np.where(mask_multi,var_tmp,np.nan)
 
     return var
 
@@ -236,7 +282,7 @@ def time_series_time(time,time_s,time_e):
     Time_s = time_s - datetime(2000,1,1,0,0,0)
     Time_e = time_e - datetime(2000,1,1,0,0,0)
     Time     = time[(time>=Time_s) & (time<=Time_e)]
-    
+
     return Time
 
 # =============================== Plots setting ================================

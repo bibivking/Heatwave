@@ -137,26 +137,26 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, var_name, var_units, ts_s,
         levels  = np.arange(-20, 20, 1)
     elif var_name == "temp":
         levels  = np.arange(-1., 1., 0.2)
-
-    var_contours = ax.contourf(var_cross, levels=levels, cmap=get_cmap("coolwarm"))
+    print(np.shape(var_cross))
+    var_contours = ax.contourf( var1_cross.coords["vertical"], var1_cross.coords["xy_loc"], var_cross, levels=levels, cmap=get_cmap("coolwarm"))
 
     # Add the color bar
     cb_var = fig.colorbar(var_contours, ax=ax)
     cb_var.ax.tick_params(labelsize=12)
 
-    # Set the x-ticks to use latitude and longitude labels.
-    coord_pairs = to_np(var1_cross.coords["xy_loc"])
-    x_ticks     = np.arange(coord_pairs.shape[0])
-    x_labels    = [pair.latlon_str() for pair in to_np(coord_pairs)]
-    ax.set_xticks(x_ticks[::20])
-    ax.set_xticklabels(x_labels[::20], rotation=45, fontsize=12)
+    # # Set the x-ticks to use latitude and longitude labels.
+    # coord_pairs = to_np(var1_cross.coords["xy_loc"])
+    # x_ticks     = np.arange(coord_pairs.shape[0])
+    # x_labels    = [pair.latlon_str() for pair in to_np(coord_pairs)]
+    # ax.set_xticks(x_ticks[::20])
+    # ax.set_xticklabels(x_labels[::20], rotation=45, fontsize=12)
 
-    # Set the y-ticks to be height.
-    vert_vals = to_np(var1_cross.coords["vertical"])
-    v_ticks = np.arange(vert_vals.shape[0])
-    ax.set_yticks(v_ticks[:])
-    ax.set_yticklabels(vert_vals[:], fontsize=12)
-    ax.set_ylim((0,2000))
+    # # Set the y-ticks to be height.
+    # vert_vals = to_np(var1_cross.coords["vertical"])
+    # v_ticks   = np.arange(vert_vals.shape[0])
+    # ax.set_yticks(vert_vals)
+    # ax.set_yticklabels(vert_vals, fontsize=12)
+    # ax.set_ylim((0,2000))
 
     # Set the x-axis and  y-axis labels
     ax.set_xlabel("Latitude, Longitude", fontsize=12)
@@ -168,10 +168,12 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, var_name, var_units, ts_s,
         ax.set_title(var_name+" ts-"+str(ts), {"fontsize" : 12})
     else:
         ax.set_title(var_name+" ("+var_units+") ts-"+str(ts), {"fontsize" : 12})
+
     if message == None:
         message = var_name
     else:
         message = message+"_"+var_name
+
     if ts == None:
         fig.savefig("./plots/19Oct/wrf_prof/profile_wrf_"+message
                 +"_tss-"+str(ts_s)+"-"+str(ts_e), bbox_inches='tight', pad_inches=0.1)
@@ -202,33 +204,35 @@ if __name__ == "__main__":
     var_name   = 'temp' #"th" #"rh"
     var_units  = "degC" #None #'%' #"degC"
 
-    for case_num in np.arange(case_sum):
-        file_paths = []
+    # for case_num in np.arange(case_sum):
+    case_num   = 0
+    file_paths = []
 
-        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
-        file_path  = path + file_names[case_num]+"_fd"
-        file_paths.append(file_path)
-        file_path  = path + file_names[case_num]+"_gw"
-        file_paths.append(file_path)
+    path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+    file_path  = path + file_names[case_num]+"_fd"
+    file_paths.append(file_path)
+    file_path  = path + file_names[case_num]+"_gw"
+    file_paths.append(file_path)
 
-        tss       = np.arange(24) # 1 pm
-        message   = case_names[case_num]+"_GW-FD"
-        for ts in tss:
-            plot_profile_wrf_var_diff_period_mean(file_paths, var_name, var_units, ts_s[case_num], ts_e[case_num], ts, message=message)
+    tss       = np.arange(24) # 1 pm
+    message   = case_names[case_num]+"_GW-FD"
+    # for ts in tss:
+    ts = 0
+    plot_profile_wrf_var_diff_period_mean(file_paths, var_name, var_units, ts_s[case_num], ts_e[case_num], ts, message=message)
 
-    var_name   = 'rh' #"th" #"rh"
-    var_units  = None #None #'%' #"degC"
+    # var_name   = 'rh' #"th" #"rh"
+    # var_units  = None #None #'%' #"degC"
 
-    for case_num in np.arange(case_sum):
-        file_paths = []
+    # for case_num in np.arange(case_sum):
+    #     file_paths = []
 
-        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
-        file_path  = path + file_names[case_num]+"_fd"
-        file_paths.append(file_path)
-        file_path  = path + file_names[case_num]+"_gw"
-        file_paths.append(file_path)
+    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+    #     file_path  = path + file_names[case_num]+"_fd"
+    #     file_paths.append(file_path)
+    #     file_path  = path + file_names[case_num]+"_gw"
+    #     file_paths.append(file_path)
 
-        tss       = np.arange(24) # 1 pm
-        message   = case_names[case_num]+"_GW-FD"
-        for ts in tss:
-            plot_profile_wrf_var_diff_period_mean(file_paths, var_name, var_units, ts_s[case_num], ts_e[case_num], ts, message=message)
+    #     tss       = np.arange(24) # 1 pm
+    #     message   = case_names[case_num]+"_GW-FD"
+    #     for ts in tss:
+    #         plot_profile_wrf_var_diff_period_mean(file_paths, var_name, var_units, ts_s[case_num], ts_e[case_num], ts, message=message)
