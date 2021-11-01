@@ -485,7 +485,7 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
     # gaussian_filter(z,sigma=3)
 
     # Add the var contours
-    # levels = np.arange(-20., 20., 2.)
+    levels = np.arange(np.nanmin(var), np.nanmax(var), 20)
     var_contours = plt.contourf(to_np(lons), to_np(lats), to_np(var),
                    transform=crs.PlateCarree(), cmap=get_cmap("bwr"),extend='both') #levels = levels,,"jet" #“rainbow”#"coolwarm"
     plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)
@@ -512,35 +512,39 @@ if __name__ == "__main__":
     #    plot_spital_map
     #######################################################
 
-    var_3D = [  'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
+    var_3D = [
                 'rh2',  # 2m Relative Humidity
                 'T2',   # 2m Temperature
                 'td2',  # 2m Dew Point Temperature
-                'slp',  # Sea Level Pressure
+                'slp',  # Sea Level Pressure        
                 'ter',  # Model Terrain Height
                 'ctt',  # Cloud Top Temperature
                 'mdbz', # Maximum Reflectivity
                 'pw',   # Precipitable Water
-                'cloudfrac', # Cloud Fraction
-                'updraft_helicity' # Updraft Helicity
-              ]
-    var_names         = ['PMSL','PRCP','RAINC','RAINNC','PSFC','U10','V10','SFCEVP','TSK','PBLH','QVAPOR','QICE']
+                'updraft_helicity', # Updraft Helicity
+                'helicity',        # Storm Relative Helicity     
+                'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC) 
+                'cloudfrac', # Cloud Fraction 
+              ] 
+
+
+    var_other         = ['RAINC','RAINNC','PSFC','U10','V10','TSK','PBLH']
 
     cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_15Oct/ensemble_avg'
     cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_20090122-20090213_gw'  # atmo output of wrf-cable run
     cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_20090122-20090213_fd'  # atmo output of wrf-cable run
 
-    file_paths        = [cpl_atmo_file_fd, cpl_atmo_file_gw]
+    file_paths        = [cpl_atmo_file_fd] # cpl_atmo_file_fd, cpl_atmo_file_gw
 
-    CLDFRA,QVAPOR
-    for j, var_name in enumerate(var_names):
+    for j, var_name in enumerate(var_3D):
 
-        for i in np.arange(0,23):
-            time_s = datetime(2009,1,22,0,0,0,0) + timedelta(days=int(i))
-            time_e = datetime(2009,1,23,0,0,0,0) + timedelta(days=int(i))
+        # for i in np.arange(0,23):
+        i = 7
+        time_s = datetime(2009,1,22,0,0,0,0) + timedelta(days=int(i))
+        time_e = datetime(2009,1,23,0,0,0,0) + timedelta(days=int(i))
 
-            message = "Couple_GW-FD_"+str(time_s)+"-"+str(time_e)
-            plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, message=message)
+        message = "Couple_FD_"+str(time_s)+"-"+str(time_e)
+        plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, message=message)
 
 
     #######################################################

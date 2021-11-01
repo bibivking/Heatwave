@@ -4,7 +4,8 @@ from netCDF4 import Dataset
 import netCDF4 as nc
 import numpy as np
 from datetime import datetime, timedelta
-from wrf import (getvar, interplevel,ALL_TIMES)
+from wrf import (getvar, interplevel, get_cartopy, cartopy_xlim,
+                 cartopy_ylim, to_np, latlon_coords, ALL_TIMES)
 
 # =============================== Basci Functions ==============================
 def leap_year(year):
@@ -158,25 +159,38 @@ def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None):
 
     print("read "+var_name+" from wrf output")
 
-    var_3D = [  'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
+    var_3D = [
                 'rh2',  # 2m Relative Humidity
                 'T2',   # 2m Temperature
                 'td2',  # 2m Dew Point Temperature
-                'slp',  # Sea Level Pressure
+                'slp',  # Sea Level Pressure        
                 'ter',  # Model Terrain Height
                 'ctt',  # Cloud Top Temperature
                 'mdbz', # Maximum Reflectivity
                 'pw',   # Precipitable Water
-                'cloudfrac', # Cloud Fraction
-                'updraft_helicity' # Updraft Helicity
-                ]
+                'updraft_helicity', # Updraft Helicity
+                'helicity',        # Storm Relative Helicity     
+                'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC) 
+                'cloudfrac', # Cloud Fraction 
+              ] 
+
 
     wrf_file = Dataset(file_path)
     p        = getvar(wrf_file, "pressure",timeidx=ALL_TIMES)
     if var_name in var_3D:
         var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
+    elif var_name == 'cape_2d':
+        var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0] 
+        print("======= cape_2d =======")
+        print(var_tmp)
+    elif var_name == 'cloudfrac':
+        var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0] 
+        print("======= cloudfrac =======")
+        print(var_tmp)
     else:
         var_tmp  = wrf_file.variables[var_name][:]
+
+
 
     if loc_lat == None:
         var  = var_tmp
@@ -197,9 +211,16 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
     p        = getvar(wrf_file, "pressure",timeidx=ALL_TIMES)
 
     if var_unit == None:
-        Var      = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
+        if var_name == 'cape_3d':
+            Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
+            print("======= Var =======")
+            print(Var)
+        else:
+            Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
     else:
         Var      = getvar(wrf_file, var_name, units=var_unit, timeidx=ALL_TIMES)
+
+ 
 
     if height == None:
         var_tmp  = Var

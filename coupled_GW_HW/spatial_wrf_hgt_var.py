@@ -9,7 +9,7 @@ import cartopy.crs as crs
 import cartopy.feature as cfeature
 from cartopy.feature import NaturalEarthFeature
 from wrf import (getvar, interplevel, get_cartopy, cartopy_xlim,
-                 cartopy_ylim, to_np, latlon_coords)
+                 cartopy_ylim, to_np, latlon_coords, ALL_TIMES)
 from common_utils import *
 from scipy.ndimage import gaussian_filter
 
@@ -71,7 +71,7 @@ def plot_spatial_wrf_Tair_Wind(file_path,height,timeidx):
     bm.barbs(x[::125,::125], y[::125,::125], to_np(u_hgt[::125, ::125]),
             to_np(v_hgt[::125, ::125]), length=6)
 
-    plt.title("500 MB Height (dm), Wind Speed (kt), Barbs (kt)")
+    plt.title("500 MB Height (gpm), Wind Speed (kt), Barbs (kt)")
 
     plt.show()
 
@@ -171,7 +171,7 @@ def plot_spatial_wrf_var_Wind(case_names,file_paths,var_name,message,var_unit,he
     ax.quiver(to_np(lons[::5,::5]), to_np(lats[::5,::5]), to_np(u_hgt[::5, ::5]),
              to_np(v_hgt[::5, ::5]),  transform=crs.PlateCarree()) #scale=5,
 
-    plt.title("500hPa Geopotential Height (dm), "+str(height)+"hPa Temperature (degC) and Barbs (m s-1) timestep-"+str(timeidx))
+    plt.title("500hPa Geopotential Height (gpm), "+str(height)+"hPa Temperature (degC) and Barbs (m s-1) timestep-"+str(timeidx))
 
     if message == None:
         message = var_name+'_'+str(height)+"hPa"
@@ -290,7 +290,7 @@ def plot_spatial_wrf_var_Wind_diff(case_names,file_paths,var_name,message,var_un
     ax.quiver(to_np(lons[::5,::5]), to_np(lats[::5,::5]), to_np(u_diff[::5, ::5]),
              to_np(v_diff[::5, ::5]), scale=20., transform=crs.PlateCarree()) # width=0.0002,
 
-    plt.title(str(height)+"hPa Geopotential Height (dm), Temperature (degC) and Barbs (m s-1) timestep-"+str(timeidx))
+    plt.title(str(height)+"hPa Geopotential Height (gpm), Temperature (degC) and Barbs (m s-1) timestep-"+str(timeidx))
 
     fig.savefig("./plots/spatial_wrf_diff_"+message+"_"+str(height)+"hPa_"+var_name+"_"+case_names[0]+"_vs_"+case_names[1]+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
 
@@ -448,7 +448,7 @@ def plot_spatial_map_wrf_hgt(file_paths, var_name, height, time_s, time_e, var_u
     if var_unit == None:
         plt.title(str(height)+"hPa, "+var_name)
     else:
-        plt.title(str(height)+"hPa, Geopotential Height (m),"+var_name+" ("+var_unit+") and Barbs (m s-1)")
+        plt.title(str(height)+"hPa, Geopotential Height (gpm),"+var_name+" ("+var_unit+") and Barbs (m s-1)")
 
     if message == None:
         message = var_name+'_'+str(height)+"hPa"
@@ -480,13 +480,11 @@ if __name__ == "__main__":
     cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_20090122-20090213_fd'  # atmo output of wrf-cable run
 
     # =======================  Run    ========================
-    var_4D      = [ 'avo',  #  Absolute Vorticity
-                    'eth',  #  Equivalent Potential Temperature
-                    'cape_3d',# 3D CAPE and CIN
+    var_4D      = [
+                    'avo',    # Absolute Vorticity
+                    'eth',    # Equivalent Potential Temperature
                     'dbz',    # Reflectivity
-                    'geopt',  # Geopotential for the Mass Grid
-                    'geopt_stag', # Geopotential for the Vertically Staggered Grid
-                    'helicity',   # Storm Relative Helicity
+                    'geopt',  # Geopotential for the Mass Grid  
                     'omg',  # Omega
                     'p',    # Full Model Pressure
                     'pvo',  # Potential Vorticity
@@ -501,7 +499,10 @@ if __name__ == "__main__":
                     'va',   # V-component of Wind on Mass Points
                     'wa',   # W-component of Wind on Mass Points
                     'z',    # Model Height for Mass Grid
+                    'cape_3d',# 3D CAPE and CIN
                     ]
+
+                    #
 
     var_unit    = None #"degC"
     height      = 850
