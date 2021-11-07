@@ -163,34 +163,31 @@ def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None):
                 'rh2',  # 2m Relative Humidity
                 'T2',   # 2m Temperature
                 'td2',  # 2m Dew Point Temperature
-                'slp',  # Sea Level Pressure        
+                'slp',  # Sea Level Pressure
                 'ter',  # Model Terrain Height
                 'ctt',  # Cloud Top Temperature
                 'mdbz', # Maximum Reflectivity
                 'pw',   # Precipitable Water
                 'updraft_helicity', # Updraft Helicity
-                'helicity',        # Storm Relative Helicity     
-                'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC) 
-                'cloudfrac', # Cloud Fraction 
-              ] 
-
+                'helicity',        # Storm Relative Helicity
+              ]
 
     wrf_file = Dataset(file_path)
     p        = getvar(wrf_file, "pressure",timeidx=ALL_TIMES)
     if var_name in var_3D:
         var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
     elif var_name == 'cape_2d':
-        var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0] 
+        # 'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
+        var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
         print("======= cape_2d =======")
         print(var_tmp)
     elif var_name == 'cloudfrac':
-        var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0] 
+        # 'cloudfrac', # Cloud Fraction
+        var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
         print("======= cloudfrac =======")
         print(var_tmp)
     else:
         var_tmp  = wrf_file.variables[var_name][:]
-
-
 
     if loc_lat == None:
         var  = var_tmp
@@ -220,7 +217,7 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
     else:
         Var      = getvar(wrf_file, var_name, units=var_unit, timeidx=ALL_TIMES)
 
- 
+
 
     if height == None:
         var_tmp  = Var
@@ -257,6 +254,16 @@ def spital_var(time,Var,time_s,time_e):
 
     # np.savetxt("test_var.txt",var,delimiter=",")
     return var
+
+def spital_var_max(time,Var,time_s,time_e):
+
+    Time_s = time_s - datetime(2000,1,1,0,0,0)
+    Time_e = time_e - datetime(2000,1,1,0,0,0)
+    time_cood = (time>=Time_s) & (time<Time_e)
+
+    var = np.nanmax(Var[time_cood,:,:],axis=0)
+    return var
+
 
 def spital_ERAI_tp(time,Var,time_s,time_e):
 

@@ -485,6 +485,7 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
     # gaussian_filter(z,sigma=3)
 
     # Add the var contours
+    # Add the var contours
     if len(file_paths) > 1 and var_name == "T2":
         levels = np.linspace(-2., 2., num=20) # np.nanmin(var), np.nanmax(var)
     elif len(file_paths) > 1:
@@ -495,7 +496,6 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
     else:
         levels = np.arange(np.nanmin(var), np.nanmax(var), 20)
 
-        # levels = np.linspace(np.nanmin(var),np.nanmax(var), num=21) # np.nanmin(var), np.nanmax(var)
     var_contours = plt.contourf(to_np(lons), to_np(lats), to_np(var),
                    levels = levels, transform=crs.PlateCarree(), cmap=get_cmap("bwr"),extend='both') #,"jet" #“rainbow”#"coolwarm"
     plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)
@@ -512,7 +512,7 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
     else:
         message = message+"_"+var_name
 
-    fig.savefig('./plots/5Nov/wrf_surf/15Oct/spatial_wrf_surf_'+message , bbox_inches='tight', pad_inches=0.1)
+    fig.savefig('./plots/5Nov/wrf_surf/3Nov/spatial_wrf_surf_'+message , bbox_inches='tight', pad_inches=0.1)
 
 
 if __name__ == "__main__":
@@ -535,11 +535,11 @@ if __name__ == "__main__":
                 'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)        
                 'cloudfrac', # Cloud Fraction
               ]
-
                 # 'ter',  # Model Terrain Height
+
     var_other         = ['RAINC','RAINNC','PSFC','U10','V10','TSK','PBLH']
 
-    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_15Oct/ensemble_avg'
+    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_3Nov/ensemble_avg'
     cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_20090122-20090213_gw'  # atmo output of wrf-cable run
     cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_20090122-20090213_fd'  # atmo output of wrf-cable run
 
@@ -554,7 +554,7 @@ if __name__ == "__main__":
         # 30 Jan
         for i in np.arange(0,22):
             time_s = datetime(2009,1,22,14,0,0,0) + timedelta(days=int(i))
-            time_e = datetime(2009,1,23,13,59,0,0) + timedelta(days=int(i))
+            time_e = datetime(2009,1,23,13,59,0,0) + timedelta(days=int(i))    
 
             if len(file_paths) > 1:
                 message = "Couple_GW-FD_"+str(time_s)

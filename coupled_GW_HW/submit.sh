@@ -12,5 +12,4 @@
 
 source activate science
 cd /g/data/w35/mm3972/scripts/Heatwave/coupled_GW_HW
-
-python spatial_map_weather_analysis.py
+python spatial_wrf_hgt_var_3Nov.py

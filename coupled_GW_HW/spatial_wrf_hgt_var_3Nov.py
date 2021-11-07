@@ -178,7 +178,7 @@ def plot_spatial_wrf_var_Wind(case_names,file_paths,var_name,message,var_unit,he
     else:
         message = message+"_"+var_name+'_'+str(height)+"hPa"
 
-    fig.savefig("./plots/5Nov/wrf_hgt/spatial_wrf_"+message+"_"+var_name+"_"+case_names[0]+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
+    fig.savefig("./plots/5Nov/wrf_hgt/3Nov/spatial_wrf_"+message+"_"+var_name+"_"+case_names[0]+"_"+str(timeidx) , bbox_inches='tight', pad_inches=0.1)
 
 def plot_spatial_wrf_var_Wind_diff(case_names,file_paths,var_name,message,var_unit,height,timeidx,val_min=None,val_max=None):
 
@@ -432,9 +432,13 @@ def plot_spatial_map_wrf_hgt(file_paths, var_name, height, time_s, time_e, var_u
         max_val = np.abs(np.nanmax(var))
         min_val = np.abs(np.nanmin(var))
         max_range = np.maximum(max_val,min_val)
+        print(max_val)
+        print(min_val)
+        print(max_range)
         levels = np.linspace(max_range*(-1.),max_range,num=20)
     else:
         levels = np.arange(np.nanmin(var), np.nanmax(var), 20)
+        # levels = np.arange(5., 30., 1.)
 
     var_contours = plt.contourf(to_np(lons), to_np(lats), to_np(var),levels = levels,
                    transform=crs.PlateCarree(), cmap=get_cmap("bwr"),extend='both') #,"jet" #“rainbow”#"coolwarm"
@@ -457,7 +461,7 @@ def plot_spatial_map_wrf_hgt(file_paths, var_name, height, time_s, time_e, var_u
     else:
         message = message+"_"+var_name+'_'+str(height)+"hPa"
 
-    fig.savefig('./plots/5Nov/wrf_hgt/15Oct/spatial_map_wrf_hgt_'+message , bbox_inches='tight', pad_inches=0.1)
+    fig.savefig('./plots/5Nov/wrf_hgt/3Nov/spatial_map_wrf_hgt_'+message , bbox_inches='tight', pad_inches=0.1)
 
 if __name__ == "__main__":
 
@@ -477,32 +481,32 @@ if __name__ == "__main__":
 
 
     # =======================   Path   =======================
-    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_15Oct/ensemble_avg'
+    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_3Nov/ensemble_avg'
     cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_20090122-20090213_gw'  # atmo output of wrf-cable run
     cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_20090122-20090213_fd'  # atmo output of wrf-cable run
 
     # =======================  Run    ========================
     var_4D      = [
-                    'avo',    # Absolute Vorticity
-                    'eth',    # Equivalent Potential Temperature
-                    'dbz',    # Reflectivity
-                    'geopt',  # Geopotential for the Mass Grid  
-                    'omg',  # Omega
-                    'pvo',  # Potential Vorticity
-                    'rh',   # Relative Humidity
-                    'td',   # Dew Point Temperature
-                    'tc',   # Temperature in Celsius
-                    'th',   # Potential Temperature
-                    'temp', # Temperature (in specified units)
-                    'tv',   # Virtual Temperature
-                    'twb',  # Wet Bulb Temperature
-                    'ua',   # U-component of Wind on Mass Points
-                    'va',   # V-component of Wind on Mass Points
-                    'wa',   # W-component of Wind on Mass Points
-                    'z',    # Model Height for Mass Grid
                     'cape_3d',# 3D CAPE and CIN
                     ]
                     # 'p',    # Full Model Pressure
+                    # 'avo',    # Absolute Vorticity
+                    # 'eth',    # Equivalent Potential Temperature
+                    # 'dbz',    # Reflectivity
+                    # 'geopt',  # Geopotential for the Mass Grid  
+                    # 'omg',  # Omega
+                    # 'pvo',  # Potential Vorticity
+                    # 'rh',   # Relative Humidity
+                    # 'td',   # Dew Point Temperature
+                    # 'tc',   # Temperature in Celsius
+                    # 'th',   # Potential Temperature
+                    # 'temp', # Temperature (in specified units)
+                    # 'tv',   # Virtual Temperature
+                    # 'twb',  # Wet Bulb Temperature
+                    # 'ua',   # U-component of Wind on Mass Points
+                    # 'va',   # V-component of Wind on Mass Points
+                    # 'wa',   # W-component of Wind on Mass Points
+                    # 'z',    # Model Height for Mass Grid                    
 
     var_unit    = None #"degC"
     height      = 850
@@ -511,14 +515,12 @@ if __name__ == "__main__":
 
     file_paths  = [ cpl_atmo_file_fd, cpl_atmo_file_gw ] # cpl_atmo_file_fd,
 
-    time_s = datetime(2009,1,22,0,0,0,0)
-    time_e = datetime(2009,2,14,0,0,0,0)
+    # time_s = datetime(2009,1,22,0,0,0,0)
+    # time_e = datetime(2009,2,14,0,0,0,0)
 
     for var_name in var_4D:
 
-        # i = 7 #for i in np.arange(0,23):
-        # time_s = datetime(2009,1,22,0,0,0,0) + timedelta(days=int(i))
-        # time_e = datetime(2009,1,22,23,59,0,0) + timedelta(days=int(i))
+        # i = 7 #for i in np.arange(0,23): 
 
         # 30 Jan
         for i in np.arange(0,22):
@@ -529,6 +531,7 @@ if __name__ == "__main__":
                 message = "Couple_GW-FD_"+str(height)+"hPa_"+str(time_s)
             else:
                 message = "Couple_GW_"+str(height)+"hPa_"+str(time_s)
+                        
             plot_spatial_map_wrf_hgt(file_paths, var_name, height, time_s, time_e, var_unit, message=message) #  loc_lat=loc_lat, loc_lon=loc_lat,
 
 
