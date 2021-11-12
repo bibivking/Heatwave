@@ -111,13 +111,13 @@ def plot_time_series_errorbar( file_paths, var_name, date_s, date_e, hw_start, l
     delta = hw_start - datetime(2000,1,1)
 
     total_days = (date_e-date_s).days + 1
-    print(total_days)
+    # print(total_days)
 
     values = np.zeros((len(file_paths),total_days))
 
     for i, file_path in enumerate(file_paths):
 
-        print(file_path)
+        # print(file_path)
 
         Time, Var = read_var(file_path, var_name, loc_lat, loc_lon, lat_name, lon_name)
         time, var = time_series_var(Time, Var, date_s, date_e)
@@ -133,8 +133,8 @@ def plot_time_series_errorbar( file_paths, var_name, date_s, date_e, hw_start, l
             if time_cood[j]:
                 days.append(time[j].days)
                 value.append(var[j])
-        print(days)
-        print(value)
+        # print(days)
+        # print(value)
 
         data          = pd.DataFrame(days, columns=['day'])
         data['value'] = value
@@ -202,7 +202,7 @@ def plot_time_series_errorbar( file_paths, var_name, date_s, date_e, hw_start, l
 
     plt.savefig('./plots/19Oct/hw_evolution/time_series_multi-lines_errorbar_'+message+'.png',dpi=300)
 
-def plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date_e, hw_start, loc_lat=None, loc_lon=None,
+def plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date_e, seconds, hw_start, loc_lat=None, loc_lon=None,
                       lat_name=None, lon_name=None, message=None,labal_names=None, rain_val=None,wtd_val=None,
                       pft_val=None, ensemble_path=None ):
 
@@ -210,12 +210,10 @@ def plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date
 
     fig, ax = plt.subplots()
     colors = cm.Paired(np.arange(0,12))
-    print(colors)
 
     delta = hw_start - datetime(2000,1,1)
 
     total_days = (date_e-date_s).days + 1
-    print(total_days)
 
     values_mean = np.zeros((len(file_paths),total_days))
     values_max  = np.zeros((len(file_paths),total_days))
@@ -223,48 +221,64 @@ def plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date
 
     if rain_val is not None:
         Time, rain= read_var(ensemble_path, "Rainf_tavg", loc_lat, loc_lon, lat_name, lon_name)
-        rain_mean = spital_var(Time, rain, date_s, date_e) 
+        rain_mean = spital_var(Time, rain, date_s, date_e)
         rain_mask = np.ones(np.shape(rain_mean), dtype=bool)
         rain_mask = np.where( rain_mean*24.*3600. < rain_val, True, False)
-        print(np.any(rain_mask))
+        print("(rain_mask == True).sum()")
+        print((rain_mask == True).sum())
+
     if wtd_val is not None:
-        Time, wtd = read_var(ensemble_path, "WaterTableD_tavg", loc_lat, loc_lon, lat_name, lon_name) 
-        wtd_mean = spital_var(Time, wtd, date_s, date_e) 
+        Time, wtd = read_var(ensemble_path, "WaterTableD_tavg", loc_lat, loc_lon, lat_name, lon_name)
+        wtd_mean = spital_var(Time, wtd, date_s, date_e)
         wtd_mask = np.ones(np.shape(wtd_mean), dtype=bool)
         wtd_mask = np.where(np.all([(wtd_mean/1000.) >=wtd_val[0], (wtd_mean/1000.) <wtd_val[1]],axis=0), True, False)
-        print(np.any(wtd_mask))
+        print("(wtd_mask == True).sum()")
+        print((wtd_mask == True).sum())
+
     if pft_val is not None:
         pft      = tree_mask(ensemble_path,"Landcover_inst")
         pft_mask = np.ones(np.shape(pft), dtype=bool)
-        pft_mask = np.where( np.all([pft >=pft_val[0], pft<=pft_val[1]],axis=0), True, False)
-        print(np.any(pft_mask))      
+        if len(pft_val) == 1:
+            pft_mask = np.where( pft == pft_val[0], True, False)
+        elif (len(pft_val) == 2) :
+            pft_mask = np.where( np.all([pft >=pft_val[0], pft<=pft_val[1]],axis=0), True, False)
 
     var = []
 
     for i, file_path in enumerate(file_paths):
-
-        print(file_path)
 
         Time, Var = read_var(file_path, var_name, loc_lat, loc_lon, lat_name, lon_name)
         ntime = len(Time)
 
         if rain_mask is not None:
             rain_mask_multi = [rain_mask]*ntime
-            Var = np.where(rain_mask_multi, Var, np.nan)
+            # Var = np.where(rain_mask_multi == True, Var, np.nan)
         if wtd_mask is not None:
             wtd_mask_multi  = [wtd_mask]*ntime
-            Var = np.where(wtd_mask_multi, Var, np.nan)
+            # Var = np.where(wtd_mask_multi == True, Var, np.nan)
         if pft_mask is not None:
             pft_mask_multi  = [pft_mask]*ntime
-            Var = np.where(pft_mask_multi, Var, np.nan)
+            # Var = np.where(pft_mask_multi == True, Var, np.nan)
 
-        var_mean, var_max, var_min = time_series_statistic(Time, Var, date_s, date_e) # shape = (selected_pixels_num, time_series)
+        Var_tmp = np.where( np.all([rain_mask_multi,wtd_mask_multi,pft_mask_multi],axis=0), Var, np.nan)
+        # print(np.any(np.isnan(Var_tmp[0,:,:])))
+
+        np.savetxt(message,Var_tmp[0,:,:])
+        var_mean, var_max, var_min = time_series_statistic(Time, Var_tmp, date_s, date_e) # shape = (selected_pixels_num, time_series)
 
         # ======== Local time 10am -4pm =======
-        time = time_series_time(Time, date_s, date_e) 
-        time_cood = []
-        for j in np.arange(len(time)):
-            time_cood.append( (time[j].seconds <= 6.*60.*60.) )
+        time = time_series_time(Time, date_s, date_e)
+
+        if seconds == None:
+            time_cood = time
+        else:
+            time_cood = []
+            for j in np.arange(len(time)):
+                if seconds[0] > seconds[1]:
+                    time_cood.append( (time[j].seconds >= seconds[0]) | (time[j].seconds < seconds[1]) )
+                elif seconds[0] < seconds[1]:
+                    time_cood.append( (time[j].seconds >= seconds[0]) & (time[j].seconds < seconds[1]) )
+        # print(time_cood)
 
         days       = []
         value_mean = []
@@ -328,10 +342,10 @@ def plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date
     fd_min  = np.min(values_min[5:10,:], axis =0)
 
     ax.plot(times, gw_mean, color="red", ls='-', lw=2.0, zorder=10, label="FD")
-    ax.fill_between(times, gw_min, gw_max, alpha=0.5, facecolor='red', zorder=10)
+    # ax.fill_between(times, gw_min, gw_max, alpha=0.5, facecolor='red', zorder=10)
 
     ax.plot(times, fd_mean, color="blue", ls='-', lw=2.0, zorder=10, label="GW")
-    ax.fill_between(times, fd_min, fd_max, alpha=0.5, facecolor='blue', zorder=10)
+    # ax.fill_between(times, fd_min, fd_max, alpha=0.5, facecolor='blue', zorder=10)
 
     # ax.set_xlim([np.min(var1*scale,var2*scale), np.max(var1*scale,var2*scale)])
     # Time2, Var2 = read_var(file_paths[1], var_names[1], loc_lat, loc_lon, lat_name[1], lon_name[1])
@@ -354,7 +368,7 @@ def plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date
     if loc_lat != None:
         message = message + "_lat="+str(loc_lat) + "_lon="+str(loc_lon)
 
-    plt.savefig('./plots/19Oct/hw_evolution/time_series_multi-lines_errorbar_'+message+'.png',dpi=300)
+    plt.savefig('./plots/5Nov/hw_evolution/3Nov/time_series_multi-lines_'+message+'.png',dpi=300)
 
 if __name__ == "__main__":
 
@@ -367,7 +381,7 @@ if __name__ == "__main__":
     #                 "FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
     #                 "Rainf_tavg", "Qair_f_inst" ]
 
-    var_names  = [ "Evap_tavg","TVeg_tavg","Qh_tavg","Qle_tavg",
+    var_names  = [ "Evap_tavg" ,"TVeg_tavg","Qh_tavg","Qle_tavg",
                    "FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
                    "Rainf_tavg", "Qair_f_inst" ]
     #
@@ -376,40 +390,16 @@ if __name__ == "__main__":
     # #######################
 
     # 2009
-    hw_name   = "hw2009_15Oct"
+    hw_name   = "hw2009_3Nov"
     start_date= "20090122"
     end_date  = "20090213"
-    rst_dates = ["20090113","20090115","20090117","20090119","20090121" ]
+    rst_dates = ["20090117","20090118","20090119","20090120","20090121" ]
     # end_date  = "20090214"
 
     # date_s    = datetime(2009,1,13,0,0,0)
-    date_s    = datetime(2009,1,22,0,0,0)
-    date_e    = datetime(2009,2,13,23,59,59)
-    hw_start  = datetime(2009,1,29)
-
-    # # 2011
-    # hw_name   = "hw2011_15Oct"
-    # rst_dates = ["20110115","20110117","20110119","20110121","20110123" ]
-    # end_date  = "20110212"
-    # date_s    = datetime(2011,1,15,0,0,0)
-    # date_e    = datetime(2011,2,11,23,59,59)
-    # hw_start  = datetime(2011,1,30)
-
-    # # 2013
-    # hw_name   = "hw2013_15Oct"
-    # rst_dates = ["20121217","20121219","20121221","20121223","20121225" ]
-    # end_date  = "20130115"
-    # date_s    = datetime(2012,12,17,0,0,0)
-    # date_e    = datetime(2013,1,14,23,59,59)
-    # hw_start  = datetime(2013,1,1)
-
-    # # 2019
-    # hw_name   = "hw2019_15Oct"
-    # rst_dates = ["20181228","20181230","20190101","20190103","20190105" ]
-    # end_date  = "20190131"
-    # date_s    = datetime(2018,12,28,0,0,0)
-    # date_e    = datetime(2019,1,30,23,59,59)
-    # hw_start  = datetime(2019,1,12)
+    date_s    = datetime(2009,1,22,20,0,0)
+    date_e    = datetime(2009,2,14,8,59,59)
+    hw_start  = datetime(2009,1,28,14,0,0)
 
     # #######################
     #     path setting      #
@@ -429,7 +419,7 @@ if __name__ == "__main__":
                     path + "/gw_rst_" + rst_dates[3] + "/LIS_output/LIS.CABLE." + start_date + "-" + end_date+ ".nc",
                     path + "/gw_rst_" + rst_dates[4] + "/LIS_output/LIS.CABLE." + start_date + "-" + end_date+ ".nc" ]
 
-    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/fd_feb2009/WRF_output/wrfout_d01_2009-02-01_00:00:00"
+    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+hw_name+"/ensemble_avg/wrfout_20090122-20090213_gw"
 
 
     ####################################
@@ -437,63 +427,62 @@ if __name__ == "__main__":
     ####################################
     lat_name     = "lat"
     lon_name     = "lon"
-    labal_names  = [ "fd-14d","gw-14d","fd-12d","gw-12d","fd-10d",
-                     "gw-10d","fd-8d","gw-8d","fd-6d","gw-6d" ]
+    labal_names  = [ "fd-10d","gw-10d","fd-9d","gw-9d","fd-8d",
+                     "gw-8d","fd-7d","gw-7d","fd-6d","gw-6d" ]
+    # labal_names  = [ "fd-14d","gw-14d","fd-12d","gw-12d","fd-10d",
+    #                  "gw-10d","fd-8d","gw-8d","fd-6d","gw-6d" ]
 
+    seconds       = [20.*60.*60.,8.*60.*60.]
 
     for var_name in var_names:
 
-        message   = hw_name +"_Victoria"
+        loc_lat   = None #[-36.5,-35.5]
+        loc_lon   = None #[144.,146.]
 
-        loc_lat      = [-39.,-36.]
-        loc_lon      = [143.,149.]
+        message   = hw_name +"_crop_wtd=0-5_daytime"
 
-        plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date_e, hw_start, 
+        plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date_e, seconds, hw_start,
                     loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name, message=message,
-                    labal_names=labal_names, rain_val=0.05, wtd_val=[2.5,5.], pft_val=[1,4], 
+                    labal_names=labal_names, rain_val=0.1, wtd_val=[0.,5.], pft_val=[9],
+                    ensemble_path=ensemble_path )
+
+        message   = hw_name +"_crop_wtd=5-10_daytime"
+
+        plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date_e, seconds, hw_start,
+                    loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name, message=message,
+                    labal_names=labal_names, rain_val=0.1, wtd_val=[5.,10.], pft_val=[9],
+                    ensemble_path=ensemble_path )
+
+        message   = hw_name +"_crop_wtd=10-15_daytime"
+
+        plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date_e, seconds, hw_start,
+                    loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name, message=message,
+                    labal_names=labal_names, rain_val=0.1, wtd_val=[10.,15.], pft_val=[9],
                     ensemble_path=ensemble_path )
 
 
-    # for var_name in var_names:
-    #     message   = hw_name +"_crop_deep"
+        # loc_lat   = [-36.5,-35.5]
+        # loc_lon   = [147.,151.]
+        message   = hw_name +"_forest_wtd=0-5_daytime"
 
-    #     # 7.5-10
-    #     loc_lat      = [-36.1,-35.9]
-    #     loc_lon      = [142.5,142.7]
+        plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date_e, seconds, hw_start,
+                    loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name, message=message,
+                    labal_names=labal_names, rain_val=0.1, wtd_val=[0.,5.], pft_val=[1,4],
+                    ensemble_path=ensemble_path )
 
-    #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
-    #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
-    #     message   = hw_name +"_crop_mid"
-    #     # 5.-7.5
-    #     loc_lat      = [-37.1,-36.9]
-    #     loc_lon      = [142.5,142.7]
+        message   = hw_name +"_forest_wtd=5-10_daytime"
 
-    #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
-    #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
+        plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date_e, seconds, hw_start,
+                    loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name, message=message,
+                    labal_names=labal_names, rain_val=0.1, wtd_val=[5.,10.], pft_val=[1,4],
+                    ensemble_path=ensemble_path )
 
-    #     message   = hw_name +"_crop_shallow"
-    #     # 2.5-5
-    #     loc_lat      = [-38.7,-38.5]
-    #     loc_lon      = [142.5,142.7]
+        message   = hw_name +"_forest_wtd=10-15_daytime"
 
-    #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
-    #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
-
-    #     message   = hw_name +"_forest_mid"
-    #     # 5 - 7.5
-    #     loc_lat      = [-26.6,-26.4]
-    #     loc_lon      = [149.9,150.1]
-
-    #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
-    #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
-
-    #     message   = hw_name +"_forest_shallow"
-    #     # 2.5-5
-    #     loc_lat      = [-38.1,-37.9]
-    #     loc_lon      = [145.9,146.1]
-
-    #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
-    #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
+        plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date_e, seconds, hw_start,
+                    loc_lat=loc_lat, loc_lon=loc_lon, lat_name=lat_name, lon_name=lon_name, message=message,
+                    labal_names=labal_names, rain_val=0.1, wtd_val=[10.,15.], pft_val=[1,4],
+                    ensemble_path=ensemble_path )
 
     # for var_name in var_names:
     #     message   = hw_name +"_crop_deep"
@@ -535,7 +524,48 @@ if __name__ == "__main__":
 
     #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
     #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
-    
+
+    # for var_name in var_names:
+    #     message   = hw_name +"_crop_deep"
+
+    #     # 7.5-10
+    #     loc_lat      = [-36.1,-35.9]
+    #     loc_lon      = [142.5,142.7]
+
+    #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
+    #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
+    #     message   = hw_name +"_crop_mid"
+    #     # 5.-7.5
+    #     loc_lat      = [-37.1,-36.9]
+    #     loc_lon      = [142.5,142.7]
+
+    #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
+    #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
+
+    #     message   = hw_name +"_crop_shallow"
+    #     # 2.5-5
+    #     loc_lat      = [-38.7,-38.5]
+    #     loc_lon      = [142.5,142.7]
+
+    #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
+    #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
+
+    #     message   = hw_name +"_forest_mid"
+    #     # 5 - 7.5
+    #     loc_lat      = [-26.6,-26.4]
+    #     loc_lon      = [149.9,150.1]
+
+    #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
+    #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
+
+    #     message   = hw_name +"_forest_shallow"
+    #     # 2.5-5
+    #     loc_lat      = [-38.1,-37.9]
+    #     loc_lon      = [145.9,146.1]
+
+    #     plot_time_series_errorbar(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,
+    #                      lat_name=lat_name, lon_name=lon_name, message=message,labal_names=labal_names)
+
 
 
         # plot_time_series(file_paths, var_name, date_s, date_e, hw_start, loc_lat=loc_lat, loc_lon=loc_lon,

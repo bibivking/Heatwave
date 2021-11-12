@@ -26,7 +26,7 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
     ntime    = len(ncfile1.variables['Times'][:,0])
     lat      = ncfile1.variables['XLAT'][0,:,:]
     lon      = ncfile1.variables['XLONG'][0,:,:]
-    
+
     time_tmp = []
 
     for i in np.arange(ntime):
@@ -57,7 +57,7 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
     else:
         scale = get_scale(var_name)
         var1  = spital_var(time,Var1,time_s,time_e)*scale
-    
+
     z1   = spital_var(time,Z1,time_s,time_e)
     ua1  = spital_var(time,Ua1,time_s,time_e)
     va1  = spital_var(time,Va1,time_s,time_e)
@@ -65,8 +65,8 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
     # Calculate temperature advection using metpy function
     # dx   = 25000
     # dy   = 25000
-    adv1 = mpcalc.advection(var1, [ua1, va1], dx=25000, dy=25000, x_dim=-2,y_dim=-1) #, dim_order='yx')  #  * units.kelvin * units('K/sec')
-                        
+    adv1 = mpcalc.advection(var1[0], [ua1[0], va1[0]], dx=25000, dy=25000, x_dim=0,y_dim=1) #, dim_order='yx')  #  * units.kelvin * units('K/sec')
+    print(np.shape(adv1))
     if len(file_paths) > 1:
         Var2  = read_wrf_hgt_var(file_paths[1], var_name, var_unit, height, loc_lat, loc_lon)
         Z2    = read_wrf_hgt_var(file_paths[1], "z", "m", height, loc_lat, loc_lon)
@@ -78,13 +78,13 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
         else:
             scale = get_scale(var_name)
             var2  = spital_var(time,Var2,time_s,time_e)*scale
-        
+
         z2   = spital_var(time,Z2,time_s,time_e)
         ua2  = spital_var(time,Ua2,time_s,time_e)
         va2  = spital_var(time,Va2,time_s,time_e)
 
         # Calculate temperature advection using metpy function
-        adv2 = mpcalc.advection(var2, [ua2, va2], dx=25000, dy=25000, x_dim=-2,y_dim=-1) 
+        adv2 = mpcalc.advection(var2[0], [ua2[0], va2[0]], dx=25000, dy=25000, x_dim=0,y_dim=1)
 
         # Calculate difference
         var = var2 - var1
@@ -92,7 +92,7 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
         v   = va2 - va1
         z   = z2 - z1
         adv = adv2- adv1
-        
+
     else:
         # Calculate difference
         var = var1
@@ -173,8 +173,8 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
         levels = np.arange(-2., 2., 0.1)
     else:
         levels = np.arange(1500., 1600., 10.)
-    
-    contours = plt.contour(to_np(lons), to_np(lats), to_np(gaussian_filter(z,sigma=3)), 
+
+    contours = plt.contour(to_np(lons), to_np(lats), to_np(gaussian_filter(z,sigma=3)),
                            levels = levels, colors="black", linewidths=1.5, linestyles='solid',
                            transform=ccrs.PlateCarree())
     plt.clabel(contours, inline=1, inline_spacing=10, fontsize=6, fmt="%d",rightside_up=True, use_clabeltext=True)
@@ -191,14 +191,14 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
     else:
         levels = np.arange(np.nanmin(var), np.nanmax(var), 20)
 
-    var_contours = plt.contour(to_np(lons), to_np(lats), to_np(var),levels = levels, 
+    var_contours = plt.contour(to_np(lons), to_np(lats), to_np(var),levels = levels,
                                colors='grey', linewidths=1.25, linestyles='dashed',
                                transform=ccrs.PlateCarree()) #,"jet" #“rainbow”#"coolwarm" , cmap=get_cmap("bwr"),extend='both'
     # plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)
     plt.clabel(var_contours, fontsize=6, inline=1, inline_spacing=10, fmt='%d',
                 rightside_up=True, use_clabeltext=True)
 
-    # -------- Plot wind barbs -------- 
+    # -------- Plot wind barbs --------
     if len(file_paths) > 1:
         ax.quiver(to_np(lons[::3,::3]), to_np(lats[::3,::3]), to_np(u[::3, ::3]),to_np(v[::3, ::3]),
              scale=20., pivot='middle', transform=ccrs.PlateCarree()) # width=0.0002,
@@ -280,7 +280,7 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
     # dx, dy = mpcalc.lat_lon_grid_deltas(lon_var, lat_var)
 
     # # Calculate temperature advection using metpy function
-    
+
     # adv = mpcalc.advection(temp_850 * units.kelvin, [u_wind_850, v_wind_850],
     #                     (dx, dy), dim_order='yx') * units('K/sec')
 
@@ -345,8 +345,6 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
 
 
     # def heat_content():
-
-
 
 if __name__ == "__main__":
 

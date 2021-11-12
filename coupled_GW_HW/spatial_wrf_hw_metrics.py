@@ -115,9 +115,9 @@ def plot_spatial_wrf_hw_metrics(file_paths, var_name, time_s, time_e, metric='Tm
         # levels = np.linspace(max_range*(-1.),max_range,num=20)
 
         if metric == 'Tmean':
-            levels = np.arange(-3.0, 3.0, 0.2)
+            levels = np.arange(-4.0, 4.0, 0.4)
         elif metric == 'Tmax':
-            levels = np.arange(-3.0, 3.0, 0.2)
+            levels = np.arange(-4.0, 4.0, 0.4)
     else:
         levels = np.arange(np.nanmin(var), np.nanmax(var), 21)
 

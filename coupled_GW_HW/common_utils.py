@@ -81,7 +81,6 @@ def mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name):
     # print(np.shape(mask))
     return mask
 
-
 # ================================ Read variables ==============================
 def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon_name=None):
 
@@ -217,8 +216,6 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
     else:
         Var      = getvar(wrf_file, var_name, units=var_unit, timeidx=ALL_TIMES)
 
-
-
     if height == None:
         var_tmp  = Var
     else:
@@ -237,11 +234,21 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
     return var
 
 # ========================= Spitial & temporal Average =========================
-def spital_var(time,Var,time_s,time_e):
+def spital_var(time,Var,time_s,time_e, seconds=None):
 
     Time_s = time_s - datetime(2000,1,1,0,0,0)
     Time_e = time_e - datetime(2000,1,1,0,0,0)
-    time_cood = (time>=Time_s) & (time<Time_e)
+
+    if seconds == None:
+        time_cood = (time>=Time_s) & (time<Time_e)
+    else:
+        time_cood = []
+        for j in np.arange(len(time)):
+            if seconds[0] >= seconds[1]:
+                if_seconds = (time[j].seconds >= seconds[0]) | (time[j].seconds < seconds[1])
+            else:
+                if_seconds = (time[j].seconds >= seconds[0]) & (time[j].seconds < seconds[1])
+            time_cood.append( (time[j]>=Time_s) & (time[j]<Time_e) & if_seconds)
 
     # print('===== np.shape(Var[time_cood,:,:]) =====')
     # print(np.shape(Var[time_cood,:,:]))
@@ -255,15 +262,22 @@ def spital_var(time,Var,time_s,time_e):
     # np.savetxt("test_var.txt",var,delimiter=",")
     return var
 
-def spital_var_max(time,Var,time_s,time_e):
+def spital_var_max(time,Var,time_s,time_e, seconds=None):
 
     Time_s = time_s - datetime(2000,1,1,0,0,0)
     Time_e = time_e - datetime(2000,1,1,0,0,0)
-    time_cood = (time>=Time_s) & (time<Time_e)
+
+    if seconds == None:
+        time_cood = (time>=Time_s) & (time<Time_e)
+    else:
+        time_cood = []
+        for j in np.arange(len(time)):
+            time_cood.append( (time[j]>=Time_s) & (time[j]<Time_e) &
+                              (time[j].seconds >= seconds[0]) &
+                              (time[j].seconds < seconds[1]) )
 
     var = np.nanmax(Var[time_cood,:,:],axis=0)
     return var
-
 
 def spital_ERAI_tp(time,Var,time_s,time_e):
 
@@ -324,7 +338,7 @@ def get_reverse_colormap(var_name):
     var_reverse_yes = [ "Rainf_f_inst","Rainf_tavg","Evap_tavg","ECanop_tavg","TVeg_tavg","ESoil_tavg",
                         "Qs_tavg","Qsb_tavg", "Snowf_tavg","GPP_tavg","Qle_tavg","SoilMoist_inst",
                         "FWsoil_tavg","SnowCover_inst","Qair_f_inst","Wind_f_inst","SWE_inst",
-                        "SnowDepth_inst","SoilWet_inst",
+                        "SnowDepth_inst","SoilWet_inst", "EF",
                         "rh2"]
     var_reverse_no  = [ "Qh_tavg","Qg_tavg","Swnet_tavg","Lwnet_tavg","SWdown_f_inst","LWdown_f_inst",
                         "VegT_tavg","AvgSurfT_tavg","Tair_f_inst","SoilTemp_inst","Albedo_inst",

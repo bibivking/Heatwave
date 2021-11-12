@@ -19,7 +19,7 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from wrf import (getvar, interplevel, get_cartopy, cartopy_xlim,
                  cartopy_ylim, to_np, latlon_coords)
 from common_utils import *
-from spatial_wrf_hgt_var import plot_spatial_map_hgt
+# from spatial_wrf_hgt_var import plot_spatial_map_hgt
 
 def plot_spital_map(file_paths, var_names, time_s, time_e, loc_lat=None, loc_lon=None, lat_names=None, lon_names=None, message=None):
 
@@ -100,7 +100,7 @@ def plot_spital_map(file_paths, var_names, time_s, time_e, loc_lat=None, loc_lon
     else:
         # clevs = np.linspace( 0.,120., num=13)
         clevs = np.linspace( 0.,5., num=11)
-        cmap  = plt.cm.GnBu # BrBG 
+        cmap  = plt.cm.GnBu # BrBG
     # print(var1)
     # np.savetxt("./"+message,var1)
     plt.contourf(lons1, lats1, var1, clevs, transform=ccrs.PlateCarree(), cmap=cmap, extend='both') #,#bwr)#coolwarm)#cm.BrBG) # clevs,
@@ -131,21 +131,21 @@ if __name__ == "__main__":
 
 
     # ======================= Option =======================
-    region = "SE Aus" #"CORDEX" #"SE Aus"
+    region = "Aus" #"SE Aus" #"CORDEX" #"SE Aus"
 
     # ====================== Pre-load =======================
     ERAI_path    = '/g/data/ub4/erai/netcdf/3hr/atmos/oper_fc_sfc/v01'
-    ERAI_T_file  = ERAI_path + '/tas/tas_3hrs_ERAI_historical_fc-sfc_20090101_20090131.nc' # air temperature
-    ERAI_P_file  = ERAI_path + '/ps/ps_3hrs_ERAI_historical_fc-sfc_20090101_20090131.nc'   # surface pressure
-    ERAI_U_file  = ERAI_path + '/uas/uas_3hrs_ERAI_historical_fc-sfc_20090101_20090131.nc' # 10 m wind speed
-    ERAI_V_file  = ERAI_path + '/vas/vas_3hrs_ERAI_historical_fc-sfc_20090101_20090131.nc' # 10 m wind speed
-    ERAI_R_file  = ERAI_path + '/tp/tp_3hrs_ERAI_historical_fc-sfc_20090101_20090131.nc' # Total rainfall
+    ERAI_T_file  = ERAI_path + '/tas/tas_3hrs_ERAI_historical_fc-sfc_20121201_20121231.nc' # air temperature
+    ERAI_P_file  = ERAI_path + '/ps/ps_3hrs_ERAI_historical_fc-sfc_20121201_20121231.nc'   # surface pressure
+    ERAI_U_file  = ERAI_path + '/uas/uas_3hrs_ERAI_historical_fc-sfc_20121201_20121231.nc' # 10 m wind speed
+    ERAI_V_file  = ERAI_path + '/vas/vas_3hrs_ERAI_historical_fc-sfc_20121201_20121231.nc' # 10 m wind speed
+    ERAI_R_file  = ERAI_path + '/tp/tp_3hrs_ERAI_historical_fc-sfc_20121201_20121231.nc' # Total rainfall
 
     AWAP_path    = '/g/data/w35/Shared_data/AWAP_3h_v1'
-    AWAP_T_file  = AWAP_path + '/Tair/AWAP.Tair.3hr.2009.nc'  # air temperature
-    AWAP_R_file  = AWAP_path + '/Rainf/AWAP.Rainf.3hr.2009.nc'  # Daily rainfall
+    AWAP_T_file  = AWAP_path + '/Tair/AWAP.Tair.3hr.2012.nc'  # air temperature
+    AWAP_R_file  = AWAP_path + '/Rainf/AWAP.Rainf.3hr.2012.nc'  # Daily rainfall
 
-    cpl_land_path  = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_15Oct/gw_jan2019/LIS_output'
+    cpl_land_path  = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2013_15Oct/gw_jan2019/LIS_output'
     cpl_land_file  = cpl_land_path + '/LIS.CABLE.201901-201901.d01.nc'  # land output of wrf-cable run
 
     cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_15Oct/ensemble_avg'
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     #     time_s = datetime(2009,2,1,0,0,0,0) + timedelta(days=int(i))
     #     time_e = datetime(2009,2,2,0,0,0,0) + timedelta(days=int(i))
     #     message = "ERAI_2009-02-"+str(i+1)
-    #     print(message)        
+    #     print(message)
     #     plot_spital_map(file_paths, var_names, time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_names=lat_names,
     #                     lon_names=lon_names, message=message)
 
@@ -225,6 +225,7 @@ if __name__ == "__main__":
     #    Plot ERAI rainfall         #
     #################################
 
+    ### Month before HW ###
     # # 2009
     # ERAI_R_file  = ERAI_path + '/tp/tp_3hrs_ERAI_historical_fc-sfc_20090101_20090131.nc' # Total rainfall
     # time_s = datetime(2009,1,1,0,0,0,0)
@@ -255,7 +256,7 @@ if __name__ == "__main__":
     #             datetime(2019,1,26,0,0,0,0)
     #             ]
 
-
+    # ### HW's Month ###
     # # # 2009
     # # ERAI_R_file  = ERAI_path + '/tp/tp_3hrs_ERAI_historical_fc-sfc_20090201_20090228.nc' # Total rainfall
     # # time_s = datetime(2009,2,1,0,0,0,0)
@@ -335,22 +336,23 @@ if __name__ == "__main__":
     # Plot WRF-CABLE land var
     # #################################
 
-    # cpl_land_path  = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_15Oct/ensemble_avg'
-    # cpl_land_file  = cpl_land_path + '/LIS.CABLE.20090122-20090213_gw.nc'  # land output of wrf-cable run
+    cpl_land_path  = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2013_15Oct/gw_rst_20121217/LIS_output'
+    #'/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2013_15Oct/ensemble_avg'
+    cpl_land_file  = cpl_land_path + '/LIS.CABLE.20121217-20130115.nc'  # land output of wrf-cable run
 
-    # file_paths  = [cpl_land_file]
+    file_paths  = [cpl_land_file]
 
-    # var_names   = ['Rainf_tavg'] #'Rainf_tavg','Tair_f_inst','Qair_f_inst','Psurf_f_inst']
-    # lat_names   = ["lat"]
-    # lon_names   = ["lon"]
+    var_names   = ['Rainf_tavg'] #'Rainf_tavg','Tair_f_inst','Qair_f_inst','Psurf_f_inst']
+    lat_names   = ["lat"]
+    lon_names   = ["lon"]
 
-    # # for i in np.arange(0,22):
-    # #     time_s = datetime(2009,1,22,0,0,0,0) + timedelta(days=int(i))
-    # #     time_e = datetime(2009,1,23,0,0,0,0) + timedelta(days=int(i))
-    # #     print(time_s)
-    # #     message = "Couple_gw"+str(time_s)
-    # #     plot_spital_map(file_paths, var_names, time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_names=lat_names,
-    # #                     lon_names=lon_names,message=message)
+    for i in np.arange(0,30):
+        time_s = datetime(2012,12,17,0,0,0,0) + timedelta(days=int(i))
+        time_e = datetime(2012,12,17,23,59,0,0) + timedelta(days=int(i))
+        print(time_s)
+        message = "Couple_gw"+str(time_s)
+        plot_spital_map(file_paths, var_names, time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_names=lat_names,
+                        lon_names=lon_names,message=message)
 
     # time_s = datetime(2009,1,22,0,0,0,0)
     # time_e = datetime(2009,2,14,0,0,0,0)
@@ -381,24 +383,24 @@ if __name__ == "__main__":
     # plot_spital_map(file_paths, var_names, time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon, lat_names=lat_names,
     #                 lon_names=lon_names,message=message)
 
-    # #################################
-    # Plot WRF-CABLE atmo var
-    # #################################
-    
-    file_paths  = [cpl_atmo_file_fd, cpl_atmo_file_gw]
-    
-    var_name    = "temp"
-    var_unit    = "degC"
-    height      = 1000
-    lat_names   = ["lat"]
-    lon_names   = ["lon"]
-    
-    time_s = datetime(2009,1,22,0,0,0,0)
-    time_e = datetime(2009,2,14,0,0,0,0)
-    
-    for i in np.arange(0,23):
-        
-        time_s = datetime(2009,1,22,0,0,0,0) + timedelta(days=int(i))
-        time_e = datetime(2009,1,22,23,59,0,0) + timedelta(days=int(i))
-        message = "Couple_GW-FD"+str(time_s)
-        plot_spatial_map_hgt(file_paths, var_name, var_unit, height, time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lat, message=message)
+    # # #################################
+    # # Plot WRF-CABLE atmo var
+    # # #################################
+    #
+    # file_paths  = [cpl_atmo_file_fd, cpl_atmo_file_gw]
+    #
+    # var_name    = "temp"
+    # var_unit    = "degC"
+    # height      = 1000
+    # lat_names   = ["lat"]
+    # lon_names   = ["lon"]
+    #
+    # time_s = datetime(2009,1,22,0,0,0,0)
+    # time_e = datetime(2009,2,14,0,0,0,0)
+    #
+    # for i in np.arange(0,23):
+    #
+    #     time_s = datetime(2009,1,22,0,0,0,0) + timedelta(days=int(i))
+    #     time_e = datetime(2009,1,22,23,59,0,0) + timedelta(days=int(i))
+    #     message = "Couple_GW-FD"+str(time_s)
+    #     plot_spatial_map_hgt(file_paths, var_name, var_unit, height, time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lat, message=message)

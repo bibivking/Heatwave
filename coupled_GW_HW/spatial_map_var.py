@@ -13,7 +13,7 @@ import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.ticker as mticker
 from convert_units import get_land_var_scale, get_land_var_range_diff
-from common_utils import get_reverse_colormap
+from common_utils import *
 
 def plot_map_var(file_path, var_name):
 
@@ -207,8 +207,6 @@ def plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, layer=None, m
 
 def plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s, ts_e, layer=None, message=None):
 
-    # Open the NetCDF4 file (add a directory path if necessary) for reading:
-
     var1 = Dataset(file_paths[0], mode='r')
     if is_diff:
         var2 = Dataset(file_paths[1], mode='r')
@@ -255,7 +253,6 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s, ts_
         gl.yformatter = LATITUDE_FORMATTER
         gl.xlabel_style = {'size':10, 'color':'black'}
         gl.ylabel_style = {'size':10, 'color':'black'}
-
 
         if get_reverse_colormap(var_name) == None:
             cmap = plt.cm.seismic
@@ -313,14 +310,99 @@ def plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s, ts_
 
         Var = None
 
+def plot_spatial_land(file_paths, wrf_path, var_name, time_s, time_e, seconds=None,loc_lat=None, loc_lon=None, message=None):
+
+    # use WRF output's lat & lon, since LIS output has default value
+    wrf = Dataset(wrf_path,  mode='r')
+    lon = wrf.variables['XLONG'][0,:,:]
+    lat = wrf.variables['XLAT'][0,:,:]
+
+    # Open the NetCDF4 file (add a directory path if necessary) for reading:
+    file1 = Dataset(file_paths[0], mode='r')
+    Time = nc.num2date(file1.variables['time'][:],file1.variables['time'].units,
+            only_use_cftime_datetimes=False, only_use_python_datetimes=True)
+    time = Time - datetime(2000,1,1,0,0,0)
+
+    if var_name == "Rnet":
+        Var1 = file1.variables["Qle_tavg"][:] + file1.variables["Qh_tavg"][:] + file1.variables["Qg_tavg"][:]
+    elif var_name == "EF":
+        Var1 = np.where( (file1.variables["Qle_tavg"][:]+file1.variables["Qh_tavg"][:]) != 0,
+                file1.variables["Qle_tavg"][:]/(file1.variables["Qle_tavg"][:]+file1.variables["Qh_tavg"][:]),
+                np.nan)
+    else:
+        Var1 = file1.variables[var_name]
+
+    var1 = spital_var(time,Var1,time_s,time_e,seconds)
+
+    if len(file_paths) > 1:
+        file2 = Dataset(file_paths[1], mode='r')
+        if var_name == "Rnet":
+            Var2 = file2.variables["Qle_tavg"][:] + file2.variables["Qh_tavg"][:] + file2.variables["Qg_tavg"][:]
+        elif var_name == "EF":
+            Var2 = np.where( (file2.variables["Qle_tavg"][:]+file2.variables["Qh_tavg"][:]) != 0,
+                    file2.variables["Qle_tavg"][:]/(file2.variables["Qle_tavg"][:]+file2.variables["Qh_tavg"][:]),
+                    np.nan)
+        else:
+            Var2 = file2.variables[var_name]
+        var2 = spital_var(time,Var2,time_s,time_e,seconds)
+        var  = var2 - var1
+    else:
+        var  = var1
+
+    # Make plots
+    fig = plt.figure(figsize=(7,5))
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    # ax.set_extent([135,155,-40,-25])
+    ax.coastlines(resolution="50m",linewidth=1)
+
+    # Add gridlines
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,linewidth=1, color='black', linestyle='--')
+    gl.xlabels_top = False
+    gl.ylabels_right = False
+    gl.xlines = True
+    gl.xlocator     = mticker.FixedLocator([110,115,120,125,130,135,140,145,150,155])
+    gl.ylocator     = mticker.FixedLocator([-45,-40,-35,-30,-25,-20,-15,-10])
+    gl.xformatter   = LONGITUDE_FORMATTER
+    gl.yformatter   = LATITUDE_FORMATTER
+    gl.xlabel_style = {'size':10, 'color':'black'}
+    gl.ylabel_style = {'size':10, 'color':'black'}
+
+    if get_reverse_colormap(var_name) == None:
+        cmap = plt.cm.seismic
+    elif get_reverse_colormap(var_name) == True:
+        cmap = plt.cm.seismic_r
+    else:
+        cmap = plt.cm.seismic_r
+
+    if len(file_paths) > 1:
+        if var_name == 'EF':
+            clevs = np.linspace(-0.5,0.5, num=21)
+        else:
+            clevs = np.linspace(-50.,50., num=21)
+    else:
+        clevs = np.arange(np.nanmin(var), np.nanmax(var), 21)
+
+    plt.contourf(lon, lat, var, levels=clevs[clevs!=0], transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
+    cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
+
+    plt.title(var_name, size=16)
+    cb.ax.tick_params(labelsize=10)
+
+    if message == None:
+        message = var_name
+    else:
+        message = message+"_"+var_name
+
+    plt.savefig('./plots/5Nov/land_var/3Nov/spatial_map_'+message+'.png',dpi=300)
+
 if __name__ == "__main__":
 
     # =============================== Variables ================================
     var_3D_names =  [ "Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Snowf_tavg",
-                       "Rainf_tavg","Evap_tavg","Qs_tavg","Qsb_tavg","VegT_tavg","AvgSurfT_tavg",
-                       "Albedo_inst","SWE_inst","SnowDepth_inst","SoilWet_inst","ECanop_tavg","TVeg_tavg",
-                       "FWsoil_tavg","ESoil_tavg","CanopInt_inst","SnowCover_inst","GPP_tavg","Wind_f_inst",
-                       "Rainf_f_inst","Tair_f_inst", "Qair_f_inst","Psurf_f_inst","SWdown_f_inst","LWdown_f_inst"]
+                      "Rainf_tavg","Evap_tavg","Qs_tavg","Qsb_tavg","VegT_tavg","AvgSurfT_tavg",
+                      "Albedo_inst","SWE_inst","SnowDepth_inst","SoilWet_inst","ECanop_tavg","TVeg_tavg",
+                      "FWsoil_tavg","ESoil_tavg","CanopInt_inst","SnowCover_inst","GPP_tavg","Wind_f_inst",
+                      "Rainf_f_inst","Tair_f_inst", "Qair_f_inst","Psurf_f_inst","SWdown_f_inst","LWdown_f_inst"]
 
     var_landinfo_3D_names =  ["Landmask_inst","Landcover_inst","Soiltype_inst","SandFrac_inst","ClayFrac_inst","SiltFrac_inst",
                               "SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst","Hyds_inst","Bch_inst","Sucs_inst",
@@ -330,274 +412,149 @@ if __name__ == "__main__":
 
     var_3D_basic_names = ['Evap_tavg',"ESoil_tavg","ECanop_tavg",'TVeg_tavg',"FWsoil_tavg","Qle_tavg","Qh_tavg","Qg_tavg","VegT_tavg","WaterTableD_tavg"]
 
+    var_energy_names = ["Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Rnet","EF"]
+
     # =============================== Operation ================================
-    case_names = [  "hw2009_15Oct","hw2011_15Oct",
-                    "hw2013_15Oct","hw2019_15Oct" ] # ["hw2014_15Oct","hw2017_15Oct"]
+    case_name  = "hw2009_3Nov"
 
-    file_names = [  "LIS.CABLE.20090122-20090213",
-                    "LIS.CABLE.20110124-20110211",
-                    "LIS.CABLE.20121226-20130114",
-                    "LIS.CABLE.20190106-20190130" ] # "LIS.CABLE.200902-200902.d01.nc",
+    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/ensemble_avg/wrfout_20090122-20090213_gw"
 
-    case_sum   = len(file_names)
-    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_15Oct/gw_rst_20090113/WRF_output/wrfout_d01_2009-01-13_11:00:00"
+    cpl_land_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
+    cpl_land_file_gw  = cpl_land_file + '/LIS.CABLE.20090122-20090213_gw.nc'  # land output of wrf-cable run
+    cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.20090122-20090213_fd.nc'  # land output of wrf-cable run
 
-    # ############################
-    #   plot plot_map_var_ts    #
-    # ############################
-    # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
-    is_diff    = False #False
+    file_paths        = [cpl_land_file_fd,cpl_land_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
+    seconds           = [8.*60.*60.,20.*60.*60.]
+    for var_name in var_energy_names:
 
-    for case_num in np.arange(case_sum):
+        time_s = datetime(2009,1,28,14,0,0,0)
+        time_e = datetime(2009,2,9,13,59,0,0)
 
-        file_paths = []
+        if len(file_paths) > 1:
+            message = "Land_nighttime_GW-FD_"+str(time_s)
+        else:
+            message = "Land_nighttime_GW_"+str(time_s)
 
-        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
-        file_path  = path + file_names[case_num]+"_gw.nc"
-        file_paths.append(file_path)
-        file_path  = path + file_names[case_num]+"_gw.nc"
-        file_paths.append(file_path)
-        print(file_paths)
+        plot_spatial_land(file_paths, wrf_path, var_name, time_s, time_e, seconds=seconds, message=message)
 
-        tss        = [0]
-        message    = case_names[case_num]+"_GW"
-
-        var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg",
-                        "Qh_tavg","Qle_tavg","FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
-                        "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
-
-        plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, message=message)
-
-        var_names  = ["SoilMoist_inst","SoilTemp_inst"]
-        for layer in np.arange(0,6):
-            plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, layer=layer, message=message)
-
-    ######################################
-    #   plot plot_map_var_period_mean    #
-    ######################################
-
-    is_diff    = False #False
-    layer      = None
-    var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg",
-                  "Qh_tavg","Qle_tavg","FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
-                  "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
-    # var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg",
-    #               "Qh_tavg","Qle_tavg","Qg_tavg","Qs_tavg","Qsb_tavg",
-    #               "FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
+    # ============================= Old Decks ===============================
+    # # ############################
+    # #   plot plot_map_var_ts    #
+    # # ############################
+    # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
+    # is_diff    = False #False
+    #
+    #     tss        = [0]
+    #     message    = case_names[case_num]+"_GW"
+    #
+    #     var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg",
+    #                     "Qh_tavg","Qle_tavg","FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
+    #                     "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
+    #
+    #     plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, message=message)
+    #
+    #     var_names  = ["SoilMoist_inst","SoilTemp_inst"]
+    #     for layer in np.arange(0,6):
+    #         plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, layer=layer, message=message)
+    #
+    # ######################################
+    # #   plot plot_map_var_period_mean    #
+    # ######################################
+    #
+    # is_diff    = False #False
+    # layer      = None
+    # var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg",
+    #               "Qh_tavg","Qle_tavg","FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
     #               "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
-
-    ts_s       = [ 6*48, 6*48, 6*48, 6*48]
-    ts_e       = [ 17*48, 13*48, 14*48, 20*48 ]
-
-    for case_num in np.arange(case_sum):
-        print(ts_s)
-        print(ts_e)
-        file_paths = []
-
-        path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
-        file_path  = path + file_names[case_num]+"_gw.nc"
-        file_paths.append(file_path)
-        file_path  = path + file_names[case_num]+"_gw.nc"
-        file_paths.append(file_path)
-        print(file_paths)
-
-        message    = case_names[case_num]+"_GW"
-        plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s[case_num], ts_e[case_num], layer=layer, message=message)
-
-        var_names  = ["SoilMoist_inst","SoilTemp_inst"]
-        for layer in np.arange(0,6):
-            plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s[case_num], ts_e[case_num], layer=layer, message=message)
-
-    # ==================== Old Operation (before Oct 2021) =====================
+    # # var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg",
+    # #               "Qh_tavg","Qle_tavg","Qg_tavg","Qs_tavg","Qsb_tavg",
+    # #               "FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
+    # #               "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
     #
-    # case_names = [  ["fd_feb2009","gw_feb2009"],
-    #                 ["fd_feb2011","gw_feb2011"],
-    #                 ["fd_jan2013","gw_jan2013"],
-    #                 ["fd_jan2014","gw_jan2014"],
-    #                 ["fd_feb2017","gw_feb2017"],
-    #                 ["fd_jan2019","gw_jan2019"] ] # ["fd_feb2009","gw_feb2009"],
-    # file_names = [  "LIS.CABLE.200902-200902.d01.nc",
-    #                 "LIS.CABLE.201102-201102.d01.nc",
-    #                 "LIS.CABLE.201301-201301.d01.nc",
-    #                 "LIS.CABLE.201401-201401.d01.nc",
-    #                 "LIS.CABLE.201702-201702.d01.nc",
-    #                 "LIS.CABLE.201901-201901.d01.nc" ] # "LIS.CABLE.200902-200902.d01.nc",
+    # ts_s       = [ 6*48, 6*48, 6*48, 6*48]
+    # ts_e       = [ 17*48, 13*48, 14*48, 20*48 ]
     #
-    # case_sum   = len(file_names)
-    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/fd_feb2009/WRF_output/wrfout_d01_2009-02-01_00:00:00"
+    # for case_num in np.arange(case_sum):
+    #     print(ts_s)
+    #     print(ts_e)
+    #     file_paths = []
+    #
+    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+    #     file_path  = path + file_names[case_num]+"_gw.nc"
+    #     file_paths.append(file_path)
+    #     file_path  = path + file_names[case_num]+"_gw.nc"
+    #     file_paths.append(file_path)
+    #     print(file_paths)
+    #
+    #     message    = case_names[case_num]+"_GW"
+    #     plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s[case_num], ts_e[case_num], layer=layer, message=message)
+    #
+    #     var_names  = ["SoilMoist_inst","SoilTemp_inst"]
+    #     for layer in np.arange(0,6):
+    #         plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s[case_num], ts_e[case_num], layer=layer, message=message)
     #
     # # ############################
     # #   plot plot_map_var_ts    #
     # # ############################
     # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
-    # is_diff    = True #False
+    # is_diff    = False #False
     #
     # for case_num in np.arange(case_sum):
     #
     #     file_paths = []
     #
-    #     for case_name in case_names[case_num]:
-    #         print(case_name)
-    #         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
-    #         file_path  = path + file_names[case_num]
-    #         file_paths.append(file_path)
+    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+    #     file_path  = path + file_names[case_num]+"_gw.nc"
+    #     file_paths.append(file_path)
+    #     file_path  = path + file_names[case_num]+"_gw.nc"
+    #     file_paths.append(file_path)
+    #     print(file_paths)
     #
-    #     tss        = []
+    #     tss        = [0]
+    #     message    = case_names[case_num]+"_GW"
     #
-    #     # day 1 to day 28
-    #     for ts in np.arange(224):
-    #         tss.append(ts)
+    #     var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg",
+    #                     "Qh_tavg","Qle_tavg","FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
+    #                     "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
     #
-    #     var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg",
-    #                   "Qh_tavg","Qle_tavg","Qg_tavg","Qs_tavg","Qsb_tavg",
-    #                   "FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
-    #                   "Rainf_tavg", "Qair_f_inst"]
-    #
-    #     plot_map_var_ts(is_diff, file_paths, wrf_path, case_names[case_num], var_names, tss)
+    #     plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, message=message)
     #
     #     var_names  = ["SoilMoist_inst","SoilTemp_inst"]
     #     for layer in np.arange(0,6):
-    #         plot_map_var_ts(is_diff, file_paths, wrf_path, case_names[case_num], var_names, tss, layer=layer)
+    #         plot_map_var_ts(is_diff, file_paths, wrf_path, var_names, tss, layer=layer, message=message)
     #
     # ######################################
     # #   plot plot_map_var_period_mean    #
     # ######################################
-    # is_diff    = True #False
+    #
+    # is_diff    = False #False
     # layer      = None
-    # var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg",
-    #               "Qh_tavg","Qle_tavg","Qg_tavg","Qs_tavg","Qsb_tavg",
-    #               "FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
-    #               "Rainf_tavg", "Qair_f_inst"]
+    # var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg",
+    #               "Qh_tavg","Qle_tavg","FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
+    #               "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
+    # # var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg",
+    # #               "Qh_tavg","Qle_tavg","Qg_tavg","Qs_tavg","Qsb_tavg",
+    # #               "FWsoil_tavg","AvgSurfT_tavg","VegT_tavg","Tair_f_inst",
+    # #               "Rainf_tavg", "Qair_f_inst","WaterTableD_tavg"]
+    #
+    # ts_s       = [ 6*48, 6*48, 6*48, 6*48]
+    # ts_e       = [ 17*48, 13*48, 14*48, 20*48 ]
     #
     # for case_num in np.arange(case_sum):
+    #     print(ts_s)
+    #     print(ts_e)
     #     file_paths = []
-    #     for case_name in case_names[case_num]:
-    #         path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
-    #         file_path  = path + file_names[case_num]
-    #         file_paths.append(file_path)
     #
-    #     # from day 6 to day 28
-    #     ts_s       = 5*8
-    #     ts_e       = 28*8
-    #
-    #     #for layer in np.arange(0,6):
-    #     plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names[case_num], var_names, ts_s, ts_e, layer=layer)
-
-
-    ######################
-    #   Plot AWAP Tmax   #
-    ######################
-
-    # path      = '/g/data/w35/Shared_data/Observations/AWAP_all_variables/daily/tmax/'
-    # file_name = 'AWAP_daily_tmax_1970_2019.nc'
-    # file_path = path + file_name
-    # var_name  = 'tmax'
-    # plot_map_var(file_path, var_name)
-
-    ############################################
-    #   plot LIS variables at timestep = ts    #
-    ############################################
-    # file_name  = "LIS.CABLE.198212-201301.nc"
-    # d2012121   = 10524
-    # ts         = d2012121 # d2012121+30 + 4  # 2013-01-04  #- 2012-12-01
-    # # var_names  = ["Albedo_inst","Landcover_inst","Landmask_inst","Soiltype_inst","SandFrac_inst","ClayFrac_inst","SiltFrac_inst",
-    # #               "SoilFieldCap_inst","SoilSat_inst","SoilWiltPt_inst","Hyds_inst","Bch_inst","Sucs_inst","Elevation_inst","LAI_inst"]"GPP_tavg","VegT_tavg",
-
-    # case_name  = 'ctl_11Jul'
-    # path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
-    # file_path  = path + file_name
-    # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
-    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
-    # plot_map_var_ts(case_name,file_path, wrf_path, var_names, ts)
-
-    # case_name  = 'free_drain_11Jul'
-    # path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
-    # file_path  = path + file_name
-    # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
-    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
-    # plot_map_var_ts(case_name,file_path, wrf_path, var_names, ts)
-
-    #############################
-    #   plot plot_map_var_ts    #
-    #############################
-
-    # case_names = ['free_drain_25Jul','ctl_25Jul']
-    # file_name  = "LIS.CABLE.198212-201301.nc"
-    # file_paths = []
-    # is_diff    = True #False
-    # for case_name in case_names:
-    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
-    #     file_path  = path + file_name
+    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_names[case_num]+"/ensemble_avg/"
+    #     file_path  = path + file_names[case_num]+"_gw.nc"
     #     file_paths.append(file_path)
-    #
-    # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
-    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
-    #
-    # d2012121   = 10524
-    # tss        = []
-    #
-    # # 2012-11-22 ~ 2012-12-10
-    # for ts in np.arange(d2012121-10,d2012121+10):
-    #     tss.append(ts)
-    #
-    # # 2012-12-26 ~ 2013-01-14
-    # for ts in np.arange(d2012121+31-5,d2012121+31+14):
-    #     tss.append(ts)
-    #
-    # var_names  = ["Evap_tavg","TVeg_tavg","ESoil_tavg","ECanop_tavg","FWsoil_tavg","Qh_tavg"]
-    #             #  ["Rainf_tavg","Tair_f_inst", "Qair_f_inst"]
-    # plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss)
-    #
-    # var_names  = ["SoilMoist_inst","SoilTemp_inst"]
-    # for layer in np.arange(0,6):
-    #     plot_map_var_ts(is_diff, file_paths, wrf_path, case_names, var_names, tss, layer=layer)
-
-
-    # ######################################
-    # #   plot plot_map_var_period_mean    #
-    # ######################################
-    # case_names = ['free_drain_14Aug','ctl_14Aug'] #'free_drain_25Jul',
-    # file_name  = "LIS.CABLE.198212-201301.nc"
-    # file_paths = []
-    # is_diff    = True #False
-    # layer      = None
-    # for case_name in case_names:
-    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
-    #     file_path  = path + file_name
+    #     file_path  = path + file_names[case_num]+"_gw.nc"
     #     file_paths.append(file_path)
-
-    # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
-    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
-    # d2012121   = 10524
-    # ts_s       = d2012121 -366 #+ 30 + 1
-    # ts_e       = d2012121  # + 30 + 14  # 2013-01-04  #- 2012-12-01
-    # var_names  = var_3D_basic_names #["WaterTableD_tavg"]#["SoilMoist_inst","SoilTemp_inst"] #var_3D_basic_names # ["SoilMoist_inst","SoilTemp_inst"]
-
-    # #for layer in np.arange(0,6):
-    # plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e, layer=layer)
-
-    # ######################################
-    # #   plot plot_map_var_period_mean    #
-    # ######################################
+    #     print(file_paths)
     #
-    # ############# duplicate ##############
-    # # old run vs new run
-    # case_names = ['ctl_23Aug','ctl_8Sep'] #'free_drain_25Jul',
-    # file_name  = "LIS.CABLE.200001-200012.nc"#"LIS.CABLE.198212-201301.nc"
-    # file_paths = []
-    # is_diff    = True #False
-    # layer      = None
-    # for case_name in case_names:
-    #     path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/LIS_output/"
-    #     file_path  = path + file_name
-    #     file_paths.append(file_path)
+    #     message    = case_names[case_num]+"_GW"
+    #     plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s[case_num], ts_e[case_num], layer=layer, message=message)
     #
-    # # Since lon and lat in LIS contain default values, to use plt.contourf, I take lon/lat from WRF output
-    # wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/WRF_output/wrfout_d01_2013-01-01_03:00:00"
-    # d2012121   = 10524
-    # ts_s       = 0 #+ 30 + 1 # d2012121
-    # ts_e       = 366  # + 30 + 14  # 2013-01-04  #- 2012-12-01 # d2012121
-    # var_names  = var_3D_basic_names #["WaterTableD_tavg"]#["SoilMoist_inst","SoilTemp_inst"] #var_3D_basic_names # ["SoilMoist_inst","SoilTemp_inst"]
-    #
-    # #for layer in np.arange(0,6):
-    # plot_map_var_period_mean(is_diff, file_paths, wrf_path, case_names, var_names, ts_s, ts_e, layer=layer)
+    #     var_names  = ["SoilMoist_inst","SoilTemp_inst"]
+    #     for layer in np.arange(0,6):
+    #         plot_map_var_period_mean(is_diff, file_paths, wrf_path, var_names, ts_s[case_num], ts_e[case_num], layer=layer, message=message)

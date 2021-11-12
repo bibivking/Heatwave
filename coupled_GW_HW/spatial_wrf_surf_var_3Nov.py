@@ -523,19 +523,19 @@ if __name__ == "__main__":
     #######################################################
 
     var_3D = [
-                'rh2',  # 2m Relative Humidity
-                'T2',   # 2m Temperature
-                'td2',  # 2m Dew Point Temperature
-                'slp',  # Sea Level Pressure
-                'ctt',  # Cloud Top Temperature
-                'mdbz', # Maximum Reflectivity
-                'pw',   # Precipitable Water
-                'updraft_helicity', # Updraft Helicity
-                'helicity',        # Storm Relative Helicity
-                'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)        
+                'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
                 'cloudfrac', # Cloud Fraction
               ]
                 # 'ter',  # Model Terrain Height
+                # 'updraft_helicity', # Updraft Helicity
+                # 'helicity',        # Storm Relative Helicity
+                # 'ctt',  # Cloud Top Temperature
+                # 'mdbz', # Maximum Reflectivity
+                # 'td2',  # 2m Dew Point Temperature
+                # 'rh2',  # 2m Relative Humidity
+                # 'T2',   # 2m Temperature
+                # 'slp',  # Sea Level Pressure
+                # 'pw',   # Precipitable Water
 
     var_other         = ['RAINC','RAINNC','PSFC','U10','V10','TSK','PBLH']
 
@@ -547,14 +547,14 @@ if __name__ == "__main__":
 
     for j, var_name in enumerate(var_3D):
 
-        # for i in np.arange(0,23):
-        #     time_s = datetime(2009,1,22,0,0,0,0) + timedelta(days=int(i))
-        #     time_e = datetime(2009,1,22,23,59,0,0) + timedelta(days=int(i))
-
-        # 30 Jan
         for i in np.arange(0,22):
             time_s = datetime(2009,1,22,14,0,0,0) + timedelta(days=int(i))
-            time_e = datetime(2009,1,23,13,59,0,0) + timedelta(days=int(i))    
+            time_e = datetime(2009,1,23,13,59,0,0) + timedelta(days=int(i))
+
+        # # 30 Jan
+        # for i in np.arange(0,4):
+        #     time_s = datetime(2009,2,9,14,0,0,0) + timedelta(days=int(i))
+        #     time_e = datetime(2009,2,10,13,59,0,0) + timedelta(days=int(i))
 
             if len(file_paths) > 1:
                 message = "Couple_GW-FD_"+str(time_s)

@@ -504,7 +504,6 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
     ax.set_xlim(cartopy_xlim(p1))
     ax.set_ylim(cartopy_ylim(p1))
 
-
     plt.title(var_name)
 
     if message == None:
@@ -532,7 +531,7 @@ if __name__ == "__main__":
                 'pw',   # Precipitable Water
                 'updraft_helicity', # Updraft Helicity
                 'helicity',        # Storm Relative Helicity
-                'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)        
+                'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
                 'cloudfrac', # Cloud Fraction
               ]
 
