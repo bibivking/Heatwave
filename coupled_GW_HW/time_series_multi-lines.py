@@ -221,7 +221,7 @@ def plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date
 
     if rain_val is not None:
         Time, rain= read_var(ensemble_path, "Rainf_tavg", loc_lat, loc_lon, lat_name, lon_name)
-        rain_mean = spital_var(Time, rain, date_s, date_e)
+        rain_mean = spital_var(UTC_to_AEST(Time), rain, date_s, date_e)
         rain_mask = np.ones(np.shape(rain_mean), dtype=bool)
         rain_mask = np.where( rain_mean*24.*3600. < rain_val, True, False)
         print("(rain_mask == True).sum()")
@@ -229,7 +229,7 @@ def plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date
 
     if wtd_val is not None:
         Time, wtd = read_var(ensemble_path, "WaterTableD_tavg", loc_lat, loc_lon, lat_name, lon_name)
-        wtd_mean = spital_var(Time, wtd, date_s, date_e)
+        wtd_mean = spital_var(UTC_to_AEST(Time), wtd, date_s, date_e)
         wtd_mask = np.ones(np.shape(wtd_mean), dtype=bool)
         wtd_mask = np.where(np.all([(wtd_mean/1000.) >=wtd_val[0], (wtd_mean/1000.) <wtd_val[1]],axis=0), True, False)
         print("(wtd_mask == True).sum()")

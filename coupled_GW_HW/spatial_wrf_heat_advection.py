@@ -2,6 +2,7 @@
 
 import sys
 import numpy as np
+import pint
 from netCDF4 import Dataset,num2date
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
@@ -36,7 +37,7 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
     time = np.array(time_tmp)
 
     # to get lat and lon
-    p1       = getvar(ncfile1, "pressure", timeidx=ALL_TIMES)
+    p1   = getvar(ncfile1, "pressure", timeidx=ALL_TIMES)
 
     # Extract the pressure, geopotential height, and wind variables
     # dx, dy = mpcalc.lat_lon_grid_deltas(lon, lat)
@@ -48,7 +49,7 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
     # !!!!!!!!!!!!!!
 
     Var1  = read_wrf_hgt_var(file_paths[0], var_name, var_unit, height, loc_lat, loc_lon)
-    Z1    = read_wrf_hgt_var(file_paths[0], "z", "m", height, loc_lat, loc_lon)
+    # Z1    = read_wrf_hgt_var(file_paths[0], "z", "m", height, loc_lat, loc_lon)
     Ua1   = read_wrf_hgt_var(file_paths[0], "ua", "m s-1", height, loc_lat, loc_lon)
     Va1   = read_wrf_hgt_var(file_paths[0], "va", "m s-1", height, loc_lat, loc_lon)
 
@@ -58,48 +59,51 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
         scale = get_scale(var_name)
         var1  = spital_var(time,Var1,time_s,time_e)*scale
 
-    z1   = spital_var(time,Z1,time_s,time_e)
+    # z1   = spital_var(time,Z1,time_s,time_e)
     ua1  = spital_var(time,Ua1,time_s,time_e)
     va1  = spital_var(time,Va1,time_s,time_e)
 
-    # Calculate temperature advection using metpy function
-    # dx   = 25000
-    # dy   = 25000
-    adv1 = mpcalc.advection(var1[0], [ua1[0], va1[0]], dx=25000, dy=25000, x_dim=0,y_dim=1) #, dim_order='yx')  #  * units.kelvin * units('K/sec')
+    dx   = 25000
+    dy   = 25000
+
+    adv1 = mpcalc.advection(Var1, u=Ua1, v=Va1, dx=dx, dy=dy, x_dim=0, y_dim=1)
     print(np.shape(adv1))
-    if len(file_paths) > 1:
-        Var2  = read_wrf_hgt_var(file_paths[1], var_name, var_unit, height, loc_lat, loc_lon)
-        Z2    = read_wrf_hgt_var(file_paths[1], "z", "m", height, loc_lat, loc_lon)
-        Ua2   = read_wrf_hgt_var(file_paths[1], "ua", "m s-1", height, loc_lat, loc_lon)
-        Va2   = read_wrf_hgt_var(file_paths[1], "va", "m s-1", height, loc_lat, loc_lon)
 
-        if var_name in ['temp']:
-            var2  = spital_var(time,Var2,time_s,time_e)
-        else:
-            scale = get_scale(var_name)
-            var2  = spital_var(time,Var2,time_s,time_e)*scale
+    adv       = adv1
 
-        z2   = spital_var(time,Z2,time_s,time_e)
-        ua2  = spital_var(time,Ua2,time_s,time_e)
-        va2  = spital_var(time,Va2,time_s,time_e)
-
-        # Calculate temperature advection using metpy function
-        adv2 = mpcalc.advection(var2[0], [ua2[0], va2[0]], dx=25000, dy=25000, x_dim=0,y_dim=1)
-
-        # Calculate difference
-        var = var2 - var1
-        u   = ua2 - ua1
-        v   = va2 - va1
-        z   = z2 - z1
-        adv = adv2- adv1
-
-    else:
-        # Calculate difference
-        var = var1
-        u   = ua1
-        v   = va1
-        z   = z1
-        adv = adv1
+    # if len(file_paths) > 1:
+    #     Var2  = read_wrf_hgt_var(file_paths[1], var_name, var_unit, height, loc_lat, loc_lon)
+    #     Z2    = read_wrf_hgt_var(file_paths[1], "z", "m", height, loc_lat, loc_lon)
+    #     Ua2   = read_wrf_hgt_var(file_paths[1], "ua", "m s-1", height, loc_lat, loc_lon)
+    #     Va2   = read_wrf_hgt_var(file_paths[1], "va", "m s-1", height, loc_lat, loc_lon)
+    #
+    #     if var_name in ['temp']:
+    #         var2  = spital_var(time,Var2,time_s,time_e)
+    #     else:
+    #         scale = get_scale(var_name)
+    #         var2  = spital_var(time,Var2,time_s,time_e)*scale
+    #
+    #     z2   = spital_var(time,Z2,time_s,time_e)
+    #     ua2  = spital_var(time,Ua2,time_s,time_e)
+    #     va2  = spital_var(time,Va2,time_s,time_e)
+    #
+    #     # Calculate temperature advection using metpy function
+    #     adv2 = mpcalc.advection(var2[0], [ua2[0], va2[0]], dx=25000, dy=25000, x_dim=0,y_dim=1)
+    #
+    #     # Calculate difference
+    #     var = var2 - var1
+    #     u   = ua2 - ua1
+    #     v   = va2 - va1
+    #     z   = z2 - z1
+    #     adv = adv2- adv1
+    #
+    # else:
+    #     # Calculate difference
+    #     var = var1
+    #     u   = ua1
+    #     v   = va1
+    #     z   = z1
+    #     adv = adv1
 
     # Get the lat/lon coordinates
     lats, lons = latlon_coords(p1)
@@ -165,46 +169,46 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
                     extend='both', cmap='bwr', transform=ccrs.PlateCarree())
     plt.colorbar(cf, ax=ax, orientation="horizontal", pad=.05, extendrect=True, ticks=cint)
     # cb = plt.colorbar(cf, cax=cax, orientation='horizontal', extendrect=True, ticks=cint)
-    cb.set_label(r'$^{o}C/d$', size='large')
+    # cb.set_label(r'$^{o}C/d$', size='large')
 
 
     # ------- Plot Height Contours -------
-    if len(file_paths) > 1:
-        levels = np.arange(-2., 2., 0.1)
-    else:
-        levels = np.arange(1500., 1600., 10.)
-
-    contours = plt.contour(to_np(lons), to_np(lats), to_np(gaussian_filter(z,sigma=3)),
-                           levels = levels, colors="black", linewidths=1.5, linestyles='solid',
-                           transform=ccrs.PlateCarree())
-    plt.clabel(contours, inline=1, inline_spacing=10, fontsize=6, fmt="%d",rightside_up=True, use_clabeltext=True)
+    # if len(file_paths) > 1:
+    #     levels = np.arange(-2., 2., 0.1)
+    # else:
+    #     levels = np.arange(1500., 1600., 10.)
+    #
+    # contours = plt.contour(to_np(lons), to_np(lats), to_np(gaussian_filter(z,sigma=3)),
+    #                        levels = levels, colors="black", linewidths=1.5, linestyles='solid',
+    #                        transform=ccrs.PlateCarree())
+    # plt.clabel(contours, inline=1, inline_spacing=10, fontsize=6, fmt="%d",rightside_up=True, use_clabeltext=True)
 
     # ------- Plot Var Contours ----------
-    if len(file_paths) > 1:
-        max_val = np.abs(np.nanmax(var))
-        min_val = np.abs(np.nanmin(var))
-        max_range = np.maximum(max_val,min_val)
-        print(max_val)
-        print(min_val)
-        print(max_range)
-        levels = np.linspace(max_range*(-1.),max_range,num=20)
-    else:
-        levels = np.arange(np.nanmin(var), np.nanmax(var), 20)
-
-    var_contours = plt.contour(to_np(lons), to_np(lats), to_np(var),levels = levels,
-                               colors='grey', linewidths=1.25, linestyles='dashed',
-                               transform=ccrs.PlateCarree()) #,"jet" #“rainbow”#"coolwarm" , cmap=get_cmap("bwr"),extend='both'
-    # plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)
-    plt.clabel(var_contours, fontsize=6, inline=1, inline_spacing=10, fmt='%d',
-                rightside_up=True, use_clabeltext=True)
+    # if len(file_paths) > 1:
+    #     max_val = np.abs(np.nanmax(var))
+    #     min_val = np.abs(np.nanmin(var))
+    #     max_range = np.maximum(max_val,min_val)
+    #     print(max_val)
+    #     print(min_val)
+    #     print(max_range)
+    #     levels = np.linspace(max_range*(-1.),max_range,num=20)
+    # else:
+    #     levels = np.arange(np.nanmin(var), np.nanmax(var), 20)
+    #
+    # var_contours = plt.contour(to_np(lons), to_np(lats), to_np(var),levels = levels,
+    #                            colors='grey', linewidths=1.25, linestyles='dashed',
+    #                            transform=ccrs.PlateCarree()) #,"jet" #“rainbow”#"coolwarm" , cmap=get_cmap("bwr"),extend='both'
+    # # plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)
+    # plt.clabel(var_contours, fontsize=6, inline=1, inline_spacing=10, fmt='%d',
+    #             rightside_up=True, use_clabeltext=True)
 
     # -------- Plot wind barbs --------
-    if len(file_paths) > 1:
-        ax.quiver(to_np(lons[::3,::3]), to_np(lats[::3,::3]), to_np(u[::3, ::3]),to_np(v[::3, ::3]),
-             scale=20., pivot='middle', transform=ccrs.PlateCarree()) # width=0.0002,
-    else:
-        ax.quiver(to_np(lons[::3,::3]), to_np(lats[::3,::3]), to_np(u[::3, ::3]),to_np(v[::3, ::3]),
-             scale=100., pivot='middle', transform=ccrs.PlateCarree()) # width=0.0002,
+    # if len(file_paths) > 1:
+    #     ax.quiver(to_np(lons[::3,::3]), to_np(lats[::3,::3]), to_np(u[::3, ::3]),to_np(v[::3, ::3]),
+    #          scale=20., pivot='middle', transform=ccrs.PlateCarree()) # width=0.0002,
+    # else:
+    #     ax.quiver(to_np(lons[::3,::3]), to_np(lats[::3,::3]), to_np(u[::3, ::3]),to_np(v[::3, ::3]),
+    #          scale=100., pivot='middle', transform=ccrs.PlateCarree()) # width=0.0002,
 
 
     if var_unit == None:
@@ -217,7 +221,7 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
     else:
         message = message+"_"+var_name+'_'+str(height)+"hPa"
 
-    fig.savefig('./plots/5Nov/hw_anaylsis/3Nov/spatial_map_wrf_heat_advection_'+message , bbox_inches='tight', pad_inches=0.1)
+    fig.savefig('./plots/5Nov/heat_advection/3Nov/spatial_map_wrf_heat_advection_'+message , bbox_inches='tight', pad_inches=0.1)
 
     # # Helper function for finding proper time variable
     # def find_time_var(var, time_basename='time'):
@@ -343,8 +347,6 @@ def heat_advection(file_paths, var_name, height, time_s, time_e, var_unit=None, 
 
     # vort_adv = mpcalc.advection(vor, [u, v], (dx, dy), dim_order='yx') * 1e9  上面都是对的，就这句出错
 
-
-    # def heat_content():
 
 if __name__ == "__main__":
 

@@ -31,6 +31,12 @@ def get_scale(var_name):
         scale = 1.
     return scale
 
+def UTC_to_AEST(time):
+
+    Time = time + timedelta(hours=10)
+
+    return Time
+
 # ===================================== Mask ===================================
 def tree_mask(file_path,pft_var_name):
 
@@ -81,6 +87,24 @@ def mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name):
     # print(np.shape(mask))
     return mask
 
+def time_mask(time, time_s, time_e, seconds=None):
+
+    Time_s = time_s - datetime(2000,1,1,0,0,0)
+    Time_e = time_e - datetime(2000,1,1,0,0,0)
+
+    if seconds == None:
+        time_cood = (time>=Time_s) & (time<Time_e)
+    else:
+        time_cood = []
+        for j in np.arange(len(time)):
+            if seconds[0] >= seconds[1]:
+                if_seconds = (time[j].seconds >= seconds[0]) | (time[j].seconds < seconds[1])
+            else:
+                if_seconds = (time[j].seconds >= seconds[0]) & (time[j].seconds < seconds[1])
+            time_cood.append( (time[j]>=Time_s) & (time[j]<Time_e) & if_seconds)
+
+    return time_cood
+
 # ================================ Read variables ==============================
 def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon_name=None):
 
@@ -99,7 +123,6 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
     ntime      = len(time)
 
     if loc_lat == None:
-        # print("loc 1")
         Var_tmp = obs_file.variables[var_name][:]
         if hasattr(obs_file.variables[var_name], '_FillValue'):
             # hasattr(a,"b"): check whether object a has attribute 'b'
@@ -112,7 +135,6 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
             Var = Var_tmp
     else:
         # selected region
-        # print("loc 2")
         if var_name == lat_name or var_name == lon_name:
             # read lat or lon
             mask = mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name)
@@ -132,7 +154,6 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
                 Var = np.where(mask, obs_file.variables[var_name][0,:,:], np.nan)
                 # print(np.shape(Var))
         else:
-            # print("loc 3")
             # read var except lat or lat
             mask = mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name)
             mask_multi = [ mask ] * ntime
@@ -234,49 +255,32 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
     return var
 
 # ========================= Spitial & temporal Average =========================
-def spital_var(time,Var,time_s,time_e, seconds=None):
+def spital_var(time, Var, time_s, time_e, seconds=None):
 
-    Time_s = time_s - datetime(2000,1,1,0,0,0)
-    Time_e = time_e - datetime(2000,1,1,0,0,0)
-
-    if seconds == None:
-        time_cood = (time>=Time_s) & (time<Time_e)
-    else:
-        time_cood = []
-        for j in np.arange(len(time)):
-            if seconds[0] >= seconds[1]:
-                if_seconds = (time[j].seconds >= seconds[0]) | (time[j].seconds < seconds[1])
-            else:
-                if_seconds = (time[j].seconds >= seconds[0]) & (time[j].seconds < seconds[1])
-            time_cood.append( (time[j]>=Time_s) & (time[j]<Time_e) & if_seconds)
-
-    # print('===== np.shape(Var[time_cood,:,:]) =====')
-    # print(np.shape(Var[time_cood,:,:]))
-
-    var = np.nanmean(Var[time_cood,:,:],axis=0)
-    # for rain
-    # var = np.sum(Var[time_cood,:,:],axis=0)
-    # print('===== np.shape(var) =====')
-    # print(np.shape(var))
+    time_cood = time_mask(time, time_s, time_e, seconds)
+    var       = np.nanmean(Var[time_cood,:,:],axis=0)
 
     # np.savetxt("test_var.txt",var,delimiter=",")
     return var
 
-def spital_var_max(time,Var,time_s,time_e, seconds=None):
+def spital_var_max(time, Var, time_s, time_e, seconds=None):
 
-    Time_s = time_s - datetime(2000,1,1,0,0,0)
-    Time_e = time_e - datetime(2000,1,1,0,0,0)
+    time_cood = time_mask(time, time_s, time_e, seconds)
+    time_slt  = time[time_cood]
 
-    if seconds == None:
-        time_cood = (time>=Time_s) & (time<Time_e)
-    else:
-        time_cood = []
-        for j in np.arange(len(time)):
-            time_cood.append( (time[j]>=Time_s) & (time[j]<Time_e) &
-                              (time[j].seconds >= seconds[0]) &
-                              (time[j].seconds < seconds[1]) )
+    var_slt  = Var[time_cood,:,:]
 
-    var = np.nanmax(Var[time_cood,:,:],axis=0)
+    days     = []
+    var_tmp  = []
+
+    for t in time_slt:
+        days.append(t.days)
+
+    for d in np.arange(days[0],days[-1]):
+        var_tmp.append(np.nanmax(var_slt[days == d,:,:],axis=0))
+
+    var = np.nanmean(var_tmp,axis=0)
+
     return var
 
 def spital_ERAI_tp(time,Var,time_s,time_e):

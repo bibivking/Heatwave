@@ -538,18 +538,21 @@ if __name__ == "__main__":
                 # 'pw',   # Precipitable Water
 
     var_other         = ['RAINC','RAINNC','PSFC','U10','V10','TSK','PBLH']
-
-    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_3Nov/ensemble_avg'
-    cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_20090122-20090213_gw'  # atmo output of wrf-cable run
-    cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_20090122-20090213_fd'  # atmo output of wrf-cable run
+    case_name         = "hw2019_3Nov" #"hw2009_3Nov"
+    periods           = "20190108-20190130" #"20090122-20090213"
+    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
+    cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_'+periods+'_gw'  # atmo output of wrf-cable run
+    cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_'+periods+'_fd'  # atmo output of wrf-cable run
 
     file_paths        = [cpl_atmo_file_fd,cpl_atmo_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
 
     for j, var_name in enumerate(var_3D):
 
         for i in np.arange(0,22):
-            time_s = datetime(2009,1,22,14,0,0,0) + timedelta(days=int(i))
-            time_e = datetime(2009,1,23,13,59,0,0) + timedelta(days=int(i))
+            time_s = datetime(2019,1,8,14,0,0,0) + timedelta(days=int(i))
+            time_e = datetime(2019,1,9,13,59,0,0) + timedelta(days=int(i))            
+            # time_s = datetime(2009,1,22,14,0,0,0) + timedelta(days=int(i))
+            # time_e = datetime(2009,1,23,13,59,0,0) + timedelta(days=int(i))
 
         # # 30 Jan
         # for i in np.arange(0,4):

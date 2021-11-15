@@ -321,12 +321,12 @@ def plot_spatial_land(file_paths, wrf_path, var_name, time_s, time_e, seconds=No
     file1 = Dataset(file_paths[0], mode='r')
     Time = nc.num2date(file1.variables['time'][:],file1.variables['time'].units,
             only_use_cftime_datetimes=False, only_use_python_datetimes=True)
-    time = Time - datetime(2000,1,1,0,0,0)
+    time = UTC_to_AEST(Time) - datetime(2000,1,1,0,0,0)
 
     if var_name == "Rnet":
         Var1 = file1.variables["Qle_tavg"][:] + file1.variables["Qh_tavg"][:] + file1.variables["Qg_tavg"][:]
     elif var_name == "EF":
-        Var1 = np.where( (file1.variables["Qle_tavg"][:]+file1.variables["Qh_tavg"][:]) != 0,
+        Var1 = np.where( (file1.variables["Qle_tavg"][:]+file1.variables["Qh_tavg"][:]) > file1.variables["Qle_tavg"][:],
                 file1.variables["Qle_tavg"][:]/(file1.variables["Qle_tavg"][:]+file1.variables["Qh_tavg"][:]),
                 np.nan)
     else:
@@ -377,6 +377,9 @@ def plot_spatial_land(file_paths, wrf_path, var_name, time_s, time_e, seconds=No
     if len(file_paths) > 1:
         if var_name == 'EF':
             clevs = np.linspace(-0.5,0.5, num=21)
+        elif var_name == 'Qair_f_inst':
+            clevs = np.linspace(-2,2, num=21)
+            var = var*1000. # kg/kg -> g/kg
         else:
             clevs = np.linspace(-50.,50., num=21)
     else:
@@ -412,28 +415,41 @@ if __name__ == "__main__":
 
     var_3D_basic_names = ['Evap_tavg',"ESoil_tavg","ECanop_tavg",'TVeg_tavg',"FWsoil_tavg","Qle_tavg","Qh_tavg","Qg_tavg","VegT_tavg","WaterTableD_tavg"]
 
-    var_energy_names = ["Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Rnet","EF"]
+    var_energy_names = ["Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Qair_f_inst","Rnet","EF"] #
 
     # =============================== Operation ================================
-    case_name  = "hw2009_3Nov"
+    case_name  = "hw2019_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
 
-    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/ensemble_avg/wrfout_20090122-20090213_gw"
+    if case_name == "hw2009_3Nov":
+        period     = "20090122-20090213"
+        time_s = datetime(2009,1,28,0,0,0,0)
+        time_e = datetime(2009,2,8,23,59,0,0)
+    elif  case_name == "hw2013_3Nov":
+        period     = "20121229-20130122"
+        time_s = datetime(2013,1,4,0,0,0,0)
+        time_e = datetime(2013,1,18,23,59,0,0)
+    elif  case_name == "hw2019_3Nov":
+        period     = "20190108-20190130"
+        time_s = datetime(2019,1,14,0,0,0)
+        time_e = datetime(2019,1,26,23,59,0,0)
 
+
+    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/ensemble_avg/wrfout_"+period+"_gw"
     cpl_land_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
-    cpl_land_file_gw  = cpl_land_file + '/LIS.CABLE.20090122-20090213_gw.nc'  # land output of wrf-cable run
-    cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.20090122-20090213_fd.nc'  # land output of wrf-cable run
+
+    cpl_land_file_gw  = cpl_land_file + '/LIS.CABLE.'+period+'_gw.nc'  # land output of wrf-cable run
+    cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.'+period+'_fd.nc'  # land output of wrf-cable run
 
     file_paths        = [cpl_land_file_fd,cpl_land_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
-    seconds           = [8.*60.*60.,20.*60.*60.]
+    seconds           = [6.*60.*60.,18.*60.*60.]
+
     for var_name in var_energy_names:
 
-        time_s = datetime(2009,1,28,14,0,0,0)
-        time_e = datetime(2009,2,9,13,59,0,0)
 
         if len(file_paths) > 1:
-            message = "Land_nighttime_GW-FD_"+str(time_s)
+            message = "Land_daytime_GW-FD_"+str(time_s)+"-"+str(time_e)
         else:
-            message = "Land_nighttime_GW_"+str(time_s)
+            message = "Land_daytime_GW_"+str(time_s)+"-"+str(time_e)
 
         plot_spatial_land(file_paths, wrf_path, var_name, time_s, time_e, seconds=seconds, message=message)
 

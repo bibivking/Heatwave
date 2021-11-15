@@ -481,14 +481,35 @@ if __name__ == "__main__":
 
 
     # =======================   Path   =======================
-    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_3Nov/ensemble_avg'
-    cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_20090122-20090213_gw'  # atmo output of wrf-cable run
-    cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_20090122-20090213_fd'  # atmo output of wrf-cable run
+    case_name         = "hw2019_3Nov" #"hw2009_3Nov"
+    periods           = "20190108-20190130" #"20090122-20090213"
+    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
+    cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_'+periods+'_gw'  # atmo output of wrf-cable run
+    cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_'+periods+'_fd'  # atmo output of wrf-cable run
 
     # =======================  Run    ========================
     var_4D      = [
                     'cape_3d',# 3D CAPE and CIN
+                    'p',    # Full Model Pressure
+                    'avo',    # Absolute Vorticity
+                    'eth',    # Equivalent Potential Temperature
+                    'dbz',    # Reflectivity
+                    'geopt',  # Geopotential for the Mass Grid  
+                    'omg',  # Omega
+                    'pvo',  # Potential Vorticity
+                    'rh',   # Relative Humidity
+                    'td',   # Dew Point Temperature
+                    'tc',   # Temperature in Celsius
+                    'th',   # Potential Temperature
+                    'temp', # Temperature (in specified units)
+                    'tv',   # Virtual Temperature
+                    'twb',  # Wet Bulb Temperature
+                    'ua',   # U-component of Wind on Mass Points
+                    'va',   # V-component of Wind on Mass Points
+                    'wa',   # W-component of Wind on Mass Points
+                    'z',    # Model Height for Mass Grid                      
                     ]
+                    # 'cape_3d',# 3D CAPE and CIN
                     # 'p',    # Full Model Pressure
                     # 'avo',    # Absolute Vorticity
                     # 'eth',    # Equivalent Potential Temperature
@@ -524,8 +545,10 @@ if __name__ == "__main__":
 
         # 30 Jan
         for i in np.arange(0,22):
-            time_s = datetime(2009,1,22,14,0,0,0) + timedelta(days=int(i))
-            time_e = datetime(2009,1,23,13,59,0,0) + timedelta(days=int(i))
+            time_s = datetime(2019,1,8,14,0,0,0) + timedelta(days=int(i))
+            time_e = datetime(2019,1,9,13,59,0,0) + timedelta(days=int(i))            
+            # time_s = datetime(2009,1,22,14,0,0,0) + timedelta(days=int(i))
+            # time_e = datetime(2009,1,23,13,59,0,0) + timedelta(days=int(i))
 
             if len(file_paths) > 1:
                 message = "Couple_GW-FD_"+str(height)+"hPa_"+str(time_s)

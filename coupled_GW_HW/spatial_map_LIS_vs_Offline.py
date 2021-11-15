@@ -533,7 +533,7 @@ if __name__ == "__main__":
     plot_map_var_lis(file_path, wrf_path, case_name, var_LIS_names, is_lnd=is_lnd, is_tree=is_tree, layer=layer)
 
     ##############################
-    #   plot statistic_bar    #
+    #   plot statistic_bar       #
     ##############################
     is_tree           = False
 
