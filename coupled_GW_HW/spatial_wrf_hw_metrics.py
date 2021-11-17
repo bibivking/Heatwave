@@ -9,93 +9,134 @@ import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
 import matplotlib.animation as animation
 from scipy.interpolate import griddata
-import cartopy.crs as crs
+import cartopy.crs as ccrs
+import matplotlib.ticker as mticker
 from cartopy.feature import NaturalEarthFeature
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from wrf import (to_np, getvar, smooth2d, get_cartopy, cartopy_xlim,
                         cartopy_ylim, latlon_coords, ALL_TIMES)
 from common_utils import *
 
 def hw_thresholds(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, percent):
 
-    year_tot       = 2019 - 1970 + 1
-    Time_tmp,tmax  = read_var(AWAP_tmax_file, "tmax", lat_name="latitude", lon_name="longitude")
-    Time_tmp,tmin  = read_var(AWAP_tmin_file, "tmin", lat_name="latitude", lon_name="longitude")
+    method = "plot"
 
-    tmn        = (tmax + tmin)/2.
+    if method == "calc":
+        year_tot       = 2019 - 1970 + 1
+        Time_tmp,tmax  = read_var(AWAP_tmax_file, "tmax", lat_name="latitude", lon_name="longitude")
+        Time_tmp,tmin  = read_var(AWAP_tmin_file, "tmin", lat_name="latitude", lon_name="longitude")
 
-    tmn_day    = np.delete(tmn,np.s_[365*2+31+28::365*3+366],0)
+        tmn        = (tmax + tmin)/2.
 
-    tmn_day_4D = tmn_day.reshape(year_tot, 365, np.shape(tmn)[1], np.shape(tmn)[2])
+        tmn_day    = np.delete(tmn,np.s_[365*2+31+28::365*3+366],0)
 
-    tmn_percent= np.percentile(tmn_day_4D,percent,axis=0)
+        tmn_day_4D = tmn_day.reshape(year_tot, 365, np.shape(tmn)[1], np.shape(tmn)[2])
 
-    # ========== write out percentile ==========
-    # read lat and lon
-    AWAP_tmax       = nc.Dataset(AWAP_tmax_file, 'r')
-    lat             = AWAP_tmax.variables['latitude'][:]
-    lon             = AWAP_tmax.variables['longitude'][:]
-    nday            = 365
-    nlon            = len(lon)
-    nlat            = len(lat)
+        tmn_percent= np.percentile(tmn_day_4D,percent,axis=0)
 
-    # create file and write global attributes
-    f               = nc.Dataset(AWAP_file_out, 'w', format='NETCDF4')
-    f.description   = str(percent)+' th percentile of 1970-2019 daily mean temperature, created by MU Mengyuan'
-    f.source        = AWAP_tmax_file + " and " + AWAP_tmin_file
-    f.history       = "Created by: %s" % (os.path.basename(__file__))
-    f.creation_date = "%s" % (datetime.now())
+        # ========== write out percentile ==========
+        # read lat and lon
+        AWAP_tmax       = nc.Dataset(AWAP_tmax_file, 'r')
+        lat             = AWAP_tmax.variables['latitude'][:]
+        lon             = AWAP_tmax.variables['longitude'][:]
+        nday            = 365
+        nlon            = len(lon)
+        nlat            = len(lat)
 
-    # set dimensions
-    f.createDimension('time', nday)
-    f.createDimension('latitude', nlat)
-    f.createDimension('longitude', nlon)
-    f.Conventions  = "CF-1.0"
+        # create file and write global attributes
+        f               = nc.Dataset(AWAP_file_out, 'w', format='NETCDF4')
+        f.description   = str(percent)+' th percentile of 1970-2019 daily mean temperature, created by MU Mengyuan'
+        f.source        = AWAP_tmax_file + " and " + AWAP_tmin_file
+        f.history       = "Created by: %s" % (os.path.basename(__file__))
+        f.creation_date = "%s" % (datetime.now())
 
-    # create variables
-    time            = f.createVariable('time', 'f4', ('time',))
-    time.units      = "days since 2019-01-01 00:00:00"
-    time.long_name  = "time"
-    time.standard_name = "time"
-    time.calendar   = "standard"
-    time.axis       = "T"
-    time[:]         = np.arange(365)
-    # print(time)
+        # set dimensions
+        f.createDimension('time', nday)
+        f.createDimension('latitude', nlat)
+        f.createDimension('longitude', nlon)
+        f.Conventions  = "CF-1.0"
 
-    latitude        = f.createVariable('latitude', 'f4', ('latitude'))
-    latitude.units  = "degrees_north"
-    latitude.long_name = "latitude"
-    latitude.standard_name = "projection_y_coordinate"
-    latitude.axis   = "Y"
-    latitude[:]     = lat
-    # print(latitude)
+        # create variables
+        time            = f.createVariable('time', 'f4', ('time',))
+        time.units      = "days since 2019-01-01 00:00:00"
+        time.long_name  = "time"
+        time.standard_name = "time"
+        time.calendar   = "standard"
+        time.axis       = "T"
+        time[:]         = np.arange(365)
+        # print(time)
 
-    # print("np.any(np.isnan(latitude))")
-    # print(np.any(np.isnan(latitude)))
+        latitude        = f.createVariable('latitude', 'f4', ('latitude'))
+        latitude.units  = "degrees_north"
+        latitude.long_name = "latitude"
+        latitude.standard_name = "projection_y_coordinate"
+        latitude.axis   = "Y"
+        latitude[:]     = lat
+        # print(latitude)
 
-    longitude       = f.createVariable('longitude', 'f4', ('longitude'))
-    longitude.units = "degrees_east"
-    longitude.long_name = "longitude"
-    longitude.standard_name = "projection_x_coordinate"
-    longitude.axis  = "X"
-    longitude[:]    = lon
-    # print(longitude)
-    #
-    # print("np.any(np.isnan(longitude))")
-    # print(np.any(np.isnan(longitude)))
+        # print("np.any(np.isnan(latitude))")
+        # print(np.any(np.isnan(latitude)))
 
-    tmean           = f.createVariable('tmean', 'f4', ('time', 'latitude','longitude',))
-    tmean.units     = "C"
-    tmean.long_name = str(percent) + "th of air temperature"
-    tmean.CF_name   = str(percent) + "th of air temperature"
-    tmean.proj4     = "+proj=longlat +ellps=GRS80"
-    tmean[:]        = tmn_percent
+        longitude       = f.createVariable('longitude', 'f4', ('longitude'))
+        longitude.units = "degrees_east"
+        longitude.long_name = "longitude"
+        longitude.standard_name = "projection_x_coordinate"
+        longitude.axis  = "X"
+        longitude[:]    = lon
+        # print(longitude)
+        #
+        # print("np.any(np.isnan(longitude))")
+        # print(np.any(np.isnan(longitude)))
 
-    # print("np.any(np.isnan(tmean))")
-    # print(np.any(np.isnan(tmean)))
-    # print(tmean)
+        tmean           = f.createVariable('tmean', 'f4', ('time', 'latitude','longitude',))
+        tmean.units     = "C"
+        tmean.long_name = str(percent) + "th of air temperature"
+        tmean.CF_name   = str(percent) + "th of air temperature"
+        tmean.proj4     = "+proj=longlat +ellps=GRS80"
+        tmean[:]        = tmn_percent
 
-    f.close()
+        # print("np.any(np.isnan(tmean))")
+        # print(np.any(np.isnan(tmean)))
+        # print(tmean)
 
+        f.close()
+
+    elif method == "plot":
+
+        # check mask 
+        file = nc.Dataset(AWAP_file_out, mode='r')   
+        lon  = file.variables['longitude'][:]
+        lat  = file.variables['latitude'][:]
+        tmn  = file.variables['tmean'][:]
+
+        cmap = plt.cm.coolwarm # #,"jet" #“rainbow”#"coolwarm"
+
+        for i in np.arange(365):
+            print(i, "-day")
+
+            fig1 = plt.figure(figsize=(12,9))
+            # Get the lat/lon coordinates
+
+            ax1 = plt.axes(projection=ccrs.PlateCarree())
+            ax1.set_extent([110,155,-45,-10])
+            ax1.coastlines(resolution="50m",linewidth=1)
+
+            # Add gridlines
+            gl = ax1.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,linewidth=1, color='black', linestyle='--')
+            gl.xlabels_top  = False
+            gl.ylabels_right= False
+            gl.xlines       = True
+            gl.xlocator     = mticker.FixedLocator([110,115,120,125,130,135,140,145,150,155])
+            gl.ylocator     = mticker.FixedLocator([-45,-40,-35,-30,-25,-20,-15,-10])
+            gl.xformatter   = LONGITUDE_FORMATTER
+            gl.yformatter   = LATITUDE_FORMATTER
+            gl.xlabel_style = {'size':10, 'color':'black','rotation': 90}
+            gl.ylabel_style = {'size':10, 'color':'black'}
+            
+            var_contours = plt.contourf(lon, lat, tmn[i,:,:], levels=np.arange(20,45,1), transform=ccrs.PlateCarree(), cmap=cmap) 
+            plt.colorbar(var_contours, ax=ax1, orientation="horizontal", pad=.05)
+            plt.savefig('./plots/5Nov/hw_metric/3Nov/Tmean_'+str(percent)+'th_day-'+str(i+1)+'.png',dpi=300)
+            
 def regrid_AWAP_to_WRF(AWAP_file, WRF_file):
 
     awap_file = Dataset(AWAP_file, mode='r')
@@ -135,11 +176,11 @@ def count_days_abv_thrshld(var, thrshld, time, time_s, time_e):
     hours     = np.zeros(np.shape(var[0,:,:]))
     print(np.shape(var))
 
+    date = doy[0].days
+
     for i in np.arange(len(time_cood)):
         if time_cood[i]:
             hours = hours + np.where( var[int(i),:,:]- 273.15 >= thrshld[int(doy[i].days),:,:], 1, 0)
-
-    print(hours[4,6])
 
     return hours
 
@@ -253,7 +294,7 @@ def plot_spatial_wrf_hw_metrics(file_paths, var_name, time_s, time_e, metric='Tm
         levels = np.arange(np.nanmin(var), np.nanmax(var), 21)
 
     var_contours = plt.contourf(to_np(lons), to_np(lats), to_np(var),
-                   levels = levels, transform=crs.PlateCarree(), cmap=get_cmap("seismic"),extend='both') #,"jet" #“rainbow”#"coolwarm"
+                   levels = levels, transform=ccrs.PlateCarree(), cmap=get_cmap("seismic"),extend='both') #,"jet" #“rainbow”#"coolwarm"
     plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)  #"bwr"
 
     # Set the map bounds
@@ -269,12 +310,12 @@ def plot_spatial_wrf_hw_metrics(file_paths, var_name, time_s, time_e, metric='Tm
 
     fig.savefig('./plots/5Nov/hw_metric/3Nov/spatial_wrf_hw_metrics_'+message , bbox_inches='tight', pad_inches=0.1)
 
-def plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, file_paths, var_name, time_s, time_e, percent=90, metric='Tmean',loc_lat=None, loc_lon=None, message=None):
+def plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, file_paths, var_name, time_s, time_e, percent=90,   metric='Tmean',loc_lat=None, loc_lon=None, message=None):
 
     ### Calculate AWAP heatwave threshold ###
     # hw_thresholds(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, percent)
 
-    ### regrid AWAP to WRF domain ###
+    # ### regrid AWAP to WRF domain ###
     Tmn_regrid = regrid_AWAP_to_WRF(AWAP_file_out, file_paths[0])
 
     # Open the NetCDF file
@@ -362,14 +403,15 @@ def plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, 
 
     # Add the var contours
     if len(file_paths) > 1:
-        levels = [-20.,-18.,-16.,-14.,-12.,-10.,-8.,-6.,-4.,-2.,2.,4.,6.,8.,10.,12.,14.,16.,18.,20.]
+        # levels = [-20.,-18.,-16.,-14.,-12.,-10.,-8.,-6.,-4.,-2.,2.,4.,6.,8.,10.,12.,14.,16.,18.,20.]
+        levels = [-4.,-3.,-2.,-1.,1.,2.,3.,4.]
         # np.arange(-10., 11.,2.)
     else:
         levels = np.arange(0., 50.,1.)
     print(levels)
 
     var_contours = plt.contourf(to_np(lons), to_np(lats), to_np(days),
-                                transform=crs.PlateCarree(), cmap=get_cmap("seismic"),
+                                transform=ccrs.PlateCarree(), cmap=get_cmap("seismic"),
                                 levels = levels, extend='both') #,"jet" #“rainbow”#"coolwarm"
     plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)  #[levels!=0]"bwr" [levels!=0] levels = levels[levels!=0],
     #
@@ -389,23 +431,29 @@ def plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, 
 if __name__ == "__main__":
 
     var_name       = 'T2'
-    case_name      = "hw2019_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
+    case_name      = "hw2009_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
 
     if case_name == "hw2009_3Nov":
         # 2009 HW : 28–31.01.2009 and 6–8.02.2009
         period = "20090122-20090213"
-        time_s = datetime(2009,1,28,0,0,0,0)
-        time_e = datetime(2009,2,8,23,59,0,0)
+        # Time_s = datetime(2009,1,28,0,0,0,0)
+        # Time_e = datetime(2009,2,8,23,59,0,0)
+        Time_s = datetime(2009,1,22,0,0,0,0)
+        Time_e = datetime(2009,2,13,23,59,0,0)
     elif  case_name == "hw2013_3Nov":
         # 2013 HW : 4–8.01.2013, ​11–13.01.2013 and 17–18.01.2013
         period = "20121229-20130122"
-        time_s = datetime(2013,1,4,0,0,0,0)
-        time_e = datetime(2013,1,18,23,59,0,0)
+        # Time_s = datetime(2013,1,4,0,0,0,0)
+        # Time_e = datetime(2013,1,18,23,59,0,0)
+        Time_s = datetime(2012,12,29,0,0,0,0)
+        Time_e = datetime(2013,1,22,23,59,0,0)
     elif  case_name == "hw2019_3Nov":
         # 2019 HW : 14–18.01.2019 and 22–26.01.2019
         period = "20190108-20190130"
-        time_s = datetime(2019,1,14,0,0,0)
-        time_e = datetime(2019,1,26,23,59,0,0)
+        # Time_s = datetime(2019,1,14,0,0,0)
+        # Time_e = datetime(2019,1,26,23,59,0,0)
+        Time_s = datetime(2019,1,8,0,0,0)
+        Time_e = datetime(2019,1,30,23,59,0,0)
 
     AWAP_tmax_file = "/g/data/w35/mm3972/data/AWAP/AWAP_AUS_temp/AWAP_daily_tmax_1970_2019.nc"
     AWAP_tmin_file = "/g/data/w35/mm3972/data/AWAP/AWAP_AUS_temp/AWAP_daily_tmin_1970_2019.nc"
@@ -424,12 +472,18 @@ if __name__ == "__main__":
 
     AWAP_file_out = "./nc_file/AWAP_tmean_1970_2019_"+str(percent)+"-th.nc"
 
-    if len(file_paths) > 1:
-        message = 'Couple_GW-FD_'+str(time_s)+'-'+str(time_e)
-    else:
-        message = 'Couple_GW_'+str(time_s)+'-'+str(time_e)
+    tot_day   = (Time_e-Time_s).days + 1
 
-    plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, file_paths, var_name, time_s, time_e, percent=percent, message=message)
+    for i in np.arange(tot_day):
+        time_s = Time_s + timedelta(days=int(i))
+        time_e = Time_s + timedelta(days=int(i+1)) - timedelta(seconds=1)
+
+        if len(file_paths) > 1:
+            message = 'Couple_GW-FD_'+str(time_s)+'-'+str(time_e)
+        else:
+            message = 'Couple_GW_'+str(time_s)+'-'+str(time_e)
+
+        plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, file_paths, var_name, time_s, time_e, percent=percent, message=message)
 
     #######################################################
     # Decks to run:
@@ -440,9 +494,9 @@ if __name__ == "__main__":
     #     message = 'Couple_GW-FD_'+str(time_s)+'-'+str(time_e)
     # else:
     #     message = 'Couple_GW_'+str(time_s)+'-'+str(time_e)
-    #
+    
     # metric   = 'Tmean'
     # plot_spatial_wrf_hw_metrics(file_paths, var_name, time_s, time_e, metric=metric, message=message)
-    #
+    
     # metric   = 'Tmax'
     # plot_spatial_wrf_hw_metrics(file_paths, var_name, time_s, time_e, metric=metric, message=message)

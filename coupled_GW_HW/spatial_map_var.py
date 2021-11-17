@@ -418,7 +418,7 @@ if __name__ == "__main__":
     var_energy_names = ["Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Qair_f_inst","Rnet","EF"] #
 
     # =============================== Operation ================================
-    case_name  = "hw2019_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
+    case_name  = "hw2009_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
 
     if case_name == "hw2009_3Nov":
         period     = "20090122-20090213"
@@ -441,15 +441,15 @@ if __name__ == "__main__":
     cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.'+period+'_fd.nc'  # land output of wrf-cable run
 
     file_paths        = [cpl_land_file_fd,cpl_land_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
-    seconds           = [6.*60.*60.,18.*60.*60.]
+    seconds           = [18.*60.*60.,6.*60.*60.]
 
     for var_name in var_energy_names:
 
 
         if len(file_paths) > 1:
-            message = "Land_daytime_GW-FD_"+str(time_s)+"-"+str(time_e)
+            message = "Land_night_GW-FD_"+str(time_s)+"-"+str(time_e)
         else:
-            message = "Land_daytime_GW_"+str(time_s)+"-"+str(time_e)
+            message = "Land_night_GW_"+str(time_s)+"-"+str(time_e)
 
         plot_spatial_land(file_paths, wrf_path, var_name, time_s, time_e, seconds=seconds, message=message)
 
