@@ -475,12 +475,11 @@ if __name__ == "__main__":
     #    heat_advection
     #######################################################
 
-    hw_name           = "hw2009_3Nov"
+    hw_name           = "hw2013_3Nov"
     var_name          = 'temp'
     var_unit          = 'K'#'degC'
     height            = 850
     seconds           = [6.*60.*60.,18.*60.*60.]
-
     # 2009
     if hw_name == "hw2009_3Nov":
         start_date= "20090122"

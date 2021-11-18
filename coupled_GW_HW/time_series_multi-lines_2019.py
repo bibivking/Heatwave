@@ -423,7 +423,7 @@ if __name__ == "__main__":
     #     path setting      #
     # #######################
 
-    hw_name = "hw2009_3Nov" #"hw2009_3Nov"
+    hw_name = "hw2019_3Nov" #"hw2009_3Nov"
     check_pixel = True
 
     # 2009
@@ -513,8 +513,8 @@ if __name__ == "__main__":
         time_spell = "daytime"
     for var_name in var_names:
 
-        loc_lat   = [-29,-28]
-        loc_lon   = [138.,139.]
+        loc_lat   = [-34,-31]
+        loc_lon   = [142.,145.]
 
         message   = hw_name +"_grass_wtd=0-5_"+time_spell
 
@@ -524,7 +524,7 @@ if __name__ == "__main__":
                     ensemble_path=ensemble_path,check_pixel=check_pixel )
 
         loc_lat   = [-34,-33]
-        loc_lon   = [141.,142.]
+        loc_lon   = [144.,145.]
 
         message   = hw_name +"_grass_wtd=5-10_"+time_spell
 
@@ -533,8 +533,9 @@ if __name__ == "__main__":
                     labal_names=labal_names, rain_val=10., wtd_val=[5.,10.], pft_val=[6],
                     ensemble_path=ensemble_path,check_pixel=check_pixel )
 
-        loc_lat   = [-34,-33]
-        loc_lon   = [140.,142.]
+
+        loc_lat   = [-25,-24]
+        loc_lon   = [137.,138.]
 
         message   = hw_name +"_grass_wtd=10-15_"+time_spell
 
@@ -544,8 +545,8 @@ if __name__ == "__main__":
                     ensemble_path=ensemble_path,check_pixel=check_pixel )
 
 
-        loc_lat   = [-37,-35]
-        loc_lon   = [140.,142.]
+        loc_lat   = [-37,-36]
+        loc_lon   = [148.,149.]
         message   = hw_name +"_forest_wtd=0-5_"+time_spell
 
         plot_time_series_errorbar_select_regions( file_paths, var_name, date_s, date_e, seconds, hw_start,
@@ -553,8 +554,8 @@ if __name__ == "__main__":
                     labal_names=labal_names, rain_val=10., wtd_val=[0.,5.], pft_val=[2],
                     ensemble_path=ensemble_path,check_pixel=check_pixel )
 
-        loc_lat   = [-35,-34]
-        loc_lon   = [142.,143.]
+        loc_lat   = [-33,-32]
+        loc_lon   = [150.,151.]
 
         message   = hw_name +"_forest_wtd=5-10_"+time_spell
 
@@ -563,8 +564,8 @@ if __name__ == "__main__":
                     labal_names=labal_names, rain_val=10., wtd_val=[5.,10.], pft_val=[2],
                     ensemble_path=ensemble_path,check_pixel=check_pixel )
 
-        loc_lat   = [-35,-33]
-        loc_lon   = [142.,144.]
+        loc_lat   = [-35,-34]
+        loc_lon   = [141.,142.]
 
         message   = hw_name +"_forest_wtd=10-15_"+time_spell
 

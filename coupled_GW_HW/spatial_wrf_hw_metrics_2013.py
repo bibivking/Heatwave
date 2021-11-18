@@ -431,7 +431,7 @@ def plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, 
 if __name__ == "__main__":
 
     var_name       = 'T2'
-    case_name      = "hw2009_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
+    case_name      = "hw2013_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
 
     if case_name == "hw2009_3Nov":
         # 2009 HW : 28–31.01.2009 and 6–8.02.2009
@@ -475,8 +475,8 @@ if __name__ == "__main__":
     tot_day   = (Time_e-Time_s).days + 1
 
     # for i in np.arange(tot_day):
-        # time_s = Time_s + timedelta(days=int(i))
-        # time_e = Time_s + timedelta(days=int(i+1)) - timedelta(seconds=1)
+    #     time_s = Time_s + timedelta(days=int(i))
+    #     time_e = Time_s + timedelta(days=int(i+1)) - timedelta(seconds=1)
 
     if len(file_paths) > 1:
         message = 'Couple_GW-FD_'+str(Time_s)+'-'+str(Time_e)

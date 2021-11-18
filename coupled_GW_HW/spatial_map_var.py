@@ -415,7 +415,7 @@ if __name__ == "__main__":
 
     var_3D_basic_names = ['Evap_tavg',"ESoil_tavg","ECanop_tavg",'TVeg_tavg',"FWsoil_tavg","Qle_tavg","Qh_tavg","Qg_tavg","VegT_tavg","WaterTableD_tavg"]
 
-    var_energy_names = ["Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Qair_f_inst","Rnet","EF"] #
+    var_energy_names = ["WaterTableD_tavg"] #["Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Qair_f_inst","Rnet","EF"] #
 
     # =============================== Operation ================================
     case_name  = "hw2009_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
