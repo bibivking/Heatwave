@@ -224,23 +224,50 @@ def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None):
 def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=None, loc_lon=None):
 
     print("read "+var_name+" from wrf output")
+
+    var_4D =  [
+                    'p',    # Full Model Pressure
+                    'avo',    # Absolute Vorticity
+                    'eth',    # Equivalent Potential Temperature
+                    'dbz',    # Reflectivity
+                    'geopt',  # Geopotential for the Mass Grid  
+                    'omg',  # Omega
+                    'pvo',  # Potential Vorticity
+                    'rh',   # Relative Humidity
+                    'td',   # Dew Point Temperature
+                    'tc',   # Temperature in Celsius
+                    'th',   # Potential Temperature
+                    'temp', # Temperature (in specified units)
+                    'tv',   # Virtual Temperature
+                    'twb',  # Wet Bulb Temperature
+                    'ua',   # U-component of Wind on Mass Points
+                    'va',   # V-component of Wind on Mass Points
+                    'wa',   # W-component of Wind on Mass Points
+                    'z',    # Model Height for Mass Grid
+                    'cape_3d',# 3D CAPE and CIN
+                    ]
+
+
     wrf_file = Dataset(file_path)
     p        = getvar(wrf_file, "pressure",timeidx=ALL_TIMES)
 
-    if var_unit == None:
-        if var_name == 'cape_3d':
-            Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
-            print("======= Var =======")
-            print(Var)
+    if var_name in var_4D:
+        if var_unit == None:
+            if var_name == 'cape_3d':
+                Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
+                print("======= Var =======")
+                print(Var)
+            else:
+                Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
         else:
-            Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
+            Var      = getvar(wrf_file, var_name, units=var_unit, timeidx=ALL_TIMES)
     else:
-        Var      = getvar(wrf_file, var_name, units=var_unit, timeidx=ALL_TIMES)
+        var_tmp  = wrf_file.variables[var_name][:]
 
     if height == None:
         var_tmp  = Var
     else:
-        var_tmp  = interplevel(Var, p, height)
+        var_tmp  = interplevel(Var, p, height) ## need to check whether works with wrf_file.variables[var_name][:]
 
     if loc_lat == None:
         var  = var_tmp

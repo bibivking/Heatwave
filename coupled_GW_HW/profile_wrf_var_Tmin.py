@@ -383,7 +383,7 @@ if __name__ == "__main__":
     hw_name           = "hw2009_3Nov"
     var_name          = 'temp'
     var_unit          = 'degC'
-    calc_type         = 'Tmax'
+    calc_type         = 'Tmin'
     # var_name          = 'th'
     # var_unit          = 'degC'
 

@@ -251,8 +251,8 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
     # Compute the vertical cross-section interpolation.  Also, include the
     # lat/lon points along the cross-section in the metadata by setting latlon
     # to True.
-    var_out1    = np.zeros((np.shape(var1)[0],501,12))
-    var_out2    = np.zeros((np.shape(var1)[0],501,12))
+    var_out1    = []
+    var_out2    = []
 
     for i in np.arange(np.shape(var1)[0]):
         var1_cross  = vertcross(var1[i], z1[i], wrfin=ncfile1, start_point=start_point,
@@ -269,7 +269,8 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
         y              = np.reshape(grid_y,-1)
         value          = np.reshape(to_np(var1_cross),-1)
         grid_X, grid_Y = np.meshgrid(xy_loc,vertical)
-        var_out1[i,:,:] = griddata((x, y), value, (grid_X, grid_Y), method="linear")
+
+        var_out1.append(griddata((x, y), value, (grid_X, grid_Y), method="linear")[:])
 
         grid_X, grid_Y, grid_x, grid_y        = None, None, None, None
         x, y, value, vertical_tmp, var1_cross = None, None, None, None, None
@@ -283,7 +284,7 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
             y              = np.reshape(grid_y,-1)
             value          = np.reshape(to_np(var2_cross),-1)
             grid_X, grid_Y = np.meshgrid(xy_loc,vertical)
-            var_out2[i,:,:] = griddata((x, y), value, (grid_X, grid_Y), method="linear")
+            var_out2.append(griddata((x, y), value, (grid_X, grid_Y), method="linear")[:])
 
             grid_X, grid_Y, grid_x, grid_y = None, None, None, None
             x, y, value, var2_cross        = None, None, None, None
@@ -397,8 +398,8 @@ if __name__ == "__main__":
         start_date= "20090122"
         end_date  = "20090213"
         time_s = datetime(2009,1,28,0,0,0,0)
-        time_e = datetime(2009,1,28,23,59,0,0)
-        # time_e = datetime(2009,2,8,23,59,0,0)
+        # time_e = datetime(2009,1,28,23,59,0,0)
+        time_e = datetime(2009,2,8,23,59,0,0)
         # Time_s = datetime(2009,1,22,0,0,0,0)
         # Time_e = datetime(2009,2,13,23,59,0,0)
 
