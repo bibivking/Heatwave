@@ -200,9 +200,6 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
         time_tmp.append(UTC_to_AEST(time_temp) - datetime(2000,1,1,0,0,0))
     time = np.array(time_tmp)
 
-    doy_tmp = [time[i].days for i in np.arange(len(time))]
-    print(doy_tmp)
-
     if seconds == None:
         time_cood = (time>=Time_s) & (time<Time_e)
     else:
@@ -214,20 +211,16 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
                 if_seconds = (time[j].seconds >= seconds[0]) & (time[j].seconds < seconds[1])
             time_cood.append((time[j]>=Time_s) & (time[j]<Time_e) & if_seconds)
 
-    doy = []
-    for i in np.arange(len(time_cood)):
-        doy.append(doy_tmp[i])
-
+    time_tmp = time[time_cood]
+    doy      = [ time_tmp[i].days for i in np.arange(len(time_tmp)) ]
+    print("doy",doy)
 
     # Get the WRF variables
+    z_tmp1      = getvar(ncfile1, "z", timeidx=ALL_TIMES)
     if var_name in ["temp","th","rh"]:
-        z_tmp1      = getvar(ncfile1, "z", timeidx=ALL_TIMES)
         var_tmp1    = getvar(ncfile1, var_name, units=var_units, timeidx=ALL_TIMES)
     else:
-        z_tmp1      = getvar(ncfile1, "z", timeidx=ALL_TIMES)
-        print(z_tmp1)
         var_tmp1    = ncfile1.variables[var_name][:]
-        print(var_tmp1)
 
     z1          = z_tmp1[time_cood,:,:,:]
     var1        = var_tmp1[time_cood,:,:,:]
@@ -235,7 +228,11 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
     if len(file_paths) > 1:
         ncfile2     = Dataset(file_paths[1])
         z_tmp2      = getvar(ncfile2, "z", timeidx=ALL_TIMES)
-        var_tmp2    = getvar(ncfile2, var_name, units=var_units, timeidx=ALL_TIMES)
+        if var_name in ["temp","th","rh"]:
+            var_tmp2    = getvar(ncfile2, var_name, units=var_units, timeidx=ALL_TIMES)
+        else:
+            var_tmp2    = ncfile2.variables[var_name][:]
+
         z2          = z_tmp2[time_cood,:,:,:]
         var2        = var_tmp2[time_cood,:,:,:]
         print(np.shape(var2))
@@ -243,7 +240,7 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
     # Set the start point and end point for the cross section
     lat_slt = -36.
     lon_min = 139.0
-    lon_max = 142.0
+    lon_max = 152.0
 
     start_point = CoordPair(lat=lat_slt, lon=lon_min) # (lat=-30., lon=115.0)
     end_point   = CoordPair(lat=lat_slt, lon=lon_max) # (lat=-30., lon=161.0)
@@ -251,17 +248,15 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
     # Compute the vertical cross-section interpolation.  Also, include the
     # lat/lon points along the cross-section in the metadata by setting latlon
     # to True.
-    var_out1    = np.zeros((np.shape(var1)[0],501,12))
-    var_out2    = np.zeros((np.shape(var1)[0],501,12))
+    var_out1    = np.zeros((np.shape(var1)[0],51,48))
+    var_out2    = np.zeros((np.shape(var1)[0],51,48))
 
     for i in np.arange(np.shape(var1)[0]):
         var1_cross  = vertcross(var1[i], z1[i], wrfin=ncfile1, start_point=start_point,
                                end_point=end_point, latlon=True, meta=True)
         if i == 0:
             xy_loc     = np.linspace(lon_min,lon_max,len(var1_cross.coords['xy_loc']))
-            vertical   = np.arange(0,5010.,10.)
-
-            print(len(var1_cross.coords['xy_loc']))
+            vertical   = np.arange(0,5100.,100.)
 
         vertical_tmp   = to_np(var1_cross.coords['vertical'])[:]
         grid_x, grid_y = np.meshgrid(xy_loc,vertical_tmp)
@@ -288,37 +283,31 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
             grid_X, grid_Y, grid_x, grid_y = None, None, None, None
             x, y, value, var2_cross        = None, None, None, None
 
-    print(var_out1)
     if calc_type == None:
-        var_cross  = np.nanmean(var_out2,axis=0) - np.nanmean(var_out1,axis=0)
-    elif calc_type == "Tmax":
+
+        if len(file_paths) > 1:
+            var_cross  = np.nanmean(var_out2,axis=0) - np.nanmean(var_out1,axis=0)
+        else:
+            var_cross  = np.nanmean(var_out1,axis=0)
+    else:
         day_num = len(np.unique(doy))
         X_dim   = len(var_out1[0,:,0])
         Y_dim   = len(var_out1[0,0,:])
-        tmax1   = np.zeros((X_dim,Y_dim))
-        tmax2   = np.zeros((X_dim,Y_dim))
-        for i in np.arange(day_num): 
-            tmax1 = tmax1 + np.nanmax(var_out1[doy == doy[i],:,:],axis=0)
-            tmax2 = tmax2 + np.nanmax(var_out2[doy == doy[i],:,:],axis=0)
-        var_cross = (tmax2 - tmax1)/day_num
-    elif calc_type == "Tmin":
-        day_num = len(np.unique(doy))
-        X_dim   = len(var_out1[0,:,0])
-        Y_dim   = len(var_out1[0,0,:])
-        tmin1   = np.zeros((X_dim,Y_dim))
-        tmin2   = np.zeros((X_dim,Y_dim))
-        for i in np.arange(day_num): 
-            tmin1 = tmin1 + np.nanmin(var_out1[doy == doy[i],:,:],axis=0)
-            tmin2 = tmin2 + np.nanmin(var_out2[doy == doy[i],:,:],axis=0)
-        var_cross = (tmin2 - tmin1)/day_num
+        t1   = np.zeros((day_num,X_dim,Y_dim))
+        t2   = np.zeros((day_num,X_dim,Y_dim))
+        if calc_type == "Tmin":
+            for i in np.arange(day_num):
+                is_the_day = [ doy[j] == np.unique(doy)[i] for j in np.arange(len(doy)) ]
+                t1[i,:,:] = np.nanmin(var_out1[is_the_day,:,:],axis=0)
+                t2[i,:,:] = np.nanmin(var_out2[is_the_day,:,:],axis=0)
+        elif calc_type == "Tmax":
+            for i in np.arange(day_num):
+                is_the_day = [ doy[j] == np.unique(doy)[i] for j in np.arange(len(doy)) ]
+                t1[i,:,:] = np.nanmax(var_out1[is_the_day,:,:],axis=0)
+                t2[i,:,:] = np.nanmax(var_out2[is_the_day,:,:],axis=0)
 
+        var_cross = np.nanmean(t2,axis=0) - np.nanmean(t1,axis=0)
 
-    # if len(file_paths) > 1:
-    #     var_cross  = np.nanmean(var_out2,axis=0) - np.nanmean(var_out1,axis=0)
-    # else:
-    #     var_cross  = np.nanmean(var_out1,axis=0)
-
-    print(np.shape(var_cross))
 
     # Create the figure that will have 3 subplots
     fig     = plt.figure(figsize=(12,9))
@@ -326,11 +315,11 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
 
     # Make the contour plot for var
     if var_name == "th":
-        levels  = [-1.,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.] 
+        levels  = [-1.,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.]
     elif var_name == "rh":
         levels  = np.arange(-20,-18,-16,-14,-12,-10,-8,-6,-4,-2,2,4,6,8,10,12,14,16,18,20)
     elif var_name == "temp":
-        levels  = [-1.,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.] 
+        levels  = [-1.,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.]
     else:
         levels = None
 
@@ -340,19 +329,6 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
     cb_var = fig.colorbar(var_contours, ax=ax)
     cb_var.ax.tick_params(labelsize=12)
 
-    # # Set the x-ticks to use latitude and longitude labels.
-    # coord_pairs = to_np(var1_cross.coords["xy_loc"])
-    # x_ticks     = np.arange(coord_pairs.shape[0])
-    # x_labels    = [pair.latlon_str() for pair in to_np(coord_pairs)]
-    # ax.set_xticks(x_ticks[::20])
-    # ax.set_xticklabels(x_labels[::20], rotation=45, fontsize=12)
-
-    # # Set the y-ticks to be height.
-    # vert_vals = to_np(var1_cross.coords["vertical"])
-    # v_ticks   = np.arange(vert_vals.shape[0])
-    # ax.set_yticks(vert_vals)
-    # ax.set_yticklabels(vert_vals, fontsize=12)
-    # ax.set_ylim((0,2000))
 
     # Set the x-axis and  y-axis labels
     ax.set_xlabel("Longitude", fontsize=12)
@@ -379,8 +355,7 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
 
 if __name__ == "__main__":
 
-
-    hw_name           = "hw2009_3Nov"
+    hw_name           = "hw2013_3Nov"
     var_name          = 'temp'
     var_unit          = 'degC'
     calc_type         = 'Tmin'
@@ -397,8 +372,8 @@ if __name__ == "__main__":
         start_date= "20090122"
         end_date  = "20090213"
         time_s = datetime(2009,1,28,0,0,0,0)
-        time_e = datetime(2009,1,28,23,59,0,0)
-        # time_e = datetime(2009,2,8,23,59,0,0)
+        # time_e = datetime(2009,1,28,11,59,0,0)
+        time_e = datetime(2009,2,8,23,59,0,0)
         # Time_s = datetime(2009,1,22,0,0,0,0)
         # Time_e = datetime(2009,2,13,23,59,0,0)
 
@@ -417,7 +392,7 @@ if __name__ == "__main__":
         time_e = datetime(2019,1,26,23,59,0,0)
         # Time_s = datetime(2019,1,8,14,0,0,0)
         # Time_e = datetime(2019,1,30,0,0,0,0)
-        #     
+        #
     cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+hw_name+'/ensemble_avg'
     cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_'+start_date+'-'+end_date+'_gw'  # atmo output of wrf-cable run
     cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_'+start_date+'-'+end_date+'_fd'  # atmo output of wrf-cable run

@@ -487,7 +487,7 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
     # Add the var contours
     # Add the var contours
     if len(file_paths) > 1 and var_name == "T2":
-        levels = np.linspace(-2., 2., num=20) # np.nanmin(var), np.nanmax(var)
+        levels = np.linspace(-2,2, num=21) # np.nanmin(var), np.nanmax(var)
     elif len(file_paths) > 1:
         max_val = np.abs(np.nanmax(var))
         min_val = np.abs(np.nanmin(var))
@@ -496,8 +496,10 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
     else:
         levels = np.arange(np.nanmin(var), np.nanmax(var), 20)
 
+    cmap = plt.cm.seismic_r
+
     var_contours = plt.contourf(to_np(lons), to_np(lats), to_np(var),
-                   levels = levels, transform=crs.PlateCarree(), cmap=get_cmap("bwr"),extend='both') #,"jet" #“rainbow”#"coolwarm"
+                   levels = levels[levels!=0], transform=crs.PlateCarree(), cmap=cmap,extend='both') #,"jet" #“rainbow”#"coolwarm"
     plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)
 
     # Set the map bounds
@@ -523,11 +525,11 @@ if __name__ == "__main__":
     #######################################################
 
     var_3D = [ 
-                'cloudfrac', # Cloud Fraction
-                'td2',  # 2m Dew Point Temperature
-                'rh2',  # 2m Relative Humidity
+                # 'cloudfrac', # Cloud Fraction
+                # 'td2',  # 2m Dew Point Temperature
+                # 'rh2',  # 2m Relative Humidity
                 'T2',   # 2m Temperature
-                'slp',  # Sea Level Pressure       
+                # 'slp',  # Sea Level Pressure       
               ]
                 # 'ter',  # Model Terrain Height
                 # 'updraft_helicity', # Updraft Helicity

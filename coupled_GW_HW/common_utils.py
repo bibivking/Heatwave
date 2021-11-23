@@ -226,43 +226,44 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
     print("read "+var_name+" from wrf output")
 
     var_4D =  [
-                    'p',    # Full Model Pressure
-                    'avo',    # Absolute Vorticity
-                    'eth',    # Equivalent Potential Temperature
-                    'dbz',    # Reflectivity
-                    'geopt',  # Geopotential for the Mass Grid  
-                    'omg',  # Omega
-                    'pvo',  # Potential Vorticity
-                    'rh',   # Relative Humidity
-                    'td',   # Dew Point Temperature
-                    'tc',   # Temperature in Celsius
-                    'th',   # Potential Temperature
-                    'temp', # Temperature (in specified units)
-                    'tv',   # Virtual Temperature
-                    'twb',  # Wet Bulb Temperature
-                    'ua',   # U-component of Wind on Mass Points
-                    'va',   # V-component of Wind on Mass Points
-                    'wa',   # W-component of Wind on Mass Points
-                    'z',    # Model Height for Mass Grid
-                    'cape_3d',# 3D CAPE and CIN
-                    ]
+                'p',    # Full Model Pressure
+                'avo',    # Absolute Vorticity
+                'eth',    # Equivalent Potential Temperature
+                'dbz',    # Reflectivity
+                'geopt',  # Geopotential for the Mass Grid  
+                'omg',  # Omega
+                'pvo',  # Potential Vorticity
+                'rh',   # Relative Humidity
+                'td',   # Dew Point Temperature
+                'tc',   # Temperature in Celsius
+                'th',   # Potential Temperature
+                'temp', # Temperature (in specified units)
+                'tv',   # Virtual Temperature
+                'twb',  # Wet Bulb Temperature
+                'ua',   # U-component of Wind on Mass Points
+                'va',   # V-component of Wind on Mass Points
+                'wa',   # W-component of Wind on Mass Points
+                'z',    # Model Height for Mass Grid
+                'cape_3d',# 3D CAPE and CIN
+                'height_agl', # Model Height for Mass Grid (AGL)
+                ]
 
 
     wrf_file = Dataset(file_path)
     p        = getvar(wrf_file, "pressure",timeidx=ALL_TIMES)
 
-    if var_name in var_4D:
-        if var_unit == None:
-            if var_name == 'cape_3d':
-                Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
-                print("======= Var =======")
-                print(Var)
-            else:
-                Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
+    # if var_name in var_4D:
+    if var_unit == None:
+        if var_name == 'cape_3d':
+            Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
+            print("======= Var =======")
+            print(Var)
         else:
-            Var      = getvar(wrf_file, var_name, units=var_unit, timeidx=ALL_TIMES)
+            Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
     else:
-        var_tmp  = wrf_file.variables[var_name][:]
+        Var      = getvar(wrf_file, var_name, units=var_unit, timeidx=ALL_TIMES)
+    # else:
+    #     Var  = wrf_file.variables[var_name][:]
 
     if height == None:
         var_tmp  = Var
@@ -272,6 +273,7 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
     if loc_lat == None:
         var  = var_tmp
     else:
+        # here only suit 2D and 3D var
         ### need to fix, not work
         ntime  = len(p[:,0,0,0])
         mask   = mask_by_lat_lon(file_path, loc_lat, loc_lon, 'XLAT', 'XLONG')
@@ -285,7 +287,7 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
 def spital_var(time, Var, time_s, time_e, seconds=None):
 
     time_cood = time_mask(time, time_s, time_e, seconds)
-    var       = np.nanmean(Var[time_cood,:,:],axis=0)
+    var       = np.nanmean(Var[time_cood],axis=0)
 
     # np.savetxt("test_var.txt",var,delimiter=",")
     return var
@@ -303,8 +305,28 @@ def spital_var_max(time, Var, time_s, time_e, seconds=None):
     for t in time_slt:
         days.append(t.days)
 
-    for d in np.arange(days[0],days[-1]):
+    for d in np.arange(days[0],days[-1]+1):
         var_tmp.append(np.nanmax(var_slt[days == d,:,:],axis=0))
+
+    var = np.nanmean(var_tmp,axis=0)
+
+    return var
+
+def spital_var_min(time, Var, time_s, time_e, seconds=None):
+    
+    time_cood = time_mask(time, time_s, time_e, seconds)
+    time_slt  = time[time_cood]
+
+    var_slt  = Var[time_cood,:,:]
+
+    days     = []
+    var_tmp  = []
+
+    for t in time_slt:
+        days.append(t.days)
+
+    for d in np.arange(days[0],days[-1]+1):
+        var_tmp.append(np.nanmin(var_slt[days == d,:,:],axis=0))
 
     var = np.nanmean(var_tmp,axis=0)
 

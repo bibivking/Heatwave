@@ -380,6 +380,8 @@ def plot_spatial_land(file_paths, wrf_path, var_name, time_s, time_e, seconds=No
         elif var_name == 'Qair_f_inst':
             clevs = np.linspace(-2,2, num=21)
             var = var*1000. # kg/kg -> g/kg
+        elif var_name == 'Tair_f_inst':
+            clevs = np.linspace(-2,2, num=21)
         else:
             clevs = np.linspace(-50.,50., num=21)
     else:
@@ -397,7 +399,7 @@ def plot_spatial_land(file_paths, wrf_path, var_name, time_s, time_e, seconds=No
         message = message+"_"+var_name
 
     plt.savefig('./plots/5Nov/land_var/3Nov/spatial_map_'+message+'.png',dpi=300)
-
+ 
 if __name__ == "__main__":
 
     # =============================== Variables ================================
@@ -415,7 +417,7 @@ if __name__ == "__main__":
 
     var_3D_basic_names = ['Evap_tavg',"ESoil_tavg","ECanop_tavg",'TVeg_tavg',"FWsoil_tavg","Qle_tavg","Qh_tavg","Qg_tavg","VegT_tavg","WaterTableD_tavg"]
 
-    var_energy_names = ["WaterTableD_tavg"] #["Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Qair_f_inst","Rnet","EF"] #
+    var_energy_names = ["Tair_f_inst"] #["Swnet_tavg","Lwnet_tavg","Qle_tavg","Qh_tavg","Qg_tavg","Qair_f_inst","Rnet","EF"] #
 
     # =============================== Operation ================================
     case_name  = "hw2009_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
@@ -441,7 +443,7 @@ if __name__ == "__main__":
     cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.'+period+'_fd.nc'  # land output of wrf-cable run
 
     file_paths        = [cpl_land_file_fd,cpl_land_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
-    seconds           = [18.*60.*60.,6.*60.*60.]
+    seconds           = None #[18.*60.*60.,6.*60.*60.]
 
     for var_name in var_energy_names:
 
