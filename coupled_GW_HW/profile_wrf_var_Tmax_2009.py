@@ -186,7 +186,7 @@ def plot_profile_wrf_var_diff_period_mean(file_paths, var_name, var_units, ts_s,
 def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=None, message=None,calc_type=None):
 
     '''
-    
+
     '''
 
     # Open the NetCDF file
@@ -220,7 +220,7 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
 
     # Get the WRF variables
     z_tmp1   = getvar(ncfile1, "z", timeidx=ALL_TIMES)
-    
+
     if var_units == None:
         var_tmp1 = getvar(ncfile1, var_name, timeidx=ALL_TIMES)
     else:
@@ -328,7 +328,7 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
         levels  = [-1.,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.]
     elif var_name == "CLDFRA":
         levels  = [-1.,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.]
-    else:   
+    else:
         levels = None
 
     var_contours = ax.contourf( xy_loc, vertical, var_cross, levels=levels, cmap=get_cmap("coolwarm"))
@@ -366,9 +366,9 @@ def plot_profile_wrf(file_paths, var_name, var_units, time_s, time_e, seconds=No
     fig.savefig("./plots/figures/profile_wrf_"+message, bbox_inches='tight', pad_inches=0.1)
 
 def plot_profile_wrf_wind(file_paths, var_name, var_units, time_s, time_e, seconds=None, message=None,calc_type=None):
-    
+
     '''
-    
+
     '''
 
     # ****************** Open the NetCDF file ******************
@@ -402,8 +402,8 @@ def plot_profile_wrf_wind(file_paths, var_name, var_units, time_s, time_e, secon
 
     # ****************** Get the WRF variables ******************
     Z1   = getvar(ncfile1, "z", timeidx=ALL_TIMES)
-    Wa1  = getvar(ncfile1, "wa", units="m s-1", timeidx=ALL_TIMES) 
-    Ua1  = getvar(ncfile1, "ua", units="m s-1", timeidx=ALL_TIMES) 
+    Wa1  = getvar(ncfile1, "wa", units="m s-1", timeidx=ALL_TIMES)
+    Ua1  = getvar(ncfile1, "ua", units="m s-1", timeidx=ALL_TIMES)
 
     if var_units == None:
         Var1 = getvar(ncfile1, var_name, timeidx=ALL_TIMES)
@@ -422,8 +422,8 @@ def plot_profile_wrf_wind(file_paths, var_name, var_units, time_s, time_e, secon
 
         ncfile2 = Dataset(file_paths[1])
         Z2   = getvar(ncfile2, "z", timeidx=ALL_TIMES)
-        Wa2  = getvar(ncfile2, "wa", units="m s-1", timeidx=ALL_TIMES) 
-        Ua2  = getvar(ncfile2, "ua", units="m s-1", timeidx=ALL_TIMES) 
+        Wa2  = getvar(ncfile2, "wa", units="m s-1", timeidx=ALL_TIMES)
+        Ua2  = getvar(ncfile2, "ua", units="m s-1", timeidx=ALL_TIMES)
 
         if var_units == None:
             Var2 = getvar(ncfile2, var_name, timeidx=ALL_TIMES)
@@ -447,8 +447,8 @@ def plot_profile_wrf_wind(file_paths, var_name, var_units, time_s, time_e, secon
     lon_min     = 139.0
     lon_max     = 152.0
 
-    start_point = CoordPair(lat=lat_slt, lon=lon_min) 
-    end_point   = CoordPair(lat=lat_slt, lon=lon_max) 
+    start_point = CoordPair(lat=lat_slt, lon=lon_min)
+    end_point   = CoordPair(lat=lat_slt, lon=lon_max)
 
     var_out1    = np.zeros((np.shape(var1)[0],51,48))
     var_out2    = np.zeros((np.shape(var1)[0],51,48))
@@ -469,7 +469,7 @@ def plot_profile_wrf_wind(file_paths, var_name, var_units, time_s, time_e, secon
             xy_loc     = np.linspace(lon_min,lon_max,len(var1_cross.coords['xy_loc']))
             vertical   = np.arange(0,5100.,100.)
             grid_X, grid_Y = np.meshgrid(xy_loc,vertical)
-            
+
         # ****************** interpolation ******************
         vertical_tmp   = to_np(var1_cross.coords['vertical'])[:]
         grid_x, grid_y = np.meshgrid(xy_loc,vertical_tmp)
@@ -550,22 +550,22 @@ def plot_profile_wrf_wind(file_paths, var_name, var_units, time_s, time_e, secon
         levels  = [-1.6,-1.4,-1.2,-1.,-0.8,-0.6,-0.4,-0.2,0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6]
     elif var_name == 'QVAPOR':
         var_cross = var_cross * 1000.
-        levels  = [-1.,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.]
+        levels  = [-1.6,-1.4,-1.2,-1.,-0.8,-0.6,-0.4,-0.2,0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6]
     elif var_name == "CLDFRA":
         var_cross = var_cross * 100.
         levels  = [-30,-25,-20,-15,-10,-5,5,10,15,20,25,30]
-    else:   
+    else:
         levels = None
 
     var_contours = ax.contourf(xy_loc, vertical, var_cross, levels=levels, cmap=get_cmap("coolwarm"))
 
     if len(file_paths) > 1:
-        scale = 3.
+        scale = 1.
     else:
         scale = 20.
 
     q = ax.quiver(xy_loc[::3], vertical[::3], ua_cross[::3,::3], wa_cross[::3,::3], angles='xy', scale_units='xy', scale=scale, pivot='middle') # width=0.0002,
-    ax.quiverkey(q, X=0.05, Y=1.0, U=scale, label=str(scale)+' m/s', labelpos='E')
+    ax.quiverkey(q, X=0.90, Y=1.05, U=scale, label=str(scale)+' m/s', labelpos='E')
 
     # Add the color bar
     cb_var = fig.colorbar(var_contours, ax=ax)
@@ -579,13 +579,13 @@ def plot_profile_wrf_wind(file_paths, var_name, var_units, time_s, time_e, secon
 
     if calc_type == None:
         if var_name == "QVAPOR":
-            ax.set_title(var_name+" (g / kg)" , {"fontsize" : 12})
+            ax.set_title("Specific humidity (g kg$\mathregular{^-1}$)", {"fontsize" : 12})
         if var_name == "CLDFRA":
             ax.set_title("Coulds (%)" , {"fontsize" : 12})
     elif calc_type == "Tmax":
-        ax.set_title("Tmax (deg C)" , {"fontsize" : 12})
+        ax.set_title("Tmax ($\mathregular{^o}$C)" , {"fontsize" : 12})
     elif calc_type == "Tmin":
-        ax.set_title("Tmin (deg C)" , {"fontsize" : 12})
+        ax.set_title("Tmin ($\mathregular{^o}$C)" , {"fontsize" : 12})
 
     if message == None:
         message = var_name
@@ -647,8 +647,8 @@ if __name__ == "__main__":
     cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_'+start_date+'-'+end_date+'_fd'  # atmo output of wrf-cable run
 
     file_paths        = [cpl_atmo_file_fd,cpl_atmo_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
-    
-    if seconds == None:    
+
+    if seconds == None:
         if len(file_paths) > 1:
             message = "GW-FD_"+str(time_s)+"-"+str(time_e)
         else:
@@ -658,7 +658,7 @@ if __name__ == "__main__":
             day_or_night = "Day"
         else:
             day_or_night = "Night"
-    
+
         if len(file_paths) > 1:
             message = day_or_night+"_GW-FD_"+str(time_s)+"-"+str(time_e)
         else:

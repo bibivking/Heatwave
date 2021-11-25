@@ -12,4 +12,4 @@
 
 source activate science
 cd /g/data/w35/mm3972/scripts/Heatwave/coupled_GW_HW
-python profile_wrf_var_Tmin.py
+python profile_wrf_var_Tmax_2009.py

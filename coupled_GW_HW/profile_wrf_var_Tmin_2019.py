@@ -601,11 +601,11 @@ def plot_profile_wrf_wind(file_paths, var_name, var_units, time_s, time_e, secon
 
 if __name__ == "__main__":
 
-    hw_name           = "hw2009_3Nov"
+    hw_name           = "hw2019_3Nov"
 
     var_name          = 'temp'
     var_unit          = 'degC'
-    calc_type         = 'Tmax'
+    calc_type         = 'Tmin'
 
     # var_name          = 'th'
     # var_unit          = 'degC'

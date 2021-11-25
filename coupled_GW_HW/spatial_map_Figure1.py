@@ -100,7 +100,7 @@ def plot_spatial_land(file_paths, wrf_path, time_s, time_e, seconds=None,loc_lat
     # ======================= Make plots ========================
     # Three integers (nrows, ncols, index)
 
-    fig, ax = plt.subplots(nrows=3, ncols=2, figsize=[11,17.5],subplot_kw={'projection': ccrs.PlateCarree()})
+    fig, ax = plt.subplots(nrows=3, ncols=2, figsize=[11,15],subplot_kw={'projection': ccrs.PlateCarree()})
     # sharex=False, sharey=False, squeeze=True, subplot_kw=None, gridspec_kw=None, **fig_kw
     plt.subplots_adjust(wspace=0.1, hspace=0.005)
 
@@ -160,40 +160,40 @@ def plot_spatial_land(file_paths, wrf_path, time_s, time_e, seconds=None,loc_lat
                 clevs = np.linspace(-4,4, num=21)
                 var   = tmax
                 cmap  = plt.cm.seismic #cmap = plt.cm.seismic_r
-                ax[i,j].title("Tmax", size=16)
+                ax[i,j].text(0.02, 0.95, '(a) Tmax', transform=ax[i,j].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
             elif i == 0 and j == 1:
                 clevs = np.linspace(-4,4, num=21)
                 #[-4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0.5,1,1.5,2,2.5,3.,3.5,4]
                 var   = tmin
                 cmap  = plt.cm.seismic
-                ax[i,j].title("Tmin", size=16)
+                ax[i,j].text(0.02, 0.95, '(b) Tmin', transform=ax[i,j].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
             elif i == 1 and j == 0:
-                clevs = np.linspace(-50, 50, num=21) 
+                clevs = np.linspace(-60, 60, num=25) 
                 var   = qle
                 cmap  = plt.cm.seismic_r
-                ax[i,j].title("Qle", size=16)
+                ax[i,j].text(0.02, 0.95, '(c) Qle', transform=ax[i,j].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
             elif i == 1 and j == 1:
-                clevs = np.linspace(-50, 50, num=21) 
+                clevs = np.linspace(-60, 60, num=25) 
                 # [-50,-45,-40,-35,-30,-25,-20,-15,-10,-5,5,10,15,20,25,30,35,40,45,50]
                 var   = qh
                 cmap = plt.cm.seismic
-                ax[i,j].title("Qh", size=16)
+                ax[i,j].text(0.02, 0.95, '(d) Qh', transform=ax[i,j].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
             elif i == 2 and j == 0:
                 clevs = np.linspace(-30, 30, num=21) 
                 var   = rnet
                 cmap  = plt.cm.seismic
-                ax[i,j].title("Rnet", size=16)
+                ax[i,j].text(0.02, 0.95, '(e) Rnet', transform=ax[i,j].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
             elif i == 2 and j == 1:
                 clevs = np.linspace(-30, 30, num=21) 
                 #[-50,-45,-40,-35,-30,-25,-20,-15,-10,-5,5,10,15,20,25,30,35,40,45,50]
                 var   = lwnet
                 cmap = plt.cm.seismic
-                ax[i,j].title("LWnet", size=16)
+                ax[i,j].text(0.02, 0.95, '(g) LWnet', transform=ax[i,j].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
             plot = ax[i,j].contourf(lon, lat, var, levels=clevs[clevs != 0], transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
             plt.colorbar(plot, ax=ax[i,j], ticklocation="right", pad=0.01, orientation="vertical", aspect=20, shrink=0.6) # cax=cax,
@@ -210,34 +210,47 @@ if __name__ == "__main__":
 
 
     # =============================== Operation ================================
-    case_name  = "hw2009_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
+    case_names = ["hw2009_3Nov", "hw2013_3Nov", "hw2019_3Nov"]
 
-    if case_name == "hw2009_3Nov":
-        period     = "20090122-20090213"
-        time_s = datetime(2009,1,28,0,0,0,0)
-        time_e = datetime(2009,2,8,23,59,0,0)
-    elif  case_name == "hw2013_3Nov":
-        period     = "20121229-20130122"
-        time_s = datetime(2013,1,4,0,0,0,0)
-        time_e = datetime(2013,1,18,23,59,0,0)
-    elif  case_name == "hw2019_3Nov":
-        period     = "20190108-20190130"
-        time_s = datetime(2019,1,14,0,0,0)
-        time_e = datetime(2019,1,26,23,59,0,0)
+    for case_name in case_names:
+
+        if case_name == "hw2009_3Nov":
+            period     = "20090122-20090213"
+            time_s = datetime(2009,1,28,0,0,0,0)
+            time_e = datetime(2009,2,8,23,59,0,0)
+        elif  case_name == "hw2013_3Nov":
+            period     = "20121229-20130122"
+            time_s = datetime(2013,1,4,0,0,0,0)
+            time_e = datetime(2013,1,18,23,59,0,0)
+        elif  case_name == "hw2019_3Nov":
+            period     = "20190108-20190130"
+            time_s = datetime(2019,1,14,0,0,0)
+            time_e = datetime(2019,1,26,23,59,0,0)
 
 
-    wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/ensemble_avg/wrfout_"+period+"_gw"
-    cpl_land_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
+        wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"+case_name+"/ensemble_avg/wrfout_"+period+"_gw"
+        cpl_land_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
 
-    cpl_land_file_gw  = cpl_land_file + '/LIS.CABLE.'+period+'_gw.nc'  # land output of wrf-cable run
-    cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.'+period+'_fd.nc'  # land output of wrf-cable run
+        cpl_land_file_gw  = cpl_land_file + '/LIS.CABLE.'+period+'_gw.nc'  # land output of wrf-cable run
+        cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.'+period+'_fd.nc'  # land output of wrf-cable run
 
-    file_paths        = [cpl_land_file_fd,cpl_land_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
-    seconds           = None #[18.*60.*60.,6.*60.*60.]
+        file_paths        = [cpl_land_file_fd,cpl_land_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
+        seconds           = None #[18.*60.*60.,6.*60.*60.]
 
-    if len(file_paths) > 1:
-        message = "Land_night_GW-FD_"+str(time_s)+"-"+str(time_e)
-    else:
-        message = "Land_night_GW_"+str(time_s)+"-"+str(time_e)
 
-    plot_spatial_land(file_paths, wrf_path, time_s, time_e, seconds=seconds, message=message)
+        if seconds == None:
+            if len(file_paths) > 1:
+                message = "GW-FD_"+str(time_s)+"-"+str(time_e)
+            else:
+                message = "GW_"+str(time_s)+"-"+str(time_e)
+        else:
+            if seconds[0] < seconds[1]:
+                day_or_night = "Day"
+            else:
+                day_or_night = "Night"
+            if len(file_paths) > 1:
+                message = day_or_night+"_GW-FD_"+str(time_s)+"-"+str(time_e)
+            else:
+                message = day_or_night+"_Land_GW_"+str(time_s)+"-"+str(time_e)
+
+        plot_spatial_land(file_paths, wrf_path, time_s, time_e, seconds=seconds, message=message)
