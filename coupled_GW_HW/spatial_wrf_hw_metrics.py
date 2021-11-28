@@ -17,6 +17,22 @@ from wrf import (to_np, getvar, smooth2d, get_cartopy, cartopy_xlim,
                         cartopy_ylim, latlon_coords, ALL_TIMES)
 from common_utils import *
 
+def get_time_cood(file_path, Time_s ,Time_e):
+    
+    # ****************** process time ******************
+    ncfile = Dataset(file_path)
+    
+    Time   = nc.num2date(ncfile.variables['time'][:],ncfile.variables['time'].units,
+                only_use_cftime_datetimes=False, only_use_python_datetimes=True)
+    time   = UTC_to_AEST(Time) - datetime(2000,1,1,0,0,0)
+
+    time_s = Time_s - datetime(2000,1,1,0,0,0)
+    time_e = Time_e - datetime(2000,1,1,0,0,0)
+
+    time_cood = (time>=time_s) & (time<time_e)
+
+    return time_cood
+
 def hw_thresholds(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, percent):
 
     method = "plot"
@@ -428,75 +444,151 @@ def plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, 
 
     fig.savefig('./plots/5Nov/hw_metric/3Nov/spatial_wrf_hw_duriation_'+message , bbox_inches='tight', pad_inches=0.1)
 
+def plot_spatial_EHF(file_path, time_s, time_e, loc_lat=None, loc_lon=None, lat_names=None, lon_names=None):
+
+    print("======== In plot_spital_map =========")
+
+    # Open the NetCDF4 file (add a directory path if necessary) for reading:
+    time_cood   = get_time_cood(file_path, time_s ,time_e)
+    print(time_cood)
+    Time, Event = read_var(file_path, "event", loc_lat, loc_lon, "lat", "lon")
+    print("np.shape(Event)",np.shape(Event))
+    print("Time",Time)
+    
+    time  = Time[time_cood] + datetime(2000,1,1,0,0,0)
+
+    event = Event[time_cood]
+    print("time",time)
+    print("np.shape(event)",np.shape(event))
+    
+    ncfile      = Dataset(file_path)
+    lat         = ncfile.variables['lat'][:]
+    lon         = ncfile.variables['lon'][:]
+    print("lat",lat)
+    print("lon",lon)
+    
+    for i in np.arange(len(time)):
+        
+        fig = plt.figure(figsize=(6,5))
+        ax  = plt.axes(projection=ccrs.PlateCarree())
+
+        # start plotting
+        if loc_lat == None:
+            ax.set_extent([130,155,-45,-20])
+        else:
+            ax.set_extent([loc_lon[0],loc_lon[1],loc_lat[0],loc_lat[1]])
+
+        ax.coastlines(resolution="50m",linewidth=1)
+
+        # Add gridlines
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,linewidth=1, color='black', linestyle='--')
+        gl.xlabels_top   = False
+        gl.ylabels_right = False
+        gl.xlines        = True
+
+        if loc_lat == None:
+            gl.xlocator     = mticker.FixedLocator([135,140,145,150,155])
+            gl.ylocator     = mticker.FixedLocator([-40,-35,-30,-25])
+        else:
+            gl.xlocator = mticker.FixedLocator(loc_lon)
+            gl.ylocator = mticker.FixedLocator(loc_lat)
+
+        gl.xformatter   = LONGITUDE_FORMATTER
+        gl.yformatter   = LATITUDE_FORMATTER
+        gl.xlabel_style = {'size':10, 'color':'black'}
+        gl.ylabel_style = {'size':10, 'color':'black'}
+
+        # cmap  = plt.cm.hot_r
+        levels= [0.1,0.9]
+        plt.contourf(lon, lat, event[i], levels=levels, transform=ccrs.PlateCarree(), extend='both') # cmap=cmap, 
+        cb = plt.colorbar(ax=ax, orientation="vertical", pad=0.02, aspect=16, shrink=0.8)
+        
+        cb.ax.tick_params(labelsize=10)
+
+        plt.savefig('./plots/figures/spatial_map_EHF_HW_cover_'+str(time[i])+'.png',dpi=300)    
+        fig = None
+        ax  = None
+        
 if __name__ == "__main__":
 
-    var_name       = 'T2'
-    case_name      = "hw2009_3Nov" # "hw2013_3Nov"# "hw2019_3Nov"#
+    var_name     = 'T2'
+    case_names   = ["hw2009_3Nov", "hw2013_3Nov", "hw2019_3Nov"]
+    
+    for case_name in case_names:
+        if case_name == "hw2009_3Nov":
+            # 2009 HW : 28–31.01.2009 and 6–8.02.2009
+            period = "20090122-20090213"
+            Time_s = datetime(2009,1,28,0,0,0,0)
+            Time_e = datetime(2009,2,8,23,59,0,0)
+            # Time_s = datetime(2009,1,22,0,0,0,0)
+            # Time_e = datetime(2009,2,13,23,59,0,0)
+        elif  case_name == "hw2013_3Nov":
+            # 2013 HW : 4–8.01.2013, ​11–13.01.2013 and 17–18.01.2013
+            period = "20121229-20130122"
+            Time_s = datetime(2013,1,4,0,0,0,0)
+            Time_e = datetime(2013,1,18,23,59,0,0)
+            # Time_s = datetime(2012,12,29,0,0,0,0)
+            # Time_e = datetime(2013,1,22,23,59,0,0)
+        elif  case_name == "hw2019_3Nov":
+            # 2019 HW : 14–18.01.2019 and 22–26.01.2019
+            period = "20190108-20190130"
+            Time_s = datetime(2019,1,14,0,0,0)
+            Time_e = datetime(2019,1,26,23,59,0,0)
+            # Time_s = datetime(2019,1,8,0,0,0)
+            # Time_e = datetime(2019,1,30,23,59,0,0)
 
-    if case_name == "hw2009_3Nov":
-        # 2009 HW : 28–31.01.2009 and 6–8.02.2009
-        period = "20090122-20090213"
-        Time_s = datetime(2009,1,28,0,0,0,0)
-        Time_e = datetime(2009,2,8,23,59,0,0)
-        # Time_s = datetime(2009,1,22,0,0,0,0)
-        # Time_e = datetime(2009,2,13,23,59,0,0)
-    elif  case_name == "hw2013_3Nov":
-        # 2013 HW : 4–8.01.2013, ​11–13.01.2013 and 17–18.01.2013
-        period = "20121229-20130122"
-        Time_s = datetime(2013,1,4,0,0,0,0)
-        Time_e = datetime(2013,1,18,23,59,0,0)
-        # Time_s = datetime(2012,12,29,0,0,0,0)
-        # Time_e = datetime(2013,1,22,23,59,0,0)
-    elif  case_name == "hw2019_3Nov":
-        # 2019 HW : 14–18.01.2019 and 22–26.01.2019
-        period = "20190108-20190130"
-        Time_s = datetime(2019,1,14,0,0,0)
-        Time_e = datetime(2019,1,26,23,59,0,0)
-        # Time_s = datetime(2019,1,8,0,0,0)
-        # Time_e = datetime(2019,1,30,23,59,0,0)
+        #######################################################
+        # Decks to run:
+        #    plot_spatial_EHF
+        #######################################################
+        EHF_file = '/g/data/w35/mm3972/scripts/ehfheatwaves/nc_file/AUS_based_on_tmean_95th/EHF_heatwaves_daily_2009-2019.nc'
 
-    AWAP_tmax_file = "/g/data/w35/mm3972/data/AWAP/AWAP_AUS_temp/AWAP_daily_tmax_1970_2019.nc"
-    AWAP_tmin_file = "/g/data/w35/mm3972/data/AWAP/AWAP_AUS_temp/AWAP_daily_tmin_1970_2019.nc"
+        plot_spatial_EHF(EHF_file, Time_s, Time_e)
 
-    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
-    cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_'+period+'_gw'  # atmo output of wrf-cable run
-    cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_'+period+'_fd'  # atmo output of wrf-cable run
 
-    file_paths       = [ cpl_atmo_file_fd, cpl_atmo_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
+        #######################################################
+        # Decks to run:
+        #    plot_spatial_wrf_hw_durition
+        #######################################################        
 
-    #######################################################
-    # Decks to run:
-    #    plot_spatial_wrf_hw_durition
-    #######################################################
-    percent       = 90
+        # AWAP_tmax_file = "/g/data/w35/mm3972/data/AWAP/AWAP_AUS_temp/AWAP_daily_tmax_1970_2019.nc"
+        # AWAP_tmin_file = "/g/data/w35/mm3972/data/AWAP/AWAP_AUS_temp/AWAP_daily_tmin_1970_2019.nc"
+        
+        # cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
+        # cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_'+period+'_gw'  # atmo output of wrf-cable run
+        # cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_'+period+'_fd'  # atmo output of wrf-cable run
 
-    AWAP_file_out = "./nc_file/AWAP_tmean_1970_2019_"+str(percent)+"-th.nc"
+        # file_paths        = [ cpl_atmo_file_fd, cpl_atmo_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
+        
+        # percent       = 90
 
-    tot_day   = (Time_e-Time_s).days + 1
+        # AWAP_file_out = "./nc_file/AWAP_tmean_1970_2019_"+str(percent)+"-th.nc"
 
-    # for i in np.arange(tot_day):
-        # time_s = Time_s + timedelta(days=int(i))
-        # time_e = Time_s + timedelta(days=int(i+1)) - timedelta(seconds=1)
+        # tot_day   = (Time_e-Time_s).days + 1
 
-    if len(file_paths) > 1:
-        message = 'Couple_GW-FD_'+str(Time_s)+'-'+str(Time_e)
-    else:
-        message = 'Couple_GW_'+str(Time_s)+'-'+str(Time_e)
+        # # for i in np.arange(tot_day):
+        #     # time_s = Time_s + timedelta(days=int(i))
+        #     # time_e = Time_s + timedelta(days=int(i+1)) - timedelta(seconds=1)
 
-    plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, file_paths, var_name, Time_s, Time_e, percent=percent, message=message)
+        # if len(file_paths) > 1:
+        #     message = 'Couple_GW-FD_'+str(Time_s)+'-'+str(Time_e)
+        # else:
+        #     message = 'Couple_GW_'+str(Time_s)+'-'+str(Time_e)
 
-    #######################################################
-    # Decks to run:
-    #    plot_spatial_wrf_hw_metrics
-    #######################################################
+        # plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, file_paths, var_name, Time_s, Time_e, percent=percent, message=message)
 
-    # if len(file_paths) > 1:
-    #     message = 'Couple_GW-FD_'+str(time_s)+'-'+str(time_e)
-    # else:
-    #     message = 'Couple_GW_'+str(time_s)+'-'+str(time_e)
+        #######################################################
+        # Decks to run:
+        #    plot_spatial_wrf_hw_metrics
+        #######################################################
 
-    # metric   = 'Tmean'
-    # plot_spatial_wrf_hw_metrics(file_paths, var_name, time_s, time_e, metric=metric, message=message)
+        # if len(file_paths) > 1:
+        #     message = 'Couple_GW-FD_'+str(time_s)+'-'+str(time_e)
+        # else:
+        #     message = 'Couple_GW_'+str(time_s)+'-'+str(time_e)
 
-    # metric   = 'Tmax'
-    # plot_spatial_wrf_hw_metrics(file_paths, var_name, time_s, time_e, metric=metric, message=message)
+        # metric   = 'Tmean'
+        # plot_spatial_wrf_hw_metrics(file_paths, var_name, time_s, time_e, metric=metric, message=message)
+
+        # metric   = 'Tmax'
+        # plot_spatial_wrf_hw_metrics(file_paths, var_name, time_s, time_e, metric=metric, message=message)

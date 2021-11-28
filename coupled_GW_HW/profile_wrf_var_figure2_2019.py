@@ -288,9 +288,7 @@ def plot_profile_wrf_wind(file_paths, time_s, time_e, message=None, lat_slt=36, 
     levels    = [-1.,-0.8,-0.6,-0.4,-0.2,0.2,0.4,0.6,0.8,1.]
 
     # Day temperature
-    color_map = get_cmap("coolwarm")
-    cmap      = color_map
-    contour   = ax[0,0].contourf(xy_loc, vertical, t_day_crs, levels=levels, cmap=cmap, extend='both')
+    contour   = ax[0,0].contourf(xy_loc, vertical, t_day_crs, levels=levels, cmap=get_cmap("coolwarm"),extend='both')
     # cb_var    = fig.colorbar(contour, ax=ax[0,0])
     # cb_var.set_label('ΔT ($\mathregular{^o}$C)', loc='center') # rotation=270,
     # cb_var.ax[0,0].tick_params(labelsize=12)
@@ -303,7 +301,7 @@ def plot_profile_wrf_wind(file_paths, time_s, time_e, message=None, lat_slt=36, 
     ax[0,0].set_ylabel("Geopotential Height (m)")#, fontsize=12)
 
     # Night temperature
-    contour   = ax[0,1].contourf(xy_loc, vertical, t_night_crs, levels=levels, cmap=cmap, extend='both')
+    contour   = ax[0,1].contourf(xy_loc, vertical, t_night_crs, levels=levels, cmap=get_cmap("coolwarm"),extend='both')
     cb_var    = fig.colorbar(contour, ax=ax[0], pad=0.01, orientation="vertical", aspect=20, shrink=0.88)
     cb_var.set_label('ΔT (${^o}$C)', loc='center') # rotation=270,
     # cb_var.ax[0,1].tick_params(labelsize=12)
@@ -316,9 +314,7 @@ def plot_profile_wrf_wind(file_paths, time_s, time_e, message=None, lat_slt=36, 
     # ax[0,1].set_ylabel("Geopotential Height (m)", fontsize=12)
 
     # Day specific humidity
-    color_map = get_cmap("coolwarm")
-    cmap      = color_map.reversed()
-    contour   = ax[1,0].contourf(xy_loc, vertical, s_day_crs*1000., levels=levels, cmap=cmap, extend='both')
+    contour   = ax[1,0].contourf(xy_loc, vertical, s_day_crs*1000., levels=levels, cmap=get_cmap("coolwarm"),extend='both')
     # cb_var    = fig.colorbar(contour, ax=ax[1,0])
     # cb_var.set_label('ΔS (g kg$\mathregular{^-1}$)', loc='center') # rotation=270,
     # cb_var.ax[1,0].tick_params(labelsize=12)
@@ -326,21 +322,21 @@ def plot_profile_wrf_wind(file_paths, time_s, time_e, message=None, lat_slt=36, 
                               wa_day_crs[::3,::3], angles='xy', scale_units='xy',
                               scale=scale, pivot='middle', color="white")
     # ax[1,0].quiverkey(q, X=0.90, Y=-0.05, U=scale, label=str(scale)+' m/s', labelpos='E')
-    ax[1,0].text(0.02, 0.95, "(c) Δq$_{day}$", transform=ax[1,0].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
+    ax[1,0].text(0.02, 0.95, "(c) ΔS$_{day}$", transform=ax[1,0].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
     ax[1,0].set_xlabel("Longitude")#, fontsize=12)
     ax[1,0].set_ylabel("Geopotential Height (m)")#, fontsize=12)
 
 
     # Day specific humidity
-    contour   = ax[1,1].contourf(xy_loc, vertical, s_night_crs*1000., levels=levels, cmap=cmap, extend='both')
+    contour   = ax[1,1].contourf(xy_loc, vertical, s_night_crs*1000., levels=levels, cmap=get_cmap("coolwarm"),extend='both')
     cb_var    = fig.colorbar(contour, ax=ax[1], pad=0.01, orientation="vertical", aspect=20, shrink=0.88)
-    cb_var.set_label('Δq (g kg$^{-1}$)', loc='center') # rotation=270,
+    cb_var.set_label('ΔS (g kg$^{-1}$)', loc='center') # rotation=270,
     # cb_var.ax[1,1].tick_params(labelsize=12)
     q         = ax[1,1].quiver(xy_loc[::3], vertical[::3], ua_night_crs[::3,::3],
                               wa_night_crs[::3,::3], angles='xy', scale_units='xy',
                               scale=scale, pivot='middle', color="white")
     ax[1,1].quiverkey(q, X=0.99, Y=-0.11, U=scale, label=str(scale)+' m/s', labelpos='E', color="black")
-    ax[1,1].text(0.02, 0.95, "(d) Δq$_{night}$", transform=ax[1,1].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
+    ax[1,1].text(0.02, 0.95, "(d) ΔS$_{night}$", transform=ax[1,1].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
     ax[1,1].set_xlabel("Longitude")#, fontsize=12)
     # ax[1,1].set_ylabel("Geopotential Height (m)", fontsize=12)
 
@@ -348,7 +344,7 @@ def plot_profile_wrf_wind(file_paths, time_s, time_e, message=None, lat_slt=36, 
 
 if __name__ == "__main__":
 
-    hw_name     = "hw2009_3Nov"
+    hw_name     = "hw2019_3Nov"
     lat_slt     = -36.
     lon_min     = 139.0
     lon_max     = 152.0
