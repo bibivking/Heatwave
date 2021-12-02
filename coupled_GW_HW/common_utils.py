@@ -3,6 +3,7 @@
 from netCDF4 import Dataset
 import netCDF4 as nc
 import numpy as np
+import matplotlib.colors as colors
 from datetime import datetime, timedelta
 from wrf import (getvar, interplevel, get_cartopy, cartopy_xlim,
                  cartopy_ylim, to_np, latlon_coords, ALL_TIMES)
@@ -175,8 +176,9 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
                 Var = Var_tmp
     return time,Var
 
-def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None):
+def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None, mask_map=None):
 
+    # output: [time,lat,lon]
     print("read "+var_name+" from wrf output")
 
     var_3D = [
@@ -194,9 +196,7 @@ def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None):
 
     wrf_file = Dataset(file_path)
     p        = getvar(wrf_file, "pressure",timeidx=ALL_TIMES)
-    if var_name in var_3D:
-        var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
-    elif var_name == 'cape_2d':
+    if var_name == 'cape_2d':
         # 'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
         var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
         print("======= cape_2d =======")
@@ -207,14 +207,21 @@ def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None):
         print("======= cloudfrac =======")
         print(var_tmp)
     else:
-        var_tmp  = wrf_file.variables[var_name][:]
+        var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
 
     if loc_lat == None:
-        var  = var_tmp
+        if mask_map is not None:
+            ntime  = len(p[:,0,0,0])
+            mask_multi = [ mask_map ] * ntime
+            var  = np.where(mask_multi,var_tmp,np.nan)
+        else:
+            var  = var_tmp
     else:
         ### need to fix, not work
         ntime  = len(p[:,0,0,0])
         mask   = mask_by_lat_lon(file_path, loc_lat, loc_lon, 'XLAT', 'XLONG')
+        if mask_map is not None:
+            mask = np.where(np.all([mask,mask_map],axis=0), True, False)
         # np.savetxt("check",mask)
         mask_multi = [ mask ] * ntime
         var    = np.where(mask_multi,var_tmp,np.nan)
@@ -426,3 +433,10 @@ def get_wrf_var_range_diff(var_name):
     else:
         ranges = None
     return ranges
+
+def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
+    
+    new_cmap = colors.LinearSegmentedColormap.from_list(
+        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+        cmap(np.linspace(minval, maxval, n)))
+    return new_cmap

@@ -60,35 +60,30 @@ def get_time_cood(file_path, time_s ,time_e):
 
 def read_wrf_var(file_path):
 
-    ncfile  = Dataset(file_path)
+    ncfile  = Dataset(file_path, mode='r')
+
     Z       = getvar(ncfile, "z", timeidx=ALL_TIMES)
     Wa      = getvar(ncfile, "wa", units="m s-1", timeidx=ALL_TIMES)
     Ua      = getvar(ncfile, "ua", units="m s-1", timeidx=ALL_TIMES)
-    # T       = getvar(ncfile, 'th', units='degC', timeidx=ALL_TIMES)
-    T       = getvar(ncfile, 'temp', units='degC', timeidx=ALL_TIMES)
+    T       = getvar(ncfile, 'th', units='degC', timeidx=ALL_TIMES)
+    # T       = getvar(ncfile, 'temp', units='degC', timeidx=ALL_TIMES)
     S       = getvar(ncfile, 'QVAPOR', timeidx=ALL_TIMES)
+    PBL     = getvar(ncfile, 'PBLH', timeidx=ALL_TIMES)
 
-    return Z, Wa, Ua, T, S
+    print(PBL)
 
-def get_time_masked(Z,T,S,Ua,Wa,time_cood):
+    return Z, Wa, Ua, T, S, PBL
+
+def get_time_masked(Z,T,S,Ua,Wa,PBL,time_cood):
 
     z  = Z[time_cood,:,:,:]
     t  = T[time_cood,:,:,:]
     s  = S[time_cood,:,:,:]
     ua = Ua[time_cood,:,:,:]
     wa = Wa[time_cood,:,:,:]
+    pbl= PBL[time_cood,:,:]
 
-    return z, t, s, ua, wa
-
-def get_average(Z,T,S,Ua,Wa,time_cood):
-
-    z  = np.nanmean(Z[time_cood,:,:,:],axis=0)
-    t  = np.nanmean(T[time_cood,:,:,:],axis=0)
-    s  = np.nanmean(S[time_cood,:,:,:],axis=0)
-    ua = np.nanmean(Ua[time_cood,:,:,:],axis=0)
-    wa = np.nanmean(Wa[time_cood,:,:,:],axis=0)
-
-    return z, t, s, ua, wa
+    return z, t, s, ua, wa, pbl
 
 def get_vertcross(file_path, z, t, s, ua, wa, lat_slt, lon_min, lon_max, doy, seconds=None):
 
@@ -103,29 +98,29 @@ def get_vertcross(file_path, z, t, s, ua, wa, lat_slt, lon_min, lon_max, doy, se
     end_point   = CoordPair(lat=lat_slt, lon=lon_max)
 
     # ****************** calc interpolation ******************
-    t_out     = np.zeros((ntime, 51, 48))
-    s_out     = np.zeros((ntime, 51, 48))
-    ua_out    = np.zeros((ntime, 51, 48))
-    wa_out    = np.zeros((ntime, 51, 48))
+    t_out     = np.zeros((ntime, 36, 48))
+    s_out     = np.zeros((ntime, 36, 48))
+    ua_out    = np.zeros((ntime, 36, 48))
+    wa_out    = np.zeros((ntime, 36, 48))
 
     for i in np.arange(ntime):
 
         print("i = ", i)
 
-        t_crs  = vertcross(t[i], z[i], wrfin=ncfile, start_point=start_point,
-                            end_point=end_point, latlon=True, meta=True)
+        t_crs  = vertcross(t[i,0:], z[i], wrfin=ncfile, start_point=start_point,
+                            end_point=end_point, latlon=True, meta=True, autolevels=80)
         s_crs  = vertcross(s[i], z[i], wrfin=ncfile, start_point=start_point,
-                            end_point=end_point, latlon=True, meta=True)
+                            end_point=end_point, latlon=True, meta=True,autolevels=80)
         ua_crs = vertcross(ua[i], z[i], wrfin=ncfile, start_point=start_point,
-                            end_point=end_point, latlon=True, meta=True)
+                            end_point=end_point, latlon=True, meta=True,autolevels=80)
         wa_crs = vertcross(wa[i], z[i], wrfin=ncfile, start_point=start_point,
-                            end_point=end_point, latlon=True, meta=True)
+                            end_point=end_point, latlon=True, meta=True,autolevels=80)
 
         if i == 0:
             print("i == 0")
             loct = np.linspace(lon_min, lon_max, len(t_crs.coords['xy_loc']))
             print("loct", loct)
-            vrt = np.arange(0, 5100., 100.)
+            vrt = np.arange(0, 3600., 100.)
 
         t_out[i], s_out[i], ua_out[i], wa_out[i] = \
                 get_interpolation(t_crs, s_crs, ua_crs, wa_crs, loct, vrt)
@@ -158,6 +153,72 @@ def get_vertcross(file_path, z, t, s, ua, wa, lat_slt, lon_min, lon_max, doy, se
 
     return t_cross, s_cross, ua_cross, wa_cross, loct, vrt
 
+def get_PBL(file_path, land_path, z, pbl, lat_slt, lon_min, lon_max):
+
+    # Compute the vertical cross-section interpolation.  Also, include the
+    # lat/lon points along the cross-section in the metadata by setting latlon
+    # to True.
+
+    ntime       = np.shape(z)[0]
+
+    ncfile      = Dataset(file_path)
+    start_point = CoordPair(lat=lat_slt, lon=lon_min)
+    end_point   = CoordPair(lat=lat_slt, lon=lon_max)
+
+    # ****************** calc interpolation ******************
+    '''
+    In vertcross, autolevels=100(default), then vertical profile is evenly spaced to 100 levels
+    '''
+    pbl_out     = np.zeros((ntime, 10, 48))
+    pbl_4D      = np.expand_dims(pbl,axis=1).repeat(29,axis=1)
+
+    landfile    = Dataset(land_path, mode='r')
+    elev        = landfile.variables['Elevation_inst'][0]
+
+    for i in np.arange(ntime):
+        print(np.shape(z[i]))
+        print(np.shape(pbl_4D[i]))
+
+        pbl_crs = vertcross(pbl_4D[i]+elev, z[i], wrfin=ncfile, start_point=start_point,
+                            end_point=end_point, latlon=True, meta=True, autolevels=10)
+        print(np.shape(pbl_crs))
+        print(pbl_crs)
+        pbl_out[i] = pbl_crs
+        pbl_crs    = None
+
+    pbl_cross = np.nanmean(pbl_out[:,9,:], axis=0)
+    print(pbl_cross)
+
+    return pbl_cross
+
+def get_WTD(file_path, land_path, time_s, time_e):
+
+    ncfile      = Dataset(file_path)
+    start_point = CoordPair(lat=lat_slt, lon=lon_min)
+    end_point   = CoordPair(lat=lat_slt, lon=lon_max)
+    z           = getvar(ncfile, "z")
+    print(z)
+
+    Time_s      = time_s - datetime(2000,1,1,0,0,0)
+    Time_e      = time_e - datetime(2000,1,1,0,0,0)
+
+    landfile    = Dataset(land_path, mode='r')
+    Time        = nc.num2date(landfile.variables['time'][:],landfile.variables['time'].units,
+                  only_use_cftime_datetimes=False, only_use_python_datetimes=True)
+    time        = UTC_to_AEST(Time) - datetime(2000,1,1,0,0,0)
+    time_cood   = (time>=Time_s) & (time<Time_e)
+
+    WTD         = landfile.variables['WaterTableD_tavg']
+    wtd         = np.nanmean(WTD[time_cood,:,:],axis=0)
+    wtd_3D      = np.expand_dims(wtd,axis=0).repeat(29,axis=0)
+    print(np.shape(wtd_3D))
+    print(np.shape(z))
+
+    wtd_crs     = vertcross(wtd_3D, z, wrfin=ncfile, start_point=start_point,
+                          end_point=end_point, latlon=True, meta=True, autolevels=10)
+    print(wtd_crs)
+    return wtd_crs[8:10,:]/1000.
+
 def get_interpolation(t_crs, s_crs, ua_crs, wa_crs, loct, vrt):
 
     print("get_interpolation")
@@ -175,7 +236,7 @@ def get_interpolation(t_crs, s_crs, ua_crs, wa_crs, loct, vrt):
 
     return t_out, s_out, ua_out, wa_out
 
-def plot_profile_wrf_wind(file_paths, time_s, time_e, message=None, lat_slt=36, lon_min=130, lon_max=160):
+def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, lat_slt=36, lon_min=130, lon_max=160):
 
     # ****************** Get time coordiation ******************
     time_cood_all, time_cood_day, time_cood_night, doy_all, doy_day, doy_night = \
@@ -184,16 +245,16 @@ def plot_profile_wrf_wind(file_paths, time_s, time_e, message=None, lat_slt=36, 
     print("time_cood_day",time_cood_night)
 
     # ****************** Get the WRF variables ******************
-    Z1,Wa1,Ua1,T1,S1 = read_wrf_var(file_paths[0])
+    Z1,Wa1,Ua1,T1,S1,PBL1 = read_wrf_var(file_paths[0])
     print("Z1", Z1)
 
     # ****************** Get time masked ******************
-    z1_day, t1_day, s1_day, ua1_day, wa1_day = \
-                       get_time_masked(Z1, T1, S1, Ua1, Wa1, time_cood_day)
+    z1_day, t1_day, s1_day, ua1_day, wa1_day, pbl1_day = \
+                       get_time_masked(Z1, T1, S1, Ua1, Wa1, PBL1, time_cood_day)
     print("z1_day",z1_day)
 
-    z1_night, t1_night, s1_night, ua1_night, wa1_night = \
-                       get_time_masked(Z1, T1, S1, Ua1, Wa1, time_cood_night)
+    z1_night, t1_night, s1_night, ua1_night, wa1_night, pbl1_night = \
+                       get_time_masked(Z1, T1, S1, Ua1, Wa1, PBL1, time_cood_night)
 
     # ****************** vertcross, interpolate and mean ******************
     seconds         = [6.*60.*60.,18.*60.*60.]
@@ -201,30 +262,41 @@ def plot_profile_wrf_wind(file_paths, time_s, time_e, message=None, lat_slt=36, 
         get_vertcross(file_paths[0], z1_day, t1_day, s1_day, ua1_day,
                       wa1_day, lat_slt, lon_min, lon_max, doy_day, seconds)
 
+    pbl1_day_crs    = get_PBL(file_paths[0],  land_paths[0], z1_day, pbl1_day, lat_slt, lon_min, lon_max)
+
     seconds         = [18.*60.*60.,6.*60.*60.]
     t1_night_crs, s1_night_crs, ua1_night_crs, wa1_night_crs, xy_loc, vertical =\
         get_vertcross(file_paths[0], z1_night, t1_night, s1_night, ua1_night,
                       wa1_night, lat_slt, lon_min, lon_max, doy_night, seconds)
+    pbl1_night_crs  = get_PBL(file_paths[0],  land_paths[0], z1_night, pbl1_night, lat_slt, lon_min, lon_max)
 
     if len(file_paths) > 1:
         # ****************** read second file ******************
-        Z2,Wa2,Ua2,T2,S2 = read_wrf_var(file_paths[1])
+        Z2,Wa2,Ua2,T2,S2,PBL2 = read_wrf_var(file_paths[1])
 
-        z2_day, t2_day, s2_day, ua2_day, wa2_day = \
-                        get_time_masked(Z2,T2,S2,Ua2,Wa2,time_cood_day)
+        z2_day, t2_day, s2_day, ua2_day, wa2_day, pbl2_day = \
+                        get_time_masked(Z2,T2,S2,Ua2,Wa2,PBL2, time_cood_day)
 
-        z2_night, t2_night, s2_night, ua2_night, wa2_night = \
-                        get_time_masked(Z2, T2, S2, Ua2, Wa2, time_cood_night)
+        z2_night, t2_night, s2_night, ua2_night, wa2_night, pbl2_night = \
+                        get_time_masked(Z2, T2, S2, Ua2, Wa2, PBL2, time_cood_night)
 
         seconds         = [6.*60.*60.,18.*60.*60.]
         t2_day_crs, s2_day_crs, ua2_day_crs, wa2_day_crs, xy_loc, vertical =\
             get_vertcross(file_paths[1], z2_day, t2_day, s2_day, ua2_day, wa2_day,
                           lat_slt, lon_min, lon_max, doy_day, seconds)
 
+        pbl2_day_crs = get_PBL(file_paths[1], land_paths[1], z2_day, pbl2_day, lat_slt, lon_min, lon_max)
+
         seconds         = [18.*60.*60.,6.*60.*60.]
         t2_night_crs, s2_night_crs, ua2_night_crs, wa2_night_crs, xy_loc, vertical =\
             get_vertcross(file_paths[1], z2_night, t2_night, s2_night, ua2_night,
                           wa2_night, lat_slt, lon_min, lon_max, doy_night, seconds)
+
+        pbl2_night_crs = get_PBL(file_paths[1], land_paths[1], z2_night, pbl2_night, lat_slt, lon_min, lon_max)
+
+        # ****************** Get water table depth ******************
+        wtd_crs   = get_WTD(file_paths[1], land_paths[1], time_s, time_e)
+
 
         # ************** calc difference **************
         t_day_crs  = t2_day_crs  - t1_day_crs
@@ -236,6 +308,7 @@ def plot_profile_wrf_wind(file_paths, time_s, time_e, message=None, lat_slt=36, 
         s_night_crs  = s2_night_crs  - s1_night_crs
         ua_night_crs = ua2_night_crs - ua1_night_crs
         wa_night_crs = wa2_night_crs - wa1_night_crs
+
         print("t_day_crs", t_day_crs)
 
     else:
@@ -279,70 +352,87 @@ def plot_profile_wrf_wind(file_paths, time_s, time_e, message=None, lat_slt=36, 
 
     props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
 
-    # Make the contour plot for var
+    # ===== set plot =====
+    # color map
+    color_map     = get_cmap("coolwarm")
+    blue_map_neg  = truncate_colormap(color_map, minval=0., maxval=0.5)
+    color_map     = get_cmap("coolwarm").reversed()
+    blue_map_pos  = truncate_colormap(color_map, minval=0.5, maxval=1.)
+    cmap          = color_map
+    cmap1         = get_cmap("Greens").reversed()
+
+    # quiver scale
     if len(file_paths) > 1:
         scale = 1.
     else:
         scale = 20.
 
-    levels    = [-1.,-0.8,-0.6,-0.4,-0.2,0.2,0.4,0.6,0.8,1.]
+    # contour levels
+    levels1   = [-1.,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1]
+    levels2   = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]
+
+    # Water table depth height
+    wtd_hgt   = [0,300]
 
     # Day temperature
-    color_map = get_cmap("coolwarm")
-    cmap      = color_map
-    contour   = ax[0,0].contourf(xy_loc, vertical, t_day_crs, levels=levels, cmap=cmap, extend='both')
-    # cb_var    = fig.colorbar(contour, ax=ax[0,0])
-    # cb_var.set_label('ΔT ($\mathregular{^o}$C)', loc='center') # rotation=270,
-    # cb_var.ax[0,0].tick_params(labelsize=12)
+    contour   = ax[0,0].contourf(xy_loc, vertical, t_day_crs, levels=levels1, cmap=blue_map_neg, extend='both')
+    cntr_wtd  = ax[0,0].contourf(xy_loc, wtd_hgt, wtd_crs, levels=np.arange(0,20,1), cmap=cmap1, extend='neither')
+    line1     = ax[0,0].plot(xy_loc,pbl1_day_crs,ls="-", color="black")
+    line2     = ax[0,0].plot(xy_loc,pbl2_day_crs,ls="--", color="black")
     q         = ax[0,0].quiver(xy_loc[::3], vertical[::3], ua_day_crs[::3,::3],
                               wa_day_crs[::3,::3], angles='xy', scale_units='xy',
                               scale=scale, pivot='middle', color="white")
-    # ax[0,0].quiverkey(q, X=0.90, Y=-0.05, U=scale, label=str(scale)+' m/s', labelpos='E')
     ax[0,0].text(0.02, 0.95, "(a) ΔT$_{max}$", transform=ax[0,0].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
-    # ax[0,0].set_xlabel("Longitude", fontsize=12)
     ax[0,0].set_ylabel("Geopotential Height (m)")#, fontsize=12)
 
     # Night temperature
-    contour   = ax[0,1].contourf(xy_loc, vertical, t_night_crs, levels=levels, cmap=cmap, extend='both')
-    cb_var    = fig.colorbar(contour, ax=ax[0], pad=0.01, orientation="vertical", aspect=20, shrink=0.88)
-    cb_var.set_label('ΔT (${^o}$C)', loc='center') # rotation=270,
-    # cb_var.ax[0,1].tick_params(labelsize=12)
+    contour   = ax[0,1].contourf(xy_loc, vertical, t_night_crs, levels=levels1, cmap=blue_map_neg, extend='both')
+    cntr_wtd  = ax[0,1].contourf(xy_loc, wtd_hgt, wtd_crs, levels=np.arange(0,20,1), cmap=cmap1, extend='neither')
+    line1     = ax[0,1].plot(xy_loc,pbl1_night_crs,ls="-", color="black")
+    line2     = ax[0,1].plot(xy_loc,pbl2_night_crs,ls="--", color="black")
     q         = ax[0,1].quiver(xy_loc[::3], vertical[::3], ua_night_crs[::3,::3],
                               wa_night_crs[::3,::3], angles='xy', scale_units='xy',
                               scale=scale, pivot='middle', color="white")
-    # ax[0,1].quiverkey(q, X=0.90, Y=-0.05, U=scale, label=str(scale)+' m/s', labelpos='E')
     ax[0,1].text(0.02, 0.95, "(b) ΔT$_{min}$", transform=ax[0,1].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
-    # ax[0,1].set_xlabel("Longitude", fontsize=12)
-    # ax[0,1].set_ylabel("Geopotential Height (m)", fontsize=12)
+    cb_var    = fig.colorbar(contour, ax=ax[0], pad=0.01, orientation="vertical", aspect=20, shrink=0.88)
+    cb_var.set_label('ΔT (${^o}$C)', loc='center') # rotation=270,
+
 
     # Day specific humidity
     color_map = get_cmap("coolwarm")
     cmap      = color_map.reversed()
-    contour   = ax[1,0].contourf(xy_loc, vertical, s_day_crs*1000., levels=levels, cmap=cmap, extend='both')
-    # cb_var    = fig.colorbar(contour, ax=ax[1,0])
-    # cb_var.set_label('ΔS (g kg$\mathregular{^-1}$)', loc='center') # rotation=270,
-    # cb_var.ax[1,0].tick_params(labelsize=12)
+    contour   = ax[1,0].contourf(xy_loc, vertical, s_day_crs*1000., levels=levels2, cmap=blue_map_pos, extend='both')
+    cntr_wtd  = ax[1,0].contourf(xy_loc, wtd_hgt, wtd_crs, levels=np.arange(0,20,1), cmap=cmap1, extend='neither')
+    line1     = ax[1,0].plot(xy_loc,pbl1_day_crs,ls="-", color="black")
+    line2     = ax[1,0].plot(xy_loc,pbl2_day_crs,ls="--", color="black")
     q         = ax[1,0].quiver(xy_loc[::3], vertical[::3], ua_day_crs[::3,::3],
                               wa_day_crs[::3,::3], angles='xy', scale_units='xy',
                               scale=scale, pivot='middle', color="white")
-    # ax[1,0].quiverkey(q, X=0.90, Y=-0.05, U=scale, label=str(scale)+' m/s', labelpos='E')
     ax[1,0].text(0.02, 0.95, "(c) Δq$_{day}$", transform=ax[1,0].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
     ax[1,0].set_xlabel("Longitude")#, fontsize=12)
     ax[1,0].set_ylabel("Geopotential Height (m)")#, fontsize=12)
 
 
     # Day specific humidity
-    contour   = ax[1,1].contourf(xy_loc, vertical, s_night_crs*1000., levels=levels, cmap=cmap, extend='both')
-    cb_var    = fig.colorbar(contour, ax=ax[1], pad=0.01, orientation="vertical", aspect=20, shrink=0.88)
-    cb_var.set_label('Δq (g kg$^{-1}$)', loc='center') # rotation=270,
-    # cb_var.ax[1,1].tick_params(labelsize=12)
+    contour   = ax[1,1].contourf(xy_loc, vertical, s_night_crs*1000., levels=levels2, cmap=blue_map_pos, extend='both')
+    cntr_wtd  = ax[1,1].contourf(xy_loc, wtd_hgt, wtd_crs, levels=np.arange(0,20,1), cmap=cmap1, extend='neither')
+    line1     = ax[1,1].plot(xy_loc,pbl1_night_crs,ls="-", color="black")
+    line2     = ax[1,1].plot(xy_loc,pbl2_night_crs,ls="--", color="black")
     q         = ax[1,1].quiver(xy_loc[::3], vertical[::3], ua_night_crs[::3,::3],
                               wa_night_crs[::3,::3], angles='xy', scale_units='xy',
                               scale=scale, pivot='middle', color="white")
-    ax[1,1].quiverkey(q, X=0.99, Y=-0.11, U=scale, label=str(scale)+' m/s', labelpos='E', color="black")
+    ax[1,1].quiverkey(q,X=0.998, Y=-0.04, U=scale, label=str(scale)+' m/s', labelpos='E', color="black")
     ax[1,1].text(0.02, 0.95, "(d) Δq$_{night}$", transform=ax[1,1].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
     ax[1,1].set_xlabel("Longitude")#, fontsize=12)
-    # ax[1,1].set_ylabel("Geopotential Height (m)", fontsize=12)
+
+    cb_var    = fig.colorbar(contour, ax=ax[1], pad=0.01, orientation="vertical", aspect=20, shrink=0.88)
+    cb_var.set_label('Δq (g kg$^{-1}$)', loc='center')
+
+    # colorbar position
+    position  = fig.add_axes([0.14, 0.04, 0.62, 0.02]) # [left, bottom, width, height]
+    cb_wtd    = fig.colorbar(cntr_wtd, ax=ax, pad=0.07, cax=position, orientation="horizontal", aspect=40, shrink=0.8)
+    cb_wtd.set_label('WTD (m)', loc='center',size=12)# rotation=270,
+    cb_wtd.ax.tick_params(labelsize=12)
 
     fig.savefig("./plots/figures/profile_wrf_Wind_"+message, bbox_inches='tight', pad_inches=0.1)
 
@@ -357,8 +447,9 @@ if __name__ == "__main__":
     if hw_name == "hw2009_3Nov":
         start_date= "20090122"
         end_date  = "20090213"
+        # time_s = datetime(2009,1,28,5,0,0,0)
+        # time_e = datetime(2009,1,28,6,59,0,0)
         time_s = datetime(2009,1,28,0,0,0,0)
-        # time_e = datetime(2009,1,28,11,59,0,0)
         time_e = datetime(2009,2,8,23,59,0,0)
         # Time_s = datetime(2009,1,22,0,0,0,0)
         # Time_e = datetime(2009,2,13,23,59,0,0)
@@ -383,11 +474,15 @@ if __name__ == "__main__":
     cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_'+start_date+'-'+end_date+'_gw'  # atmo output of wrf-cable run
     cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_'+start_date+'-'+end_date+'_fd'  # atmo output of wrf-cable run
 
-    file_paths        = [cpl_atmo_file_fd,cpl_atmo_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
+    cpl_land_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+hw_name+'/ensemble_avg'
+    cpl_land_file_gw  = cpl_land_file + '/LIS.CABLE.'+start_date+'-'+end_date+'_gw.nc' # land output of wrf-cable run
+    cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.'+start_date+'-'+end_date+'_fd.nc' # land output of wrf-cable run
 
+    file_paths        = [cpl_atmo_file_fd,cpl_atmo_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
+    land_paths        = [cpl_land_file_fd,cpl_land_file_gw]
     if len(file_paths) > 1:
         message = "GW-FD_"+str(time_s)+"-"+str(time_e)
     else:
         message = "GW_"+str(time_s)+"-"+str(time_e)
 
-    plot_profile_wrf_wind(file_paths, time_s, time_e, message=message, lat_slt=lat_slt, lon_min=lon_min, lon_max=lon_max)
+    plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=message, lat_slt=lat_slt, lon_min=lon_min, lon_max=lon_max)

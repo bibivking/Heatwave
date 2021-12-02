@@ -395,7 +395,7 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
 
     for i in np.arange(ntime):
         time_temp = datetime.strptime(str(ncfile1.variables['Times'][i,:], encoding),'%Y-%m-%d_%H:%M:%S')
-        time_tmp.append(time_temp - datetime(2000,1,1))
+        time_tmp.append(UTC_to_AEST(time_temp) - datetime(2000,1,1))
 
     time = np.array(time_tmp)
 
@@ -410,7 +410,6 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
     else:
         scale = get_scale(var_name)
         var1  = spital_var(time,Var1,time_s,time_e)*scale
-
 
     if len(file_paths) > 1:
         Var2  = read_wrf_surf_var(file_paths[1], var_name, loc_lat, loc_lon)
@@ -485,19 +484,22 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
     # gaussian_filter(z,sigma=3)
 
     # Add the var contours
-    if len(file_paths) > 1 and var_name == "T2":
-        levels = np.linspace(-2., 2., num=20) # np.nanmin(var), np.nanmax(var)
-    elif len(file_paths) > 1:
-        max_val = np.abs(np.nanmax(var))
-        min_val = np.abs(np.nanmin(var))
-        max_range = np.maximum(max_val,min_val)
-        levels = np.linspace(max_range*(-1.),max_range,num=20)
-    else:
-        levels = np.arange(np.nanmin(var), np.nanmax(var), 20)
+    # Add the var contours
+    # if len(file_paths) > 1 and var_name == "T2":
+    #     levels = np.linspace(-2,2, num=21) # np.nanmin(var), np.nanmax(var)
+    # elif len(file_paths) > 1:
+    #     max_val = np.abs(np.nanmax(var))
+    #     min_val = np.abs(np.nanmin(var))
+    #     max_range = np.maximum(max_val,min_val)
+    #     levels = np.linspace(max_range*(-1.),max_range,num=20)
+    # else:
+    #     levels = np.arange(np.nanmin(var), np.nanmax(var), 20)
 
-        # levels = np.linspace(np.nanmin(var),np.nanmax(var), num=21) # np.nanmin(var), np.nanmax(var)
+    levels = np.linspace(-10.,10.,num=21)
+    cmap = plt.cm.seismic
+
     var_contours = plt.contourf(to_np(lons), to_np(lats), to_np(var),
-                   levels = levels, transform=crs.PlateCarree(), cmap=get_cmap("bwr"),extend='both') #,"jet" #“rainbow”#"coolwarm"
+                   levels = levels[levels!=0], transform=crs.PlateCarree(), cmap=cmap,extend='both') #,"jet" #“rainbow”#"coolwarm"
     plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)
 
     # Set the map bounds
@@ -511,7 +513,7 @@ def plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, loc_lat=None, lo
     else:
         message = message+"_"+var_name
 
-    fig.savefig('./plots/5Nov/wrf_surf/15Oct/spatial_wrf_surf_'+message , bbox_inches='tight', pad_inches=0.1)
+    fig.savefig('./plots/5Nov/wrf_surf/3Nov/spatial_wrf_surf_'+message , bbox_inches='tight', pad_inches=0.1)
 
 
 if __name__ == "__main__":
@@ -521,46 +523,62 @@ if __name__ == "__main__":
     #    plot_spital_map
     #######################################################
 
-    var_3D = [
-                'rh2',  # 2m Relative Humidity
+    var_3D = [ 
+                # 'cloudfrac', # Cloud Fraction
+                # 'td2',  # 2m Dew Point Temperature
+                # 'rh2',  # 2m Relative Humidity
                 'T2',   # 2m Temperature
-                'td2',  # 2m Dew Point Temperature
-                'slp',  # Sea Level Pressure
-                'ctt',  # Cloud Top Temperature
-                'mdbz', # Maximum Reflectivity
-                'pw',   # Precipitable Water
-                'updraft_helicity', # Updraft Helicity
-                'helicity',        # Storm Relative Helicity
-                'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
-                'cloudfrac', # Cloud Fraction
+                # 'slp',  # Sea Level Pressure       
               ]
-
                 # 'ter',  # Model Terrain Height
-    var_other         = ['RAINC','RAINNC','PSFC','U10','V10','TSK','PBLH']
+                # 'updraft_helicity', # Updraft Helicity
+                # 'helicity',        # Storm Relative Helicity
+                # 'ctt',  # Cloud Top Temperature
+                # 'mdbz', # Maximum Reflectivity
+                # 'td2',  # 2m Dew Point Temperature
+                # 'rh2',  # 2m Relative Humidity
+                # 'T2',   # 2m Temperature
+                # 'slp',  # Sea Level Pressure
+                # 'pw',   # Precipitable Water
+                # 'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
+                # 'cloudfrac', # Cloud Fraction
 
-    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_15Oct/ensemble_avg'
-    cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_20090122-20090213_gw'  # atmo output of wrf-cable run
-    cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_20090122-20090213_fd'  # atmo output of wrf-cable run
+    var_other         = [   "SWDNB", # INSTANTANEOUS DOWNWELLING SHORTWAVE FLUX AT BOTTOM
+                            "LWDNB", # INSTANTANEOUS DOWNWELLING LONGWAVE FLUX AT BOTTOM
+                            "SWUPB", # INSTANTANEOUS UPWELLING SHORTWAVE FLUX AT BOTTOM
+                            "LWUPB", # INSTANTANEOUS UPWELLING LONGWAVE FLUX AT BOTTOM
+                            ]
+    # ['RAINC','RAINNC','PSFC','U10','V10','TSK','PBLH']
+
+    hw_name           = "hw2019_3Nov" 
+
+    if hw_name == "hw2009_3Nov":
+        period     = "20090122-20090213"
+        time_s = datetime(2009,1,28,0,0,0,0)
+        time_e = datetime(2009,2,8,23,59,0,0)
+    elif  hw_name == "hw2013_3Nov":
+        period     = "20121229-20130122"
+        time_s = datetime(2013,1,4,0,0,0,0)
+        time_e = datetime(2013,1,18,23,59,0,0)
+    elif  hw_name == "hw2019_3Nov":
+        period     = "20190108-20190130"
+        time_s = datetime(2019,1,14,0,0,0)
+        time_e = datetime(2019,1,26,23,59,0,0)
+
+    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+hw_name+'/ensemble_avg'
+    cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_'+period+'_gw'  # atmo output of wrf-cable run
+    cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_'+period+'_fd'  # atmo output of wrf-cable run
 
     file_paths        = [cpl_atmo_file_fd,cpl_atmo_file_gw] # cpl_atmo_file_fd, cpl_atmo_file_gw
 
-    for j, var_name in enumerate(var_3D):
+    for j, var_name in enumerate(var_other):
 
-        # for i in np.arange(0,23):
-        #     time_s = datetime(2009,1,22,0,0,0,0) + timedelta(days=int(i))
-        #     time_e = datetime(2009,1,22,23,59,0,0) + timedelta(days=int(i))
+        if len(file_paths) > 1:
+            message = "Couple_GW-FD_"+str(time_s)+"-"+str(time_e)
+        else:
+            message = "Couple_GW_"+str(time_s)+"-"+str(time_e)
 
-        # 30 Jan
-        for i in np.arange(0,22):
-            time_s = datetime(2009,1,22,14,0,0,0) + timedelta(days=int(i))
-            time_e = datetime(2009,1,23,13,59,0,0) + timedelta(days=int(i))
-
-            if len(file_paths) > 1:
-                message = "Couple_GW-FD_"+str(time_s)
-            else:
-                message = "Couple_GW_"+str(time_s)
-
-            plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, message=message)
+        plot_spatial_wrf_surf(file_paths, var_name, time_s, time_e, message=message)
 
 
     #######################################################
