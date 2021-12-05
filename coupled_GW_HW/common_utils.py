@@ -112,6 +112,7 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
 
     '''
     Read observation data, output time coordinate and variable array
+    Output: AEST time
     '''
 
     print(var_name)
@@ -179,7 +180,11 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
 
 def read_wrf_time(file_path):
     
-   # Open the NetCDF file
+    '''
+    output: AEST time
+    '''
+    
+    # Open the NetCDF file
     encoding = 'utf-8' # Times in WRF output is btype, convert to string
 
     wrf      = Dataset(file_path)
@@ -195,8 +200,11 @@ def read_wrf_time(file_path):
     return time
 
 def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None, mask_map=None):
-
-    # output: [time,lat,lon]
+    
+    '''
+    output: [time,lat,lon]
+    '''
+    
     print("read "+var_name+" from wrf output")
 
     var_3D = [
@@ -218,12 +226,12 @@ def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None, mask_map=
         # 'cape_2d', # 2D CAPE (MCAPE/MCIN/LCL/LFC)
         var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
         print("======= cape_2d =======")
-        print(var_tmp)
+        # print(var_tmp)
     elif var_name == 'cloudfrac':
         # 'cloudfrac', # Cloud Fraction
         var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
         print("======= cloudfrac =======")
-        print(var_tmp)
+        # print(var_tmp)
     else:
         var_tmp  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
 
@@ -285,7 +293,7 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
         if var_name == 'cape_3d':
             Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)[0]
             print("======= Var =======")
-            print(Var)
+            # print(Var)
         else:
             Var  = getvar(wrf_file, var_name, timeidx=ALL_TIMES)
     else:
@@ -334,7 +342,7 @@ def time_clip_var(time, Var, time_s, time_e, seconds=None):
     for d in np.arange(days[0],days[-1]+1):
         var_tmp[cnt,:,:] = np.nanmean(var_slt[days == d,:,:],axis=0)
         cnt              = cnt +1 
-    print("var_tmp",var_tmp)
+    # print("var_tmp",var_tmp)
     
     return var_tmp
 
@@ -352,7 +360,9 @@ def time_clip_var_max(time, Var, time_s, time_e, seconds=None):
     
     time_cood = time_mask(time, time_s, time_e, seconds)
     time_slt  = time[time_cood]
-
+    
+    # print("time_slt",time_slt)
+    
     var_slt  = Var[time_cood,:,:]
 
     days     = []
@@ -362,14 +372,13 @@ def time_clip_var_max(time, Var, time_s, time_e, seconds=None):
 
     cnt = 0
     var_tmp  = np.zeros([len(days),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
+    var_tmp[:,:,:]  = np.nan
     
     for d in np.arange(days[0],days[-1]+1):
         var_tmp[cnt,:,:] = np.nanmax(var_slt[days == d,:,:],axis=0)
         cnt              = cnt +1 
-    print("var_tmp",var_tmp)
     
     return var_tmp
-
 
 def spital_var_max(time, Var, time_s, time_e, seconds=None):
 
@@ -395,11 +404,11 @@ def time_clip_var_min(time, Var, time_s, time_e, seconds=None):
 
     cnt = 0
     var_tmp  = np.zeros([len(days),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
+    var_tmp[:,:,:]  = np.nan
     
     for d in np.arange(days[0],days[-1]+1):
         var_tmp[cnt,:,:] = np.nanmin(var_slt[days == d,:,:],axis=0)
         cnt              = cnt +1 
-    print("var_tmp",var_tmp)
     
     return var_tmp
 
@@ -431,16 +440,15 @@ def spital_ERAI_tp(time,Var,time_s,time_e):
 
 def time_series_var(time,Var,time_s,time_e):
 
-    Time_s = time_s - datetime(2000,1,1,0,0,0)
-    Time_e = time_e - datetime(2000,1,1,0,0,0)
-
+    time_cood = time_mask(time, time_s, time_e)
+    
     if len(np.shape(Var)) == 3:
-        var_tmp  = Var[(time>=Time_s) & (time<=Time_e),:,:]
+        var_tmp  = Var[time_cood,:,:]
         var      = np.nanmean(var_tmp,axis=(1,2))
     if len(np.shape(Var)) == 4:
-        var_tmp  = Var[(time>=Time_s) & (time<=Time_e),:,:,:]
+        var_tmp  = Var[time_cood,:,:,:]
         var      = np.nanmean(var_tmp,axis=(2,3))
-    Time     = time[(time>=Time_s) & (time<=Time_e)]
+    Time     = time[time_cood]
 
     return Time,var
 

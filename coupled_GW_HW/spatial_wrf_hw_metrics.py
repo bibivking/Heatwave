@@ -326,7 +326,8 @@ def plot_spatial_wrf_hw_metrics(file_paths, var_name, time_s, time_e, metric='Tm
 
     fig.savefig('./plots/5Nov/hw_metric/3Nov/spatial_wrf_hw_metrics_'+message , bbox_inches='tight', pad_inches=0.1)
 
-def plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, file_paths, var_name, time_s, time_e, percent=90,   metric='Tmean',loc_lat=None, loc_lon=None, message=None):
+def plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, file_paths, var_name, time_s, 
+                                 time_e, percent=90, metric='Tmean',loc_lat=None, loc_lon=None, message=None):
 
     ### Calculate AWAP heatwave threshold ###
     # hw_thresholds(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, percent)
@@ -444,6 +445,121 @@ def plot_spatial_wrf_hw_durition(AWAP_tmax_file, AWAP_tmin_file, AWAP_file_out, 
 
     fig.savefig('./plots/5Nov/hw_metric/3Nov/spatial_wrf_hw_duriation_'+message , bbox_inches='tight', pad_inches=0.1)
 
+def plot_spatial_T_abv_thrshld(file_path, time_s, time_e, loc_lat=None, loc_lon=None, lat_names=None, lon_names=None):
+    
+    print("======== In plot_spatial_T_abv_thrshld =========")
+
+    # ### regrid AWAP to WRF domain ###
+    Tmn_regrid = regrid_AWAP_to_WRF(AWAP_file_out, file_paths[0])
+
+    # Open the NetCDF file
+    ncfile1  = Dataset(file_paths[0])
+    ntime    = len(ncfile1.variables['Times'][:,0])
+    time_tmp = []
+
+    for i in np.arange(ntime):
+        time_temp = datetime.strptime(str(ncfile1.variables['Times'][i,:], 'utf-8'),'%Y-%m-%d_%H:%M:%S')
+        time_tmp.append(UTC_to_AEST(time_temp) - datetime(2000,1,1))
+
+    time  = np.array(time_tmp)
+
+    # to get lat and lon
+    p1    = getvar(ncfile1, "pressure", timeidx=ALL_TIMES)
+
+    # Extract the pressure, geopotential height, and wind variables
+    Var1  = read_wrf_surf_var(file_paths[0], var_name, loc_lat, loc_lon) ????
+    Days1 = count_days_abv_thrshld(Var1, Tmn_regrid, time, time_s, time_e)
+
+    if len(file_paths) > 1:
+        Var2  = read_wrf_surf_var(file_paths[1], var_name, loc_lat, loc_lon)
+        Days2 = count_days_abv_thrshld(Var2, Tmn_regrid, time, time_s, time_e)
+        days  = Days2 - Days1
+    else:
+        days  = Days1
+
+    print(days)
+
+    # Get the lat/lon coordinates
+    lats, lons = latlon_coords(p1)
+
+    # Get the cartopy mapping object
+    cart_proj = get_cartopy(p1)
+
+    # Create the figure
+    fig = plt.figure(figsize=(12,9))
+    fig.subplots_adjust(hspace=0.3)
+    fig.subplots_adjust(wspace=0.2)
+
+    plt.rcParams['text.usetex']     = False
+    plt.rcParams['font.family']     = "sans-serif"
+    plt.rcParams['font.serif']      = "Helvetica"
+    plt.rcParams['axes.linewidth']  = 1.5
+    plt.rcParams['axes.labelsize']  = 14
+    plt.rcParams['font.size']       = 14
+    plt.rcParams['legend.fontsize'] = 12
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 14
+
+    almost_black = '#262626'
+    # change the tick colors also to the almost black
+    plt.rcParams['ytick.color']     = almost_black
+    plt.rcParams['xtick.color']     = almost_black
+
+    # change the text colors also to the almost black
+    plt.rcParams['text.color']      = almost_black
+
+    # Change the default axis colors from black to a slightly lighter black,
+    # and a little thinner (0.5 instead of 1)
+    plt.rcParams['axes.edgecolor']  = almost_black
+    plt.rcParams['axes.labelcolor'] = almost_black
+
+    # set the box type of sequence number
+    props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
+    # choose colormap
+
+    # Set the GeoAxes to the projection used by WRF
+    ax = plt.axes(projection=cart_proj)
+
+    # Download and add the states and coastlines
+    states = NaturalEarthFeature(category="cultural", scale="50m",
+                                         facecolor="none",
+                                         name="admin_1_states_provinces_shp")
+    ax.add_feature(states, linewidth=.5, edgecolor="black")
+    ax.coastlines('50m', linewidth=0.8)
+
+    # start plotting
+    if loc_lat == None:
+        ax.set_extent([135,155,-40,-25])
+    else:
+        ax.set_extent([loc_lon[0],loc_lon[1],loc_lat[0],loc_lat[1]])
+
+    # gaussian_filter(z,sigma=3)
+
+    # Add the var contours
+    if len(file_paths) > 1:
+        levels = [-20.,-18.,-16.,-14.,-12.,-10.,-8.,-6.,-4.,-2.,2.,4.,6.,8.,10.,12.,14.,16.,18.,20.]
+    else:
+        levels = np.arange(0., 50.,1.)
+    print(levels)
+
+    var_contours = plt.contourf(to_np(lons), to_np(lats), to_np(days),
+                                transform=ccrs.PlateCarree(), cmap=get_cmap("seismic"),
+                                levels = levels, extend='both') #,"jet" #“rainbow”#"coolwarm"
+    plt.colorbar(var_contours, ax=ax, orientation="horizontal", pad=.05)  #[levels!=0]"bwr" [levels!=0] levels = levels[levels!=0],
+    #
+    # Set the map bounds
+    ax.set_xlim(cartopy_xlim(p1))
+    ax.set_ylim(cartopy_ylim(p1))
+
+    plt.title(metric)
+
+    if message == None:
+        message = var_name+"_"+metric
+    else:
+        message = message+"_"+var_name+"_"+metric
+
+    fig.savefig('./plots/5Nov/hw_metric/3Nov/spatial_wrf_hw_duriation_'+message , bbox_inches='tight', pad_inches=0.1)
+        
 def plot_spatial_EHF(file_path, time_s, time_e, loc_lat=None, loc_lon=None, lat_names=None, lon_names=None):
 
     print("======== In plot_spital_map =========")
