@@ -107,6 +107,7 @@ def time_mask(time, time_s, time_e, seconds=None):
     return time_cood
 
 # ================================ Read variables ==============================
+
 def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon_name=None):
 
     '''
@@ -119,7 +120,7 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
     time_tmp   = nc.num2date(obs_file.variables['time'][:],obs_file.variables['time'].units,
                  only_use_cftime_datetimes=False, only_use_python_datetimes=True)
 
-    time       = time_tmp - datetime(2000,1,1,0,0,0)
+    time       = UTC_to_AEST(time_tmp) - datetime(2000,1,1,0,0,0)
 
     ntime      = len(time)
 
@@ -176,6 +177,23 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
                 Var = Var_tmp
     return time,Var
 
+def read_wrf_time(file_path):
+    
+   # Open the NetCDF file
+    encoding = 'utf-8' # Times in WRF output is btype, convert to string
+
+    wrf      = Dataset(file_path)
+    ntime    = len(wrf.variables['Times'][:,0])
+    time_tmp = []
+
+    for i in np.arange(ntime):
+        time_temp = datetime.strptime(str(wrf.variables['Times'][i,:], encoding),'%Y-%m-%d_%H:%M:%S')
+        time_tmp.append(UTC_to_AEST(time_temp) - datetime(2000,1,1))
+
+    time = np.array(time_tmp)
+
+    return time
+
 def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None, mask_map=None):
 
     # output: [time,lat,lon]
@@ -211,24 +229,24 @@ def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None, mask_map=
 
     if loc_lat == None:
         if mask_map is not None:
-            ntime  = len(p[:,0,0,0])
+            ntime      = len(p[:,0,0,0])
             mask_multi = [ mask_map ] * ntime
-            var  = np.where(mask_multi,var_tmp,np.nan)
+            var        = np.where(mask_multi,var_tmp,np.nan)
         else:
-            var  = var_tmp
+            var        = var_tmp
     else:
         ### need to fix, not work
-        ntime  = len(p[:,0,0,0])
-        mask   = mask_by_lat_lon(file_path, loc_lat, loc_lon, 'XLAT', 'XLONG')
+        ntime      = len(p[:,0,0,0])
+        mask       = mask_by_lat_lon(file_path, loc_lat, loc_lon, 'XLAT', 'XLONG')
         if mask_map is not None:
-            mask = np.where(np.all([mask,mask_map],axis=0), True, False)
+            mask   = np.where(np.all([mask,mask_map],axis=0), True, False)
         # np.savetxt("check",mask)
         mask_multi = [ mask ] * ntime
-        var    = np.where(mask_multi,var_tmp,np.nan)
+        var        = np.where(mask_multi,var_tmp,np.nan)
 
     return var
 
-def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=None, loc_lon=None):
+def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=None, loc_lon=None, p_hgt="p"):
 
     print("read "+var_name+" from wrf output")
 
@@ -257,7 +275,10 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
 
 
     wrf_file = Dataset(file_path)
-    p        = getvar(wrf_file, "pressure",timeidx=ALL_TIMES)
+    if p_hgt == "p":
+        p   = getvar(wrf_file, "pressure",timeidx=ALL_TIMES)
+    if p_hgt == "hgt":
+        hgt = getvar(wrf_file, "height_agl",timeidx=ALL_TIMES)
 
     # if var_name in var_4D:
     if var_unit == None:
@@ -275,14 +296,18 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
     if height == None:
         var_tmp  = Var
     else:
-        var_tmp  = interplevel(Var, p, height) ## need to check whether works with wrf_file.variables[var_name][:]
+        if p_hgt == "p":
+            var_tmp  = interplevel(Var, p, height)
+        if p_hgt == "hgt":
+            var_tmp  = interplevel(Var, hgt, height)
 
     if loc_lat == None:
         var  = var_tmp
     else:
         # here only suit 2D and 3D var
         ### need to fix, not work
-        ntime  = len(p[:,0,0,0])
+        ntime  = len(var_tmp[:,0,0])
+        # print("ntime",ntime)
         mask   = mask_by_lat_lon(file_path, loc_lat, loc_lon, 'XLAT', 'XLONG')
         # np.savetxt("check",mask)
         mask_multi = [ mask ] * ntime
@@ -291,35 +316,7 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
     return var
 
 # ========================= Spitial & temporal Average =========================
-def spital_var(time, Var, time_s, time_e, seconds=None):
-
-    time_cood = time_mask(time, time_s, time_e, seconds)
-    var       = np.nanmean(Var[time_cood],axis=0)
-
-    # np.savetxt("test_var.txt",var,delimiter=",")
-    return var
-
-def spital_var_max(time, Var, time_s, time_e, seconds=None):
-
-    time_cood = time_mask(time, time_s, time_e, seconds)
-    time_slt  = time[time_cood]
-
-    var_slt  = Var[time_cood,:,:]
-
-    days     = []
-    var_tmp  = []
-
-    for t in time_slt:
-        days.append(t.days)
-
-    for d in np.arange(days[0],days[-1]+1):
-        var_tmp.append(np.nanmax(var_slt[days == d,:,:],axis=0))
-
-    var = np.nanmean(var_tmp,axis=0)
-
-    return var
-
-def spital_var_min(time, Var, time_s, time_e, seconds=None):
+def time_clip_var(time, Var, time_s, time_e, seconds=None):
     
     time_cood = time_mask(time, time_s, time_e, seconds)
     time_slt  = time[time_cood]
@@ -327,13 +324,91 @@ def spital_var_min(time, Var, time_s, time_e, seconds=None):
     var_slt  = Var[time_cood,:,:]
 
     days     = []
-    var_tmp  = []
 
     for t in time_slt:
         days.append(t.days)
 
+    cnt = 0
+    var_tmp  = np.zeros([len(days),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
+    
     for d in np.arange(days[0],days[-1]+1):
-        var_tmp.append(np.nanmin(var_slt[days == d,:,:],axis=0))
+        var_tmp[cnt,:,:] = np.nanmean(var_slt[days == d,:,:],axis=0)
+        cnt              = cnt +1 
+    print("var_tmp",var_tmp)
+    
+    return var_tmp
+
+def spital_var(time, Var, time_s, time_e, seconds=None):
+    
+    # time should be AEST
+    
+    time_cood = time_mask(time, time_s, time_e, seconds)
+    var       = np.nanmean(Var[time_cood],axis=0)
+
+    # np.savetxt("test_var.txt",var,delimiter=",")
+    return var
+
+def time_clip_var_max(time, Var, time_s, time_e, seconds=None):
+    
+    time_cood = time_mask(time, time_s, time_e, seconds)
+    time_slt  = time[time_cood]
+
+    var_slt  = Var[time_cood,:,:]
+
+    days     = []
+
+    for t in time_slt:
+        days.append(t.days)
+
+    cnt = 0
+    var_tmp  = np.zeros([len(days),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
+    
+    for d in np.arange(days[0],days[-1]+1):
+        var_tmp[cnt,:,:] = np.nanmax(var_slt[days == d,:,:],axis=0)
+        cnt              = cnt +1 
+    print("var_tmp",var_tmp)
+    
+    return var_tmp
+
+
+def spital_var_max(time, Var, time_s, time_e, seconds=None):
+
+    # time should be AEST
+    
+    var_tmp = time_clip_var_max(time, Var, time_s, time_e, seconds=seconds)
+
+    var = np.nanmean(var_tmp,axis=0)
+
+    return var
+
+def time_clip_var_min(time, Var, time_s, time_e, seconds=None):
+    
+    time_cood = time_mask(time, time_s, time_e, seconds)
+    time_slt  = time[time_cood]
+
+    var_slt  = Var[time_cood,:,:]
+
+    days     = []
+
+    for t in time_slt:
+        days.append(t.days)
+
+    cnt = 0
+    var_tmp  = np.zeros([len(days),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
+    
+    for d in np.arange(days[0],days[-1]+1):
+        var_tmp[cnt,:,:] = np.nanmin(var_slt[days == d,:,:],axis=0)
+        cnt              = cnt +1 
+    print("var_tmp",var_tmp)
+    
+    return var_tmp
+
+
+def spital_var_min(time, Var, time_s, time_e, seconds=None):
+    
+    # time should be AEST
+    
+    var_tmp = time_clip_var_min(time, Var, time_s, time_e, seconds=seconds)
 
     var = np.nanmean(var_tmp,axis=0)
 
@@ -359,8 +434,12 @@ def time_series_var(time,Var,time_s,time_e):
     Time_s = time_s - datetime(2000,1,1,0,0,0)
     Time_e = time_e - datetime(2000,1,1,0,0,0)
 
-    var_tmp  = Var[(time>=Time_s) & (time<=Time_e),:,:]
-    var      = np.nanmean(var_tmp,axis=(1,2))
+    if len(np.shape(Var)) == 3:
+        var_tmp  = Var[(time>=Time_s) & (time<=Time_e),:,:]
+        var      = np.nanmean(var_tmp,axis=(1,2))
+    if len(np.shape(Var)) == 4:
+        var_tmp  = Var[(time>=Time_s) & (time<=Time_e),:,:,:]
+        var      = np.nanmean(var_tmp,axis=(2,3))
     Time     = time[(time>=Time_s) & (time<=Time_e)]
 
     return Time,var

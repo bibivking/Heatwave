@@ -606,7 +606,7 @@ def plot_spatial_qh_qair(case_names, wrf_path, loc_lat=None, loc_lon=None, secon
 
     plt.savefig('./plots/figures/spatial_map_Qh_Qair_2009_2013_2019.png',dpi=300)
 
-def plot_spatial_tmax_qle_fwsoil(case_names, wrf_path, loc_lat=None, loc_lon=None, seconds=None, message=None):
+def plot_spatial_fwsoil_qle_tmax(case_names, wrf_path, loc_lat=None, loc_lon=None, seconds=None, message=None):
 
     # ======================= Make plots ========================
     # Three integers (nrows, ncols, index)
@@ -661,10 +661,14 @@ def plot_spatial_tmax_qle_fwsoil(case_names, wrf_path, loc_lat=None, loc_lon=Non
     lon = wrf.variables['XLONG'][0,:,:]
     lat = wrf.variables['XLAT'][0,:,:]
 
-    texts = [ "(a) ΔT$_{max}$","(b) ΔQ$_{e}$","(c) Δ$β$",
-              "(d) ΔT$_{max}$","(e) ΔQ$_{e}$","(f) Δ$β$",
-              "(g) ΔT$_{max}$","(h) ΔQ$_{e}$","(i) Δ$β$" ]
-    cnt   = 0
+    texts = [ "(a)","(b)","(c)",
+              "(d)","(e)","(f)",
+              "(g)","(h)","(i)" ]
+    
+    label_x = ["ΔT$_{max}$","ΔQ$_{e}$","Δ$β$"]
+    label_y = ["2009","2013","2019"]
+    
+    cnt     = 0
 
     # ==================== Set up files ====================
     for i, case_name in enumerate(case_names):
@@ -759,51 +763,68 @@ def plot_spatial_tmax_qle_fwsoil(case_names, wrf_path, loc_lat=None, loc_lon=Non
                 gl.xlabels_bottom = True
             else:
                 gl.xlabels_bottom = False
+                
+            # set y label
+            if j == 0:
+                ax[i,j].set_ylabel(label_y[i],labelpad=0.01)#, fontsize=12)
+                
 
-        # left - Tmax
-        clevs1   = [-2.4,-2.2,-2,-1.8,-1.6,-1.4,-1.2,-1,-0.8,-0.6,-0.4,-0.2]
-        plot1    = ax[i,0].contourf(lon, lat, tmax, levels=clevs1, transform=ccrs.PlateCarree(),cmap=blue2white,extend='both')
+        # left - FWsoil
+        clevs1  = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.]
+        plot1   = ax[i,0].contourf(lon, lat, fw, levels=clevs1, transform=ccrs.PlateCarree(),cmap=white2blue,extend='both')
         ax[i,0].text(0.02, 0.15, texts[cnt], transform=ax[i,0].transAxes, fontsize=14, verticalalignment='top', bbox=props)
-
+       
         # middle - Qle
         clevs2   = [10, 20, 30, 40, 50, 60, 70, 80]
         plot2    = ax[i,1].contourf(lon, lat, qle, levels=clevs2, transform=ccrs.PlateCarree(),cmap=white2blue,extend='both')
         ax[i,1].text(0.02, 0.15, texts[cnt+1], transform=ax[i,1].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
-        # right - FWsoil
-        clevs3  = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.]
-        plot3   = ax[i,2].contourf(lon, lat, fw, levels=clevs3, transform=ccrs.PlateCarree(),cmap=white2blue,extend='both')
+        print("np.sum(tmax)",np.sum(tmax))
+        # right - Tmax
+        #clevs3   = [-2.4,-2.2,-2,-1.8,-1.6,-1.4,-1.2,-1,-0.8,-0.6,-0.4,-0.2]
+        plot3    = ax[i,2].contourf(lon, lat, tmax,transform=ccrs.PlateCarree(),cmap=blue2white,extend='both') # levels=clevs3, 
         ax[i,2].text(0.02, 0.15, texts[cnt+2], transform=ax[i,2].transAxes, fontsize=14, verticalalignment='top', bbox=props)
-        clevs   = None
 
+        # set top x label
+        if i == 0:
+            ax[i,0].xaxis.set_label_position('top') 
+            ax[i,1].xaxis.set_label_position('top') 
+            ax[i,2].xaxis.set_label_position('top') 
+            ax[i,0].set_xlabel(label_x[0],labelpad=0.01)#, fontsize=12)
+            ax[i,1].set_xlabel(label_x[1],labelpad=0.01)#, fontsize=12)
+            ax[i,2].set_xlabel(label_x[2],labelpad=0.01)#, fontsize=12)
+                
+        # set bottom colorbar
         if i == 2:
-            # left - Tmax
+
+            # left - Fwsoil
             cbar = plt.colorbar(plot1, ax=ax[:,0], ticklocation="right", pad=0.03, orientation="horizontal", aspect=20, shrink=0.6) # cax=cax,
-            color_label= "$\mathregular{^o}$C"
+            color_label= "-"
             cbar.set_label(color_label, loc='center',size=12)
             cbar.ax.tick_params(labelsize=10, rotation=45)
-
+            
             # middle - Qle
             cbar = plt.colorbar(plot2, ax=ax[:,1], ticklocation="right", pad=0.03, orientation="horizontal", aspect=20, shrink=0.6) # cax=cax,
             color_label= "W m$\mathregular{^{-2}}$"
             cbar.set_label(color_label, loc='center',size=12)
             cbar.ax.tick_params(labelsize=10, rotation=45)
-
-            # right - Fwsoil
+            
+            # right - Tmax
             cbar = plt.colorbar(plot3, ax=ax[:,2], ticklocation="right", pad=0.03, orientation="horizontal", aspect=20, shrink=0.6) # cax=cax,
-            color_label= "-"
+            color_label= "$\mathregular{^o}$C"
             cbar.set_label(color_label, loc='center',size=12)
             cbar.ax.tick_params(labelsize=10, rotation=45)
+            
         cnt = cnt + 3
 
     plt.savefig('./plots/figures/spatial_map_Tmax_Qle_fwsoil_2009_2013_2019.png',dpi=300)
 
-def plot_spatial_Rnet_LW(case_names, loc_lat=None, loc_lon=None, seconds=None, message=None):
+def plot_spatial_Rnet_LW_SW(case_names, loc_lat=None, loc_lon=None, seconds=None, message=None):
 
     # ======================= Make plots ========================
     # Three integers (nrows, ncols, index)
 
-    fig, ax = plt.subplots(nrows=3, ncols=4, figsize=[15,12],sharex=True, sharey=True, squeeze=True,
+    fig, ax = plt.subplots(nrows=3, ncols=5, figsize=[16,12],sharex=True, sharey=True, squeeze=True,
                            subplot_kw={'projection': ccrs.PlateCarree()})
     plt.subplots_adjust(wspace=-0.4, hspace=0)
 
@@ -840,11 +861,6 @@ def plot_spatial_Rnet_LW(case_names, loc_lat=None, loc_lon=None, seconds=None, m
 
     # ======================= Set colormap =======================
     cmap       = plt.cm.seismic
-    blue2white = truncate_colormap(cmap, minval=0., maxval=0.5)
-    white2red  = truncate_colormap(cmap, minval=0.5, maxval=1.)
-    cmap       = plt.cm.seismic_r
-    red2white  = truncate_colormap(cmap, minval=0., maxval=0.5)
-    white2blue = truncate_colormap(cmap, minval=0.5, maxval=1.)
 
     # ======================= Read WRF file =======================
     # use WRF output's lat & lon, since LIS output has default value
@@ -852,9 +868,10 @@ def plot_spatial_Rnet_LW(case_names, loc_lat=None, loc_lon=None, seconds=None, m
     lon = wrf.variables['XLONG'][0,:,:]
     lat = wrf.variables['XLAT'][0,:,:]
 
-    texts = [ "(a) ΔR$_{net}$","(b) ΔLW$_{net}$","(c) ΔLW$_{up}$","(d) ΔLW$_{dn}$",
-              "(e) ΔR$_{net}$","(f) ΔLW$_{net}$","(g) ΔLW$_{up}$","(h) ΔLW$_{dn}$",
-              "(i) ΔR$_{net}$","(j) ΔLW$_{net}$","(k) ΔLW$_{up}$","(l) ΔLW$_{dn}$" ]
+    texts   = [ "(a)","(b)","(c)","(d)","(e)","(f)","(g)","(h)","(i)","(j)","(k)","(l)","(m)","(n)","(o)"]
+    label_x = ["ΔR$_{net}$","ΔLW$_{net}$","ΔLW$_{up}$","ΔLW$_{dn}$","ΔSW$_{net}$"]
+    label_y = ["2009","2013","2019"]
+    
     cnt   = 0
 
     # ==================== Set up files ====================
@@ -899,10 +916,13 @@ def plot_spatial_Rnet_LW(case_names, loc_lat=None, loc_lon=None, seconds=None, m
         Lwnet1 = land1.variables["Lwnet_tavg"][:]
         lwnet1 = spital_var(time_land,Lwnet1,time_s,time_e,seconds)
 
+        # "Swnet_tavg":
+        Swnet1 = land1.variables["Swnet_tavg"][:]
+        swnet1 = spital_var(time_land,Swnet1,time_s,time_e,seconds)
+        
         atmo1    = Dataset(atmo_paths[0])
         ntime    = len(atmo1.variables['Times'][:,0])
         time_tmp = []
-
 
         # Atmosphere
         encoding    = 'utf-8' # Times in WRF output is btype, convert to string
@@ -934,7 +954,11 @@ def plot_spatial_Rnet_LW(case_names, loc_lat=None, loc_lon=None, seconds=None, m
             # "Lwnet_tavg":
             Lwnet2 = land2.variables["Lwnet_tavg"][:]
             lwnet2 = spital_var(time_land,Lwnet2,time_s,time_e,seconds)
-
+            
+            # "Swnet_tavg":
+            Swnet2 = land2.variables["Swnet_tavg"][:]
+            swnet2 = spital_var(time_land,Swnet2,time_s,time_e,seconds)
+            
             atmo2    = Dataset(atmo_paths[1])
             ntime    = len(atmo2.variables['Times'][:,0])
             time_tmp = []
@@ -946,25 +970,27 @@ def plot_spatial_Rnet_LW(case_names, loc_lat=None, loc_lon=None, seconds=None, m
             time_atmo = np.array(time_tmp)
 
             # "LWup"
-            LWup2  = read_wrf_surf_var(atmo_paths[0],"LWUPB")
+            LWup2  = read_wrf_surf_var(atmo_paths[1],"LWUPB")
             lwup2  = spital_var(time_atmo,LWup2,time_s,time_e,seconds)
 
             # "LWdn"
-            LWdn2  = read_wrf_surf_var(atmo_paths[0],"LWDNB")
+            LWdn2  = read_wrf_surf_var(atmo_paths[1],"LWDNB")
             lwdn2  = spital_var(time_atmo,LWdn2,time_s,time_e,seconds)
 
             rnet  = rnet2 - rnet1
             lwnet = lwnet2 - lwnet1
+            swnet = swnet2 - swnet1
             lwup  = lwup2 - lwup1
             lwdn  = lwdn2 - lwdn1
         else:
             rnet  = rnet1
             lwnet = lwnet1
+            swnet = swnet1
             lwup  = lwup1
             lwdn  = lwdn1
 
         # ==================== Start to plot ====================
-        for j in np.arange(4):
+        for j in np.arange(5):
 
             ax[i,j].coastlines(resolution="50m",linewidth=1)
             ax[i,j].set_extent([130,155,-44,-20])
@@ -991,8 +1017,14 @@ def plot_spatial_Rnet_LW(case_names, loc_lat=None, loc_lon=None, seconds=None, m
                 gl.xlabels_bottom = True
             else:
                 gl.xlabels_bottom = False
+                
+            # set y label
+            if j == 0:
+                ax[i,j].set_ylabel(label_y[i])#, fontsize=12)
+            
 
-        clevs    = [-22,-20,-18,-16,-14,-12,-10,-8,-6,-4,-2,2,4,6,8,10,12,14,16,18,20,22]
+        clevs    = [-22,-18,-14,-10,-6,-2,2,6,10,14,18,22]
+        # clevs    = [-25,-20,-15,-10,-5,5,10,15,20,25]
 
         # left - Rnet
         plot1    = ax[i,0].contourf(lon, lat, rnet, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
@@ -1002,26 +1034,42 @@ def plot_spatial_Rnet_LW(case_names, loc_lat=None, loc_lon=None, seconds=None, m
         plot2    = ax[i,1].contourf(lon, lat, lwnet, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
         ax[i,1].text(0.02, 0.15, texts[cnt+1], transform=ax[i,1].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
-        # right middle - LWdown
-        plot3   = ax[i,2].contourf(lon, lat, lwdn, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
+        # middle - LWup
+        plot3   = ax[i,2].contourf(lon, lat, lwup, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
         ax[i,2].text(0.02, 0.15, texts[cnt+2], transform=ax[i,2].transAxes, fontsize=14, verticalalignment='top', bbox=props)
-        
-        # right - LWup
-        plot4   = ax[i,3].contourf(lon, lat, lwup, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
+
+        # right middle - LWdn        
+        plot4   = ax[i,3].contourf(lon, lat, lwdn, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
         ax[i,3].text(0.02, 0.15, texts[cnt+3], transform=ax[i,3].transAxes, fontsize=14, verticalalignment='top', bbox=props)
+        
+        # right - SWnet
+        plot5   = ax[i,4].contourf(lon, lat, swnet, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
+        ax[i,4].text(0.02, 0.15, texts[cnt+4], transform=ax[i,4].transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
-
-        if i == 2 and j == 3:
+        if i == 2 and j == 4:
             cbar = plt.colorbar(plot1, ax=ax, ticklocation="right", pad=0.035, orientation="horizontal", aspect=40, shrink=0.8) # cax=cax,
             color_label= "W m$\mathregular{^{-2}}$"
             cbar.set_label(color_label, loc='center',size=12)
-            cbar.ax.tick_params(labelsize=10, rotation=45)
-            
-        cnt = cnt + 4
+            cbar.ax.tick_params(labelsize=10, rotation=90)
+        
+        # set top x label
+        if i == 0:
+            ax[i,0].set_xlabel(label_x[0])#, fontsize=12)
+            ax[i,1].set_xlabel(label_x[1])#, fontsize=12)
+            ax[i,2].set_xlabel(label_x[2])#, fontsize=12)
+            ax[i,3].set_xlabel(label_x[3])#, fontsize=12)
+            ax[i,4].set_xlabel(label_x[4])#, fontsize=12)
+            ax[i,0].xaxis.set_label_position('top') 
+            ax[i,1].xaxis.set_label_position('top') 
+            ax[i,2].xaxis.set_label_position('top') 
+            ax[i,3].xaxis.set_label_position('top') 
+            ax[i,4].xaxis.set_label_position('top') 
+                
+        cnt = cnt + 5
         # plt.title(var_name, size=16)
         # cb.ax[i,j].tick_params(labelsize=10)
 
-    plt.savefig('./plots/figures/spatial_map_plot_spatial_Rnet_LW_2009_2013_2019.png',dpi=300)
+    plt.savefig('./plots/figures/spatial_map_plot_spatial_Rnet_LW_SW_2009_2013_2019.png',dpi=300)
 
 if __name__ == "__main__":
 
@@ -1089,4 +1137,4 @@ if __name__ == "__main__":
 
     case_names = ["hw2009_3Nov", "hw2013_3Nov", "hw2019_3Nov"]
     wrf_path   = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_3Nov/ensemble_avg/wrfout_20090122-20090213_gw"
-    plot_spatial_Rnet_LW(case_names, wrf_path)
+    plot_spatial_fwsoil_qle_tmax(case_names, wrf_path)
