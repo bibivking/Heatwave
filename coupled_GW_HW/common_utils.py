@@ -89,7 +89,13 @@ def mask_by_lat_lon(file_path, loc_lat, loc_lon, lat_name, lon_name):
     return mask
 
 def time_mask(time, time_s, time_e, seconds=None):
-
+    
+    '''
+    Checked on 14 Dec 2021, no problem was identified
+    '''
+    
+    # print("In time_mask")
+    
     Time_s = time_s - datetime(2000,1,1,0,0,0)
     Time_e = time_e - datetime(2000,1,1,0,0,0)
 
@@ -103,7 +109,7 @@ def time_mask(time, time_s, time_e, seconds=None):
             else:
                 if_seconds = (time[j].seconds >= seconds[0]) & (time[j].seconds < seconds[1])
             time_cood.append( (time[j]>=Time_s) & (time[j]<Time_e) & if_seconds)
-
+    
     return time_cood
 
 # ================================ Read variables ==============================
@@ -179,11 +185,11 @@ def read_var(file_path, var_name, loc_lat=None, loc_lon=None, lat_name=None, lon
     return time,Var
 
 def read_wrf_time(file_path):
-    
+
     '''
     output: AEST time
     '''
-    
+
     # Open the NetCDF file
     encoding = 'utf-8' # Times in WRF output is btype, convert to string
 
@@ -200,11 +206,11 @@ def read_wrf_time(file_path):
     return time
 
 def read_wrf_surf_var(file_path, var_name, loc_lat=None, loc_lon=None, mask_map=None):
-    
+
     '''
     output: [time,lat,lon]
     '''
-    
+
     print("read "+var_name+" from wrf output")
 
     var_3D = [
@@ -263,7 +269,7 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
                 'avo',    # Absolute Vorticity
                 'eth',    # Equivalent Potential Temperature
                 'dbz',    # Reflectivity
-                'geopt',  # Geopotential for the Mass Grid  
+                'geopt',  # Geopotential for the Mass Grid
                 'omg',  # Omega
                 'pvo',  # Potential Vorticity
                 'rh',   # Relative Humidity
@@ -324,8 +330,8 @@ def read_wrf_hgt_var(file_path, var_name, var_unit=None, height=None, loc_lat=No
     return var
 
 # ========================= Spitial & temporal Average =========================
-def time_clip_var(time, Var, time_s, time_e, seconds=None):
-    
+def time_clip_to_day(time, Var, time_s, time_e, seconds=None):
+
     time_cood = time_mask(time, time_s, time_e, seconds)
     time_slt  = time[time_cood]
 
@@ -337,32 +343,32 @@ def time_clip_var(time, Var, time_s, time_e, seconds=None):
         days.append(t.days)
 
     cnt = 0
-    var_tmp  = np.zeros([len(days),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
-    
-    for d in np.arange(days[0],days[-1]+1):
+    var_tmp  = np.zeros([len(np.unique(days)),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
+
+    for d in np.unique(days):
         var_tmp[cnt,:,:] = np.nanmean(var_slt[days == d,:,:],axis=0)
-        cnt              = cnt +1 
+        cnt              = cnt +1
     # print("var_tmp",var_tmp)
-    
+
     return var_tmp
 
 def spital_var(time, Var, time_s, time_e, seconds=None):
-    
+
     # time should be AEST
-    
+
     time_cood = time_mask(time, time_s, time_e, seconds)
     var       = np.nanmean(Var[time_cood],axis=0)
 
     # np.savetxt("test_var.txt",var,delimiter=",")
     return var
 
-def time_clip_var_max(time, Var, time_s, time_e, seconds=None):
-    
+def time_clip_to_day_max(time, Var, time_s, time_e, seconds=None):
+
     time_cood = time_mask(time, time_s, time_e, seconds)
     time_slt  = time[time_cood]
-    
+
     # print("time_slt",time_slt)
-    
+
     var_slt  = Var[time_cood,:,:]
 
     days     = []
@@ -371,27 +377,27 @@ def time_clip_var_max(time, Var, time_s, time_e, seconds=None):
         days.append(t.days)
 
     cnt = 0
-    var_tmp  = np.zeros([len(days),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
+    var_tmp  = np.zeros([len(np.unique(days)),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
     var_tmp[:,:,:]  = np.nan
-    
-    for d in np.arange(days[0],days[-1]+1):
+
+    for d in np.unique(days):
         var_tmp[cnt,:,:] = np.nanmax(var_slt[days == d,:,:],axis=0)
-        cnt              = cnt +1 
-    
+        cnt              = cnt +1
+
     return var_tmp
 
 def spital_var_max(time, Var, time_s, time_e, seconds=None):
 
     # time should be AEST
-    
-    var_tmp = time_clip_var_max(time, Var, time_s, time_e, seconds=seconds)
+
+    var_tmp = time_clip_to_day_max(time, Var, time_s, time_e, seconds=seconds)
 
     var = np.nanmean(var_tmp,axis=0)
 
     return var
 
-def time_clip_var_min(time, Var, time_s, time_e, seconds=None):
-    
+def time_clip_to_day_min(time, Var, time_s, time_e, seconds=None):
+
     time_cood = time_mask(time, time_s, time_e, seconds)
     time_slt  = time[time_cood]
 
@@ -403,21 +409,20 @@ def time_clip_var_min(time, Var, time_s, time_e, seconds=None):
         days.append(t.days)
 
     cnt = 0
-    var_tmp  = np.zeros([len(days),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
+    var_tmp  = np.zeros([len(np.unique(days)),len(var_slt[0,:,0]),len(var_slt[0,0,:])])
     var_tmp[:,:,:]  = np.nan
-    
-    for d in np.arange(days[0],days[-1]+1):
+
+    for d in np.unique(days):
         var_tmp[cnt,:,:] = np.nanmin(var_slt[days == d,:,:],axis=0)
-        cnt              = cnt +1 
-    
+        cnt              = cnt +1
+
     return var_tmp
 
-
 def spital_var_min(time, Var, time_s, time_e, seconds=None):
-    
+
     # time should be AEST
-    
-    var_tmp = time_clip_var_min(time, Var, time_s, time_e, seconds=seconds)
+
+    var_tmp = time_clip_to_day_min(time, Var, time_s, time_e, seconds=seconds)
 
     var = np.nanmean(var_tmp,axis=0)
 
@@ -441,7 +446,7 @@ def spital_ERAI_tp(time,Var,time_s,time_e):
 def time_series_var(time,Var,time_s,time_e):
 
     time_cood = time_mask(time, time_s, time_e)
-    
+
     if len(np.shape(Var)) == 3:
         var_tmp  = Var[time_cood,:,:]
         var      = np.nanmean(var_tmp,axis=(1,2))
@@ -522,7 +527,7 @@ def get_wrf_var_range_diff(var_name):
     return ranges
 
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
-    
+
     new_cmap = colors.LinearSegmentedColormap.from_list(
         'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
         cmap(np.linspace(minval, maxval, n)))

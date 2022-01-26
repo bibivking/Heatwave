@@ -2,9 +2,9 @@
 
 #PBS -m ae
 #PBS -P w35
-#PBS -q hugemem
+#PBS -q express
 #PBS -l walltime=4:00:00
-#PBS -l mem=1470GB
+#PBS -l mem=190GB
 #PBS -l ncpus=1
 #PBS -j oe
 #PBS -l wd
@@ -12,4 +12,4 @@
 
 source activate science
 cd /g/data/w35/mm3972/scripts/Heatwave/coupled_GW_HW
-python spatial_wrf_hw_metrics.py
+python FigS1_spatial_map_wrf_domain_pft.py

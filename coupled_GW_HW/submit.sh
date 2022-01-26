@@ -2,9 +2,9 @@
 
 #PBS -m ae
 #PBS -P w35
-#PBS -q normalbw
-#PBS -l walltime=4:20:00
-#PBS -l mem=256GB
+#PBS -q express
+#PBS -l walltime=4:00:00
+#PBS -l mem=190GB
 #PBS -l ncpus=1
 #PBS -j oe
 #PBS -l wd
@@ -12,4 +12,4 @@
 
 source activate science
 cd /g/data/w35/mm3972/scripts/Heatwave/coupled_GW_HW
-python profile_wrf_var_figure2.py
+python FigS6_theta_profile.py
