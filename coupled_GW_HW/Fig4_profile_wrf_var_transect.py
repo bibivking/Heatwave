@@ -367,12 +367,12 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
     else:
         scale = 20.
 
-    # contour levels
+    # # contour levels
     levels1   = [-1.6,-1.4,-1.2,-1.0,-0.8,-0.6,-0.4,-0.2]
     levels2   = [ 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.6]
     # levels1   = [-1.2,-1.1,-1.,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1]
     # levels2   = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.1, 1.2]
-    
+
     # Water table depth height
     wtd_hgt   = [0,300]
 
@@ -396,7 +396,7 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
                               wa_night_crs[::3,::3], angles='xy', scale_units='xy',
                               scale=scale, pivot='middle', color="white")
     ax[0,1].text(0.02, 0.95, "(b) Δθ$\mathregular{_{min}}$", transform=ax[0,1].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
-    cb_var    = fig.colorbar(contour, ax=ax[0], pad=0.01, orientation="vertical", aspect=20, shrink=0.88)
+    cb_var    = fig.colorbar(contour, ax=ax[0], pad=0.01, orientation="vertical", aspect=20, shrink=0.94)
     cb_var.set_label('Δθ (${^o}$C)', loc='center') # rotation=270,
 
 
@@ -427,7 +427,7 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
     ax[1,1].text(0.02, 0.95, "(d) Δq$\mathregular{_{night}}$", transform=ax[1,1].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
     ax[1,1].set_xlabel("Longitude")#, fontsize=12)
 
-    cb_var    = fig.colorbar(contour, ax=ax[1], pad=0.01, orientation="vertical", aspect=20, shrink=0.88)
+    cb_var    = fig.colorbar(contour, ax=ax[1], pad=0.01, orientation="vertical", aspect=20, shrink=0.94)
     cb_var.set_label('Δq (g kg$^{-1}$)', loc='center')
 
     # colorbar position
@@ -436,14 +436,14 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
     cb_wtd.set_label('WTD (m)', loc='center',size=16)# rotation=270,
     cb_wtd.ax.tick_params(labelsize=12)
 
-    fig.savefig("./plots/profile_wrf_Wind_"+message, bbox_inches='tight', pad_inches=0.1)
+    fig.savefig("./plots/profile_wrf_Wind_"+message+"_transect", bbox_inches='tight', pad_inches=0.1)
 
 if __name__ == "__main__":
 
-    hw_name     = "hw2019_3Nov"
-    lat_slt     = -36.
-    lon_min     = 139.0
-    lon_max     = 152.0
+    hw_name     = "hw2009_3Nov"
+    lat_slt     = -26.
+    lon_min     = 130.0
+    lon_max     = 155.0
 
     # 2009
     if hw_name == "hw2009_3Nov":

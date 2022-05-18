@@ -423,7 +423,7 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
     q         = ax[1,1].quiver(xy_loc[::3], vertical[::3], ua_night_crs[::3,::3],
                               wa_night_crs[::3,::3], angles='xy', scale_units='xy',
                               scale=scale, pivot='middle', color="white")
-    ax[1,1].quiverkey(q,X=0.80, Y=2.1, U=scale, label=str(scale)+' m/s', labelpos='E', color="black")
+    ax[1,1].quiverkey(q,X=1.07, Y=-0.12, U=scale, label=str(scale)+' m/s', labelpos='E', color="black")
     ax[1,1].text(0.02, 0.95, "(d) Δq$\mathregular{_{night}}$", transform=ax[1,1].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
     ax[1,1].set_xlabel("Longitude")#, fontsize=12)
 
@@ -433,7 +433,7 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
     # colorbar position
     position  = fig.add_axes([0.14, 0.04, 0.62, 0.02]) # [left, bottom, width, height]
     cb_wtd    = fig.colorbar(cntr_wtd, ax=ax, pad=0.07, cax=position, orientation="horizontal", aspect=40, shrink=0.8)
-    cb_wtd.set_label('WTD (m)', loc='center',size=16)# rotation=270,
+    cb_wtd.set_label('WTD (m)', loc='center',size=12)# rotation=270,
     cb_wtd.ax.tick_params(labelsize=12)
 
     fig.savefig("./plots/profile_wrf_Wind_"+message, bbox_inches='tight', pad_inches=0.1)
@@ -472,11 +472,11 @@ if __name__ == "__main__":
         # Time_s = datetime(2019,1,8,14,0,0,0)
         # Time_e = datetime(2019,1,30,0,0,0,0)
         #
-    cpl_atmo_file     = '/g/data/w97/mm3972/model/wrf/NUWRF/LISWRF_configs/'+hw_name+'/ensemble_avg'
+    cpl_atmo_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+hw_name+'/ensemble_avg'
     cpl_atmo_file_gw  = cpl_atmo_file + '/wrfout_'+start_date+'-'+end_date+'_gw'  # atmo output of wrf-cable run
     cpl_atmo_file_fd  = cpl_atmo_file + '/wrfout_'+start_date+'-'+end_date+'_fd'  # atmo output of wrf-cable run
 
-    cpl_land_file     = '/g/data/w97/mm3972/model/wrf/NUWRF/LISWRF_configs/'+hw_name+'/ensemble_avg'
+    cpl_land_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+hw_name+'/ensemble_avg'
     cpl_land_file_gw  = cpl_land_file + '/LIS.CABLE.'+start_date+'-'+end_date+'_gw.nc' # land output of wrf-cable run
     cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.'+start_date+'-'+end_date+'_fd.nc' # land output of wrf-cable run
 

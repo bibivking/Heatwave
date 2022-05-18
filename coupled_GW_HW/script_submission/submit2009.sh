@@ -12,4 +12,4 @@
 
 source activate science
 cd /g/data/w35/mm3972/scripts/Heatwave/coupled_GW_HW
-python Fig1_spatial_map_wrf_domain_pft.py
+python Fig4_profile_wrf_var.py

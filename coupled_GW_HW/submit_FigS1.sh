@@ -12,4 +12,4 @@
 
 module load conda/analysis3-22.04
 cd /g/data/w97/mm3972/scripts/Heatwave/coupled_GW_HW
-python Fig4_profile_wrf_var_2013.py
+python FigS1_spatial_map_Tmax_Tmin_sim_vs_obs.py

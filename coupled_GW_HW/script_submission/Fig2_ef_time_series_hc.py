@@ -63,7 +63,7 @@ def get_mask(land_file, time_s, time_e, rain_val=None, wtd_val=None, pft_val=Non
     if check_pixel:
 
         # check mask
-        file_tmp = "/g/data/w97/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_3Nov/ensemble_avg/wrfout_20090122-20090213_gw"
+        file_tmp = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_3Nov/ensemble_avg/wrfout_20090122-20090213_gw"
         file = nc.Dataset(file_tmp, mode='r')
         p1   = getvar(file, "pressure")
         lon  = file.variables['XLONG'][0,:,:]
@@ -90,7 +90,7 @@ def get_mask(land_file, time_s, time_e, rain_val=None, wtd_val=None, pft_val=Non
 
         mask = np.where(np.isnan(mask_map), 0, 1)
         plt.contourf(lon, lat, mask, levels=[-0.1,0.1,1.1], transform=ccrs.PlateCarree(), cmap=plt.cm.jet)
-        plt.savefig('./plots/check_pixels_rain_wtd_pft.png',dpi=300)
+        plt.savefig('./plots/figures/check_pixels_rain_wtd_pft.png',dpi=300)
 
     return mask_map
 
@@ -109,8 +109,10 @@ def air_density(T,QV,P):
     '''
 
     RD      = 287.04         # [J/(K-kg)] Gas Constant dry air
-    TV      = T*(1+0.609*QV)
-    density = P/(RD*TV)
+    TV      = T[:]*(1+0.609*QV[:])
+    density = P[:]/(RD*TV[:])
+    print("TV",TV)
+    print("density",density)
 
     return density
 
@@ -190,9 +192,13 @@ def read_heat_content(file_path, time_s, time_e, loc_lat=None, loc_lon=None, mas
     qv    =  time_series_var(time,QV,time_s,time_e)
     p     =  time_series_var(time,P,time_s,time_e)
 
+    print("t",t)
+    print("qv",qv)
+    print("p",p)
+
     density = air_density(t,qv,p)
     hc      = calc_atmospheric_heat_content(t,density)
-    print(hc)
+    print("hc",hc)
 
     return hc
 
@@ -411,14 +417,14 @@ def plot_time_series_vs_wtd( path, case_names, periods, time_ss, time_es, second
                     # plot3 = ax[2].fill_between(x, hc_min[1,:], hc_max[1,:], alpha=0.5, facecolor='green') # "GW"
                 else:
                     # heatwave
-                    plot1 = ax[0,loc_num].plot(x, tair_mean[0,:],  color="brown", label="hw FD") # FD
+                    plot1 = ax[0,loc_num].plot(x, tair_mean[0,:],  color="red", label="hw FD") # FD
                     plot1 = ax[0,loc_num].plot(x, tair_mean[1,:],  color="blue", label="hw GW") # GW
-                    plot1 = ax[0,loc_num].fill_between(x, tair_min[0,:], tair_max[0,:], alpha=0.5, facecolor='brown') # "FD"
+                    plot1 = ax[0,loc_num].fill_between(x, tair_min[0,:], tair_max[0,:], alpha=0.5, facecolor='red') # "FD"
                     plot1 = ax[0,loc_num].fill_between(x, tair_min[1,:], tair_max[1,:], alpha=0.5, facecolor='blue') # "GW"
 
-                    plot2 = ax[1,loc_num].plot(x, pbl_mean[0,:],  color="brown", label="hw FD") # FD
+                    plot2 = ax[1,loc_num].plot(x, pbl_mean[0,:],  color="red", label="hw FD") # FD
                     plot2 = ax[1,loc_num].plot(x, pbl_mean[1,:],  color="blue", label="hw GW") # GW
-                    plot2 = ax[1,loc_num].fill_between(x, pbl_min[0,:], pbl_max[0,:], alpha=0.5, facecolor='brown') # "FD"
+                    plot2 = ax[1,loc_num].fill_between(x, pbl_min[0,:], pbl_max[0,:], alpha=0.5, facecolor='red') # "FD"
                     plot2 = ax[1,loc_num].fill_between(x, pbl_min[1,:], pbl_max[1,:], alpha=0.5, facecolor='blue') # "GW"
             else:
 
@@ -471,7 +477,7 @@ def plot_time_series_vs_wtd( path, case_names, periods, time_ss, time_es, second
     # =============== add legend ===============
     custom_lines = [Line2D([0], [0], color="orange", lw=1),
                     Line2D([0], [0], color="green", lw=1),
-                    Line2D([0], [0], color="brown", lw=1),
+                    Line2D([0], [0], color="red", lw=1),
                     Line2D([0], [0], color="blue", lw=1)]
     fig.legend(custom_lines, ['pre-hw FD', 'pre-hw GW', 'hw FD', 'hw GW'], loc='upper right', bbox_to_anchor=(0.7, 0.9), frameon=False)
     # fig.tight_layout()
@@ -486,7 +492,7 @@ def plot_time_series_vs_wtd( path, case_names, periods, time_ss, time_es, second
     #     message = message + "_lat="+str(loc_lat) + "_lon="+str(loc_lon)
 
     fig.tight_layout()
-    plt.savefig('./plots/'+message+'vs_WTD.png',dpi=300)
+    plt.savefig('./plots/figures/'+message+'vs_WTD.png',dpi=300)
 
 def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,loc_lats=None, loc_lons=None,
                       message=None, rain_val=None, wtd_val=None, pft_val=None, is_diurnal=True, is_envelop=True):
@@ -495,7 +501,7 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
 
     # ============== Set the plot ==============
     fig, ax = plt.subplots(nrows=1, ncols=2, figsize=[15,5], sharex=True, squeeze=True) # sharex=True,sharey='row',
-    plt.subplots_adjust(left=0.06,top=0.98,right=0.9, wspace=0.155, hspace=0)
+    plt.subplots_adjust(left=0.06,top=0.98,right=0.9, wspace=0.14, hspace=0)
 
     plt.rcParams['text.usetex']     = False
     plt.rcParams['font.family']     = "sans-serif"
@@ -564,7 +570,7 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
     nperiods     = len(time_ss[hw_num][:])
 
     colors       = [ ["orange","green"],  # pre-heatwave
-                     ["brown","blue"]     ] # heatwave
+                     ["red","blue"]     ] # heatwave
     labels       = [ ["pre-hw FD","pre-hw GW"],  # pre-heatwave
                      ["hw FD","hw GW"]         ] # heatwave
 
@@ -581,7 +587,7 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
         ntime     = len(time) # number of total selected timestep
         tair      = np.zeros([ntime,case_sum])
         pbl       = np.zeros([ntime,case_sum])
-        # hc        = np.zeros([ntime,case_sum])
+        hc        = np.zeros([ntime,case_sum])
 
         # ============== get mask =============
         is_mask     = (rain_val is not None) | (wtd_val is not None) | (pft_val is not None)
@@ -597,13 +603,13 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
             file_path = file_paths[case_num]
             time, tair[:,case_num]= read_ensembles(file_path, "Tair", time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon)
             time, pbl[:,case_num] = read_ensembles(file_path, "PBL", time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon)
-            # hc_tmp[:,case_num]    = read_heat_content(file_path, time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon)
+            hc_tmp[:,case_num]    = read_heat_content(file_path, time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon)
 
         # ============== calc diurnal ==============
         if is_diurnal:
             tair = calc_diurnal_cycle(time,tair)
             pbl  = calc_diurnal_cycle(time,pbl)
-            # hc   = calc_diurnal_cycle(time,hc)
+            hc   = calc_diurnal_cycle(time,hc)
 
         # ============== plotting ==============
         if cyc_num%2 ==0:
@@ -615,18 +621,25 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
 
             tair_mean,tair_min,tair_max = calc_mean_min_max(tair,nt)
             pbl_mean,pbl_min,pbl_max    = calc_mean_min_max(pbl,nt)
-            # hc_mean,hc_min,hc_max       = calc_mean_min_max(hc,nt)
+            hc_mean,hc_min,hc_max       = calc_mean_min_max(hc,nt)
 
             for fd_gw in np.arange(2):
 
                 color = colors[cyc_num%2][fd_gw]
                 label = labels[cyc_num%2][fd_gw]
 
-                # Tair
-                var   = tair_mean[fd_gw,:]
+                # # Tair
+                # var   = tair_mean[fd_gw,:]
+                # x_max = np.argmax(var)
+                # plot  = ax[0].plot(x, var, color=color, lw=1.0, label=label)
+                # plot  = ax[0].fill_between(x, tair_min[fd_gw,:], tair_max[fd_gw,:], alpha=0.5, facecolor=color)
+                # ax[0].axvline(x=x[x_max], color=color,lw=1.0, alpha=0.4, linestyle='--')
+
+                # HC
+                var   = hc_mean[fd_gw,:]
                 x_max = np.argmax(var)
                 plot  = ax[0].plot(x, var, color=color, lw=1.0, label=label)
-                plot  = ax[0].fill_between(x, tair_min[fd_gw,:], tair_max[fd_gw,:], alpha=0.5, facecolor=color)
+                plot  = ax[0].fill_between(x, hc_min[fd_gw,:], hc_max[fd_gw,:], alpha=0.5, facecolor=color)
                 ax[0].axvline(x=x[x_max], color=color,lw=1.0, alpha=0.4, linestyle='--')
 
                 # PBL
@@ -668,20 +681,16 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
 
     print(x_ticks)
     print(x_ticklabels)
-    
-    # =============== add label & order ===============
-    ax[0].set_xticks(x_ticks)
-    ax[0].set_xticklabels(x_ticklabels,fontdict={'fontsize':14})
-    ax[0].tick_params(axis='y', labelsize=14)
-    ax[0].text(0.02, 0.95, "(e)", transform=ax[0].transAxes, verticalalignment='top', bbox=props,fontdict={'fontsize':18})
-    ax[0].set_ylabel("T$\mathregular{_{2m}}$ ($^{o}$C)",fontsize=16)
-    
-    
+
     ax[1].set_xticks(x_ticks)
-    ax[1].set_xticklabels(x_ticklabels,fontdict={'fontsize':14})
-    ax[1].tick_params(axis='y', labelsize=14)
-    ax[1].text(0.02, 0.95, "(f)", transform=ax[1].transAxes, verticalalignment='top', bbox=props,fontdict={'fontsize':18})
-    ax[1].set_ylabel("ABL (m)",fontsize=16)
+    ax[1].set_xticklabels(x_ticklabels)
+
+    # =============== add order ===============
+    ax[0].text(0.02, 0.95, "(e)", transform=ax[0].transAxes, verticalalignment='top', bbox=props)
+    ax[0].set_ylabel("T$_{2m}$ ($^{o}$C)",fontsize=14)
+
+    ax[1].text(0.02, 0.95, "(f)", transform=ax[1].transAxes, verticalalignment='top', bbox=props)
+    ax[1].set_ylabel("PBL (m)",fontsize=14)
 
     # =============== add units ===============
     # ax[0].text(0.02, 0.5, "$^{o}C$", va='bottom', ha='center',
@@ -698,11 +707,11 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
     # =============== add legend ===============
     custom_lines = [Line2D([0], [0], color="orange", lw=1),
                     Line2D([0], [0], color="green", lw=1),
-                    Line2D([0], [0], color="brown", lw=1),
+                    Line2D([0], [0], color="red", lw=1),
                     Line2D([0], [0], color="blue", lw=1)]
 
     fig.legend(custom_lines, ['pre-hw FD', 'pre-hw GW', 'hw FD', 'hw GW'],
-               loc='upper right', bbox_to_anchor=(0.79, 0.95), frameon=False, fontsize=14)
+               loc='upper right', bbox_to_anchor=(0.78, 0.95), frameon=False)
     # fig.tight_layout()
 
     # ============ savefig ============
@@ -715,7 +724,7 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
     #     message = message + "_lat="+str(loc_lat) + "_lon="+str(loc_lon)
 
     # fig.tight_layout()
-    plt.savefig('./plots/'+message+'.png',dpi=300)
+    plt.savefig('./plots/figures/'+message+'_hc.png',dpi=300)
 
 if __name__ == "__main__":
 
@@ -723,7 +732,7 @@ if __name__ == "__main__":
     #        Set decks      #
     # #######################
 
-    path       = "/g/data/w97/mm3972/model/wrf/NUWRF/LISWRF_configs/"
+    path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"
 
     case_names = [
                   "hw2009_3Nov",
@@ -753,13 +762,8 @@ if __name__ == "__main__":
     loc_lats   = [[-36.5,-35.5],
                   [-36.5,-35.5]]
 
-
-    loc_lons   = [[148.,149.],
+    loc_lons   = [[148.5,149.5],
                   [141.5,142.5]]
-
-
-    # loc_lons   = [[148.5,149.5],
-    #               [141.5,142.5]]
 
 
     plot_time_series(path, case_names, periods, time_ss, time_es,

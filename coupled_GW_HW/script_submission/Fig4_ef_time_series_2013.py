@@ -527,7 +527,7 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
     cmap      = plt.cm.seismic
 
     # ============== read heatwave information ==============
-    hw_num    = 0 # 2009
+    hw_num    = 1 # 2013
     case_name = case_names[hw_num]
     period    = periods[hw_num]
 
@@ -717,6 +717,250 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
     # fig.tight_layout()
     plt.savefig('./plots/'+message+'.png',dpi=300)
 
+def plot_time_series_3hws( path, case_names, periods, time_ss, time_es, seconds=None,loc_lats=None, loc_lons=None,
+                      message=None, rain_val=None, wtd_val=None, pft_val=None, is_diurnal=True, is_envelop=True):
+
+    print("======== In plot_time_series =========")
+
+    # ============== Set the plot ==============
+    fig, ax = plt.subplots(nrows=3, ncols=2, figsize=[15,15], sharex=True, squeeze=True) # sharex=True,sharey='row',
+    plt.subplots_adjust(left=0.06,top=0.98,right=0.9, wspace=0.155, hspace=0)
+
+    plt.rcParams['text.usetex']     = False
+    plt.rcParams['font.family']     = "sans-serif"
+    plt.rcParams['font.serif']      = "Helvetica"
+    plt.rcParams['axes.linewidth']  = 1.5
+    plt.rcParams['axes.labelsize']  = 14
+    plt.rcParams['font.size']       = 14
+    plt.rcParams['legend.fontsize'] = 12
+    plt.rcParams['xtick.labelsize'] = 14
+    plt.rcParams['ytick.labelsize'] = 14
+
+    almost_black = '#262626'
+    # change the tick colors also to the almost black
+    plt.rcParams['ytick.color']     = almost_black
+    plt.rcParams['xtick.color']     = almost_black
+
+    # change the text colors also to the almost black
+    plt.rcParams['text.color']      = almost_black
+
+    # Change the default axis colors from black to a slightly lighter black,
+    # and a little thinner (0.5 instead of 1)
+    plt.rcParams['axes.edgecolor']  = almost_black
+    plt.rcParams['axes.labelcolor'] = almost_black
+
+    # set the box type of sequence number
+    props = dict(boxstyle="round", facecolor='white', alpha=0.0, ec='white')
+
+    # ======================= Set colormap =======================
+    cmap      = plt.cm.seismic
+
+    colors    = [ ["orange","green"],  # pre-heatwave
+                    ["brown","blue"]     ] # heatwave
+    labels    = [ ["pre-hw FD","pre-hw GW"],  # pre-heatwave
+                    ["hw FD","hw GW"]         ] # heatwave
+    orders    = ['(a)','(b)','(c)','(d)','(e)','(f)']
+    
+    label_x   = ["T$\mathregular{_{2m}}$ ($^{o}$C)","ABL (m)"]
+    label_y   = ["2009","2013","2019"]
+    loc_y     = [0.55,0.5,0.45]
+    
+    # ============== read heatwave information ==============
+    for hw_num in np.arange(3):
+        case_name = case_names[hw_num]
+        period    = periods[hw_num]
+
+        # ============== set up file names ==============
+        if case_name == "hw2009_3Nov":
+            rst_dates = ["20090117","20090118","20090119","20090120","20090121" ]
+        elif case_name == "hw2013_3Nov":
+            rst_dates = ["20121224","20121225","20121226","20121227","20121228" ]
+        elif case_name == "hw2019_3Nov":
+            rst_dates = ["20190103","20190104","20190105","20190106","20190107" ]
+
+        file_path  = path + case_name
+        file_paths = None
+        file_paths = [ file_path + "/fd_rst_" + rst_dates[0] + "/WRF_output/wrfout_" + period,
+                    file_path + "/fd_rst_" + rst_dates[1] + "/WRF_output/wrfout_" + period,
+                    file_path + "/fd_rst_" + rst_dates[2] + "/WRF_output/wrfout_" + period,
+                    file_path + "/fd_rst_" + rst_dates[3] + "/WRF_output/wrfout_" + period,
+                    file_path + "/fd_rst_" + rst_dates[4] + "/WRF_output/wrfout_" + period,
+                    file_path + "/gw_rst_" + rst_dates[0] + "/WRF_output/wrfout_" + period,
+                    file_path + "/gw_rst_" + rst_dates[1] + "/WRF_output/wrfout_" + period,
+                    file_path + "/gw_rst_" + rst_dates[2] + "/WRF_output/wrfout_" + period,
+                    file_path + "/gw_rst_" + rst_dates[3] + "/WRF_output/wrfout_" + period,
+                    file_path + "/gw_rst_" + rst_dates[4] + "/WRF_output/wrfout_" + period ]
+        case_sum  = len(file_paths)
+
+        # ============== loop different location shallow WTD vs deep WTD ==============
+        loc_num      = 0
+
+        loc_lat      = loc_lats[loc_num]
+        loc_lon      = loc_lons[loc_num]
+        print("lat=",loc_lat,"lon=",loc_lon)
+
+        x_ticks      = []
+        x_ticklabels = []
+        nperiods     = len(time_ss[hw_num][:])
+
+        # ============== loop different periods (pre/during heatwaves) ==============
+        for cyc_num in np.arange(nperiods):
+            time_s    = time_ss[hw_num][cyc_num]
+            time_e    = time_es[hw_num][cyc_num]
+            print("period=",time_s,"-",time_e)
+
+            # ============== read variables ==============
+            time, tmp = read_ensembles(file_paths[0], "PBL", time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon)
+            tmp       = None
+
+            ntime     = len(time) # number of total selected timestep
+            tair      = np.zeros([ntime,case_sum])
+            pbl       = np.zeros([ntime,case_sum])
+            # hc        = np.zeros([ntime,case_sum])
+
+            # ============== get mask =============
+            is_mask     = (rain_val is not None) | (wtd_val is not None) | (pft_val is not None)
+            check_pixel = False
+
+            if is_mask:
+                land_file  = path + case_name + "/ensemble_avg/LIS.CABLE."+period+"_gw.nc"
+                print("land_file=",land_file)
+                mask_map = get_mask(land_file, time_s, time_e, rain_val, wtd_val, pft_val, check_pixel=check_pixel)
+
+            # ============== read variables =============
+            for case_num in np.arange(case_sum):
+                file_path = file_paths[case_num]
+                time, tair[:,case_num]= read_ensembles(file_path, "Tair", time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon)
+                time, pbl[:,case_num] = read_ensembles(file_path, "PBL", time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon)
+                # hc_tmp[:,case_num]    = read_heat_content(file_path, time_s, time_e, loc_lat=loc_lat, loc_lon=loc_lon)
+
+            # ============== calc diurnal ==============
+            if is_diurnal:
+                tair = calc_diurnal_cycle(time,tair)
+                pbl  = calc_diurnal_cycle(time,pbl)
+                # hc   = calc_diurnal_cycle(time,hc)
+
+            # ============== plotting ==============
+            if cyc_num%2 ==0:
+                # per heatwave
+                nt  = len(tair[:,0])
+                x   = np.arange(nt) + (nt+1)*int(cyc_num/2)
+
+            if is_envelop:
+
+                tair_mean,tair_min,tair_max = calc_mean_min_max(tair,nt)
+                pbl_mean,pbl_min,pbl_max    = calc_mean_min_max(pbl,nt)
+                # hc_mean,hc_min,hc_max       = calc_mean_min_max(hc,nt)
+
+                for fd_gw in np.arange(2):
+
+                    color = colors[cyc_num%2][fd_gw]
+                    label = labels[cyc_num%2][fd_gw]
+
+                    # Tair
+                    var   = tair_mean[fd_gw,:]
+                    x_max = np.argmax(var)
+                    plot  = ax[0].plot(x, var, color=color, lw=1.0, label=label)
+                    plot  = ax[0].fill_between(x, tair_min[fd_gw,:], tair_max[fd_gw,:], alpha=0.5, facecolor=color)
+                    ax[0].axvline(x=x[x_max], color=color,lw=1.0, alpha=0.4, linestyle='--')
+
+                    # PBL
+                    var   = pbl_mean[fd_gw,:]
+                    x_max = np.argmax(var)
+                    plot  = ax[1].plot(x, var, color=color, lw=1.0, label=label)
+                    plot  = ax[1].fill_between(x, pbl_min[fd_gw,:], pbl_max[fd_gw,:], alpha=0.5, facecolor=color)
+                    # ax[1].axvline(x=x[x_max], color=color,lw=1.0, alpha=0.4, linestyle='--')
+
+            else:
+
+                labels = ["fd-10d","fd-9d","fd-8d","fd-7d","fd-6d","gw-10d","gw-9d","gw-8d","gw-7d","gw-6d"]
+                alpha  = [1.0,0.9,0.8,0.7,0.6,1.0,0.9,0.8,0.7,0.6]
+
+                for case_num in np.arange(case_sum):
+                    if case_num < 5:
+                        plot1 = ax[0].plot(x,tair[:,case_num],  color="darkred", alpha = alpha[case_num], label=labels[case_num]) # colors="Reds",
+                        plot2 = ax[1].plot(x,pbl[:,case_num], color="darkred", alpha = alpha[case_num], label=labels[case_num]) # colors="Reds",
+                        # plot3 = ax[2].plot(x,hc[:,case_num], color="darkred", alpha = alpha[case_num], label=labels[case_num])
+                    else:
+                        plot1 = ax[0].plot(x,tair[:,case_num],  color="darkblue", alpha = alpha[case_num], label=labels[case_num])
+                        plot2 = ax[1].plot(x,pbl[:,case_num], color="darkblue", alpha = alpha[case_num], label=labels[case_num]) # colors="Reds",
+                        # plot3 = ax[2].plot(x,hc[:,case_num], color="darkred", alpha = alpha[case_num], label=labels[case_num])
+
+                # =============== add thrhld =============
+                # heat_thrhld = read_heat_thrhld( time_s,time_e, loc_lat=loc_lat, loc_lon=loc_lon)
+                # print(heat_thrhld)
+                # ax[0].axhline(y=heat_thrhld, color="gray", linestyle='--')
+
+            if cyc_num%2 == 0:
+                if is_diurnal:
+                    x_ticks      = np.concatenate((x_ticks, x[::6]), axis=0)
+                    x_ticklabels = np.concatenate((x_ticklabels, ['0:00','6:00','12:00','18:00']), axis=0)
+                else:
+                    # ax.set_xlim([0,nt])
+                    x_ticks      = np.arange(0,max(x),12)
+                    x_ticklabels = ['-1d 0:00','-1d 12:00','1d 0:00','1d 12:00','2d 0:00','2d 12:00',
+                                    '3d 0:00','3d 12:00','4d 0:00','4d 12:00','+1d 0:00','+1d 12:00']
+
+        print(x_ticks)
+        print(x_ticklabels)
+        
+        # =============== add label & order ===============
+        
+        # set x label/title
+        if hw_num == 0: 
+            ax[0].set_title(label_x[0],fontsize=16)
+            ax[1].set_title(label_x[1],fontsize=16)
+            
+        # set y label
+        ax[hw_num*2].text(-0.2, loc_y[hw_num], label_y[hw_num], va='bottom', ha='center',
+                            rotation='vertical', rotation_mode='anchor',
+                            transform=ax[hw_num*2].transAxes)
+
+        ax[hw_num*2].set_xticks(x_ticks)
+        ax[hw_num*2].set_xticklabels(x_ticklabels,fontdict={'fontsize':14})
+        ax[hw_num*2].tick_params(axis='y', labelsize=14)
+        ax[hw_num*2].text(0.02, 0.95, orders[hw_num*2], transform=ax[hw_num*2].transAxes, verticalalignment='top', bbox=props,fontdict={'fontsize':18})
+                    
+        ax[hw_num*2+1].set_xticks(x_ticks)
+        ax[hw_num*2+1].set_xticklabels(x_ticklabels,fontdict={'fontsize':14})
+        ax[hw_num*2+1].tick_params(axis='y', labelsize=14)
+        ax[hw_num*2+1].text(0.02, 0.95, orders[hw_num*2+1], transform=ax[hw_num*2+1].transAxes, verticalalignment='top', bbox=props,fontdict={'fontsize':18})
+
+        # =============== add units ===============
+        # ax[0].text(0.02, 0.5, "$^{o}C$", va='bottom', ha='center',
+        #             rotation='vertical', rotation_mode='anchor',
+        #             transform=ax[0].transAxes)
+
+        # ax[1].text(0.49, 0.5, "m", va='bottom', ha='center',
+        #             rotation='vertical', rotation_mode='anchor',
+        #             transform=ax[1].transAxes)
+
+
+        # ax[2].text(0.02, 0.95, "(c) HC", transform=ax[1].transAxes, verticalalignment='top', bbox=props)
+
+        # =============== add legend ===============
+        custom_lines = [Line2D([0], [0], color="orange", lw=1),
+                        Line2D([0], [0], color="green", lw=1),
+                        Line2D([0], [0], color="brown", lw=1),
+                        Line2D([0], [0], color="blue", lw=1)]
+
+        fig.legend(custom_lines, ['pre-hw FD', 'pre-hw GW', 'hw FD', 'hw GW'],
+                loc='upper right', bbox_to_anchor=(0.79, 0.95), frameon=False, fontsize=14)
+        # fig.tight_layout()
+
+        # ============ savefig ============
+        if is_diurnal:
+            message = 'durinal_cycle_Tmax_PBL_' +case_name
+        else:
+            message = 'time_series_Tmax_PBL_' +case_name
+
+        # if loc_lat != None:
+        #     message = message + "_lat="+str(loc_lat) + "_lon="+str(loc_lon)
+
+        # fig.tight_layout()
+    plt.savefig('./plots/'+message+'.png',dpi=300)
+    
+    
 if __name__ == "__main__":
 
     # #######################

@@ -63,7 +63,7 @@ def get_mask(land_file, time_s, time_e, rain_val=None, wtd_val=None, pft_val=Non
     if check_pixel:
 
         # check mask
-        file_tmp = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_3Nov/ensemble_avg/wrfout_20090122-20090213_gw"
+        file_tmp = "/g/data/w97/mm3972/model/wrf/NUWRF/LISWRF_configs/hw2009_3Nov/ensemble_avg/wrfout_20090122-20090213_gw"
         file = nc.Dataset(file_tmp, mode='r')
         p1   = getvar(file, "pressure")
         lon  = file.variables['XLONG'][0,:,:]
@@ -495,7 +495,7 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
 
     # ============== Set the plot ==============
     fig, ax = plt.subplots(nrows=1, ncols=2, figsize=[15,5], sharex=True, squeeze=True) # sharex=True,sharey='row',
-    plt.subplots_adjust(left=0.06,top=0.98,right=0.9, wspace=0.14, hspace=0)
+    plt.subplots_adjust(left=0.06,top=0.98,right=0.9, wspace=0.155, hspace=0)
 
     plt.rcParams['text.usetex']     = False
     plt.rcParams['font.family']     = "sans-serif"
@@ -527,7 +527,7 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
     cmap      = plt.cm.seismic
 
     # ============== read heatwave information ==============
-    hw_num    = 1 # 2013
+    hw_num    = 0 # 2009
     case_name = case_names[hw_num]
     period    = periods[hw_num]
 
@@ -668,16 +668,20 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
 
     print(x_ticks)
     print(x_ticklabels)
-
+    
+    # =============== add label & order ===============
+    ax[0].set_xticks(x_ticks)
+    ax[0].set_xticklabels(x_ticklabels,fontdict={'fontsize':14})
+    ax[0].tick_params(axis='y', labelsize=14)
+    ax[0].text(0.02, 0.95, "(e)", transform=ax[0].transAxes, verticalalignment='top', bbox=props,fontdict={'fontsize':18})
+    ax[0].set_ylabel("T$\mathregular{_{2m}}$ ($^{o}$C)",fontsize=16)
+    
+    
     ax[1].set_xticks(x_ticks)
-    ax[1].set_xticklabels(x_ticklabels)
-
-    # =============== add order ===============
-    ax[0].text(0.02, 0.95, "(e)", transform=ax[0].transAxes, verticalalignment='top', bbox=props)
-    ax[0].set_ylabel("T$_{2m}$ ($^{o}$C)",fontsize=14)
-
-    ax[1].text(0.02, 0.95, "(f)", transform=ax[1].transAxes, verticalalignment='top', bbox=props)
-    ax[1].set_ylabel("ABL (m)",fontsize=14)
+    ax[1].set_xticklabels(x_ticklabels,fontdict={'fontsize':14})
+    ax[1].tick_params(axis='y', labelsize=14)
+    ax[1].text(0.02, 0.95, "(f)", transform=ax[1].transAxes, verticalalignment='top', bbox=props,fontdict={'fontsize':18})
+    ax[1].set_ylabel("ABL (m)",fontsize=16)
 
     # =============== add units ===============
     # ax[0].text(0.02, 0.5, "$^{o}C$", va='bottom', ha='center',
@@ -698,7 +702,7 @@ def plot_time_series( path, case_names, periods, time_ss, time_es, seconds=None,
                     Line2D([0], [0], color="blue", lw=1)]
 
     fig.legend(custom_lines, ['pre-hw FD', 'pre-hw GW', 'hw FD', 'hw GW'],
-               loc='upper right', bbox_to_anchor=(0.78, 0.95), frameon=False)
+               loc='upper right', bbox_to_anchor=(0.79, 0.95), frameon=False, fontsize=14)
     # fig.tight_layout()
 
     # ============ savefig ============
@@ -719,7 +723,7 @@ if __name__ == "__main__":
     #        Set decks      #
     # #######################
 
-    path       = "/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/"
+    path       = "/g/data/w97/mm3972/model/wrf/NUWRF/LISWRF_configs/"
 
     case_names = [
                   "hw2009_3Nov",

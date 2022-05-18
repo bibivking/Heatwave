@@ -436,14 +436,14 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
     cb_wtd.set_label('WTD (m)', loc='center',size=16)# rotation=270,
     cb_wtd.ax.tick_params(labelsize=12)
 
-    fig.savefig("./plots/profile_wrf_Wind_"+message, bbox_inches='tight', pad_inches=0.1)
+    fig.savefig("./plots/profile_wrf_Wind_"+message+"_transect", bbox_inches='tight', pad_inches=0.1)
 
 if __name__ == "__main__":
 
     hw_name     = "hw2019_3Nov"
-    lat_slt     = -36.
-    lon_min     = 139.0
-    lon_max     = 152.0
+    lat_slt     = -26.
+    lon_min     = 130.0
+    lon_max     = 155.0
 
     # 2009
     if hw_name == "hw2009_3Nov":
