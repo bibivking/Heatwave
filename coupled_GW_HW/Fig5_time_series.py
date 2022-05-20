@@ -275,7 +275,7 @@ def plot_time_series_3hws( path, case_names, periods, time_ss, time_es, seconds=
     print("======== In plot_time_series =========")
 
     # ============== Set the plot ==============
-    fig, ax = plt.subplots(nrows=3, ncols=2, figsize=[15,15], sharex=True, squeeze=True) # sharex=True,sharey='row',
+    fig, ax = plt.subplots(nrows=3, ncols=2, figsize=[12,12], sharex=True, squeeze=True) # sharex=True,sharey='row',
     plt.subplots_adjust(left=0.06,top=0.98,right=0.9, wspace=0.155, hspace=0)
 
     plt.rcParams['text.usetex']     = False
@@ -312,11 +312,11 @@ def plot_time_series_3hws( path, case_names, periods, time_ss, time_es, seconds=
     labels    = [ ["pre-hw FD","pre-hw GW"],  # pre-heatwave
                     ["hw FD","hw GW"]         ] # heatwave
     orders    = ['(a)','(b)','(c)','(d)','(e)','(f)']
-    
+
     label_x   = ["T$\mathregular{_{2m}}$ ($^{o}$C)","ABL (m)"]
     label_y   = ["2009","2013","2019"]
     loc_y     = [0.55,0.5,0.45]
-    
+
     # ============== read heatwave information ==============
     for hw_num in np.arange(3):
         case_name = case_names[hw_num]
@@ -435,16 +435,16 @@ def plot_time_series_3hws( path, case_names, periods, time_ss, time_es, seconds=
 
         print(x_ticks)
         print(x_ticklabels)
-        
+
         # =============== add label & order ===============
-        
+
         # set x label/title
-        if hw_num == 0: 
+        if hw_num == 0:
             ax[0,0].set_title(label_x[0],fontsize=16)
             ax[0,1].set_title(label_x[1],fontsize=16)
-            
+
         # set y label
-        ax[hw_num,0].text(-0.2, loc_y[hw_num], label_y[hw_num], va='bottom', ha='center',
+        ax[hw_num,0].text(-0.1, loc_y[hw_num], label_y[hw_num], va='bottom', ha='center',
                             rotation='vertical', rotation_mode='anchor',
                             transform=ax[hw_num,0].transAxes)
 
@@ -452,7 +452,7 @@ def plot_time_series_3hws( path, case_names, periods, time_ss, time_es, seconds=
         ax[hw_num,0].set_xticklabels(x_ticklabels,fontdict={'fontsize':14})
         ax[hw_num,0].tick_params(axis='y', labelsize=14)
         ax[hw_num,0].text(0.02, 0.95, orders[hw_num*2], transform=ax[hw_num,0].transAxes, verticalalignment='top', bbox=props,fontdict={'fontsize':18})
-                    
+
         ax[hw_num,1].set_xticks(x_ticks)
         ax[hw_num,1].set_xticklabels(x_ticklabels,fontdict={'fontsize':14})
         ax[hw_num,1].tick_params(axis='y', labelsize=14)
@@ -465,7 +465,7 @@ def plot_time_series_3hws( path, case_names, periods, time_ss, time_es, seconds=
                         Line2D([0], [0], color="blue", lw=1)]
 
         fig.legend(custom_lines, ['pre-hw FD', 'pre-hw GW', 'hw FD', 'hw GW'],
-                loc='upper right', bbox_to_anchor=(0.79, 0.95), frameon=False, fontsize=14)
+                loc='upper right', bbox_to_anchor=(0.84, 0.95), frameon=False, fontsize=14)
         # fig.tight_layout()
 
         # ============ savefig ============
@@ -478,9 +478,9 @@ def plot_time_series_3hws( path, case_names, periods, time_ss, time_es, seconds=
         #     message = message + "_lat="+str(loc_lat) + "_lon="+str(loc_lon)
 
         # fig.tight_layout()
-    plt.savefig('./plots/'+message+'.png',dpi=300,bbox_inches='tight', pad_inches=0.2)
-    
-    
+    plt.savefig('./plots/'+message+'.png',dpi=300,bbox_inches='tight', pad_inches=0.3)
+
+
 if __name__ == "__main__":
 
     # #######################

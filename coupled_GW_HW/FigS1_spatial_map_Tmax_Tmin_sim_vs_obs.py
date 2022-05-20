@@ -13,17 +13,46 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from cartopy.feature import NaturalEarthFeature, OCEAN
+from scipy.interpolate import griddata
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.ticker as mticker
 from convert_units import get_land_var_scale, get_land_var_range_diff
 from common_utils import *
 
+def regrid_AWAP_to_WRF(AWAP_file, WRF_file,t_awap):
+
+    awap_file = Dataset(AWAP_file, mode='r')
+    lat_in    = awap_file.variables["latitude"][:]
+    lon_in    = awap_file.variables["longitude"][:]
+
+    wrf_file  = Dataset(WRF_file, mode='r')
+    lat_out   = wrf_file.variables["XLAT"][0,:,:]
+    lon_out   = wrf_file.variables["XLONG"][0,:,:]
+    nlat      = len(lat_out[:,0])
+    nlon      = len(lon_out[0,:])
+
+    lon_in_2D, lat_in_2D = np.meshgrid(lon_in,lat_in)
+    lon_in_1D            = np.reshape(lon_in_2D,-1)
+    lat_in_1D            = np.reshape(lat_in_2D,-1)
+
+    # Value                = np.zeros((365,nlat,nlon))
+    # print(np.shape(Value))
+    #
+    # for day in np.arange(365):
+    value = np.reshape(t_awap,-1)
+    Value = griddata((lon_in_1D, lat_in_1D), value, (lon_out, lat_out), method="linear")
+
+    print("np.shape(Value)")
+    print(np.shape(Value))
+
+    return Value
+
 def plot_spatial_T(case_names, wrf_path, AWAP_file, var_name, message=None):
-   
+
     # ======================= Make plots ========================
     # Three integers (nrows, ncols, index)
 
-    fig, ax = plt.subplots(nrows=3, ncols=3, figsize=[10,10],sharex=True, sharey=True, squeeze=True,
+    fig, ax = plt.subplots(nrows=3, ncols=3, figsize=[10,10], sharex=True, sharey=True, squeeze=True,
                            subplot_kw={'projection': ccrs.PlateCarree()})
     plt.subplots_adjust(wspace=-0.4, hspace=0) # left=0.15,right=0.95,top=0.85,bottom=0.05,
 
@@ -66,9 +95,9 @@ def plot_spatial_T(case_names, wrf_path, AWAP_file, var_name, message=None):
     states= NaturalEarthFeature(category="cultural", scale="50m",
                                         facecolor="none",
                                         name="admin_1_states_provinces_shp")
-    # ocean = NaturalEarthFeature('cultural', 'ocean', scale='50m', 
+    # ocean = NaturalEarthFeature('cultural', 'ocean', scale='50m',
     #                             edgecolor='none', facecolor="lightgray")
-    
+
     # ======================= Set colormap =======================
     cmap       = plt.cm.seismic
     blue2white = truncate_colormap(cmap, minval=0., maxval=0.5)
@@ -76,7 +105,7 @@ def plot_spatial_T(case_names, wrf_path, AWAP_file, var_name, message=None):
     cmap       = plt.cm.seismic_r
     red2white  = truncate_colormap(cmap, minval=0., maxval=0.5)
     white2blue = truncate_colormap(cmap, minval=0.5, maxval=1.)
-
+    temp_bar   = plt.cm.coolwarm #seismic
     # ======================= Read WRF file =======================
     # use WRF output's lat & lon, since LIS output has default value
     wrf = Dataset(wrf_path,  mode='r')
@@ -87,7 +116,7 @@ def plot_spatial_T(case_names, wrf_path, AWAP_file, var_name, message=None):
               "(d)","(e)","(f)",
               "(g)","(h)","(i)" ]
 
-    label_x = ["FD","GW","AWAP"]
+    label_x = ["FD-AWAP","GW-AWAP","GW-FD"]
     label_y = ["2009","2013","2019"]
     loc_y   = [0.55,0.5,0.45]
 
@@ -120,7 +149,7 @@ def plot_spatial_T(case_names, wrf_path, AWAP_file, var_name, message=None):
         # Open the NetCDF4 file (add a directory path if necessary) for reading:
         file1 = Dataset(file_paths[0], mode='r')
         file2 = Dataset(file_paths[1], mode='r')
-        
+
         Time  = nc.num2date(file1.variables['time'][:],file1.variables['time'].units,
                 only_use_cftime_datetimes=False, only_use_python_datetimes=True)
         time  = UTC_to_AEST(Time) - datetime(2000,1,1,0,0,0)
@@ -128,28 +157,35 @@ def plot_spatial_T(case_names, wrf_path, AWAP_file, var_name, message=None):
         T1    = file1.variables["Tair_f_inst"][:] # "FD"
         T2    = file2.variables["Tair_f_inst"][:] # "GW"
         if var_name == "tmax":
-            t1 = spital_var_max(time,T1,time_s,time_e)
-            t2 = spital_var_max(time,T2,time_s,time_e)
+            t1 = spital_var_max(time,T1,time_s,time_e) -273.15
+            t2 = spital_var_max(time,T2,time_s,time_e) -273.15
         else:
-            t1 = spital_var_min(time,T1,time_s,time_e)
-            t2 = spital_var_min(time,T2,time_s,time_e)
-        
+            t1 = spital_var_min(time,T1,time_s,time_e) -273.15
+            t2 = spital_var_min(time,T2,time_s,time_e) -273.15
+
         print("Read Sim Done")
-        
+
         # ==================== Read AWAP file ===================
         time_awap, T_awap = read_var(AWAP_file, var_name, lat_name="latitude", lon_name="longitude")
-        t_awap = spital_var(time_awap, T_awap, time_s, time_e)
+        t_awap   = spital_var(time_awap, T_awap, time_s, time_e)
+        # awap     = Dataset(AWAP_file,  mode='r')
+        # lon_awap = awap.variables['longitude'][:]
+        # lat_awap = awap.variables['latitude'][:]
+
         print(" ===== AWAP ===== ")
         print(time_awap)
         print(T_awap)
         print(t_awap)
         print("Read AWAP Done")
-        
+
+        print(" ===== regrid AWAP ===== ")
+        t_regrid = regrid_AWAP_to_WRF(AWAP_file, wrf_path, t_awap)
+
         # ==================== Start to plot ====================
         for j in np.arange(3):
 
             ax[i,j].coastlines(resolution="50m",linewidth=1)
-            ax[i,j].set_extent([130,155,-44,-20])
+            ax[i,j].set_extent([130,153,-43,-20])
             ax[i,j].add_feature(states, linewidth=.5, edgecolor="black")
 
             # Add gridlines
@@ -179,26 +215,50 @@ def plot_spatial_T(case_names, wrf_path, AWAP_file, var_name, message=None):
                 ax[i,j].text(-0.2, loc_y[i], label_y[i], va='bottom', ha='center',
                               rotation='vertical', rotation_mode='anchor',
                               transform=ax[i,j].transAxes)
-
+        '''
         # left - FD
-        clevs1  = [ 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 48, 50]
-        plot1   = ax[i,0].contourf(lon, lat, t1, levels=clevs1, transform=ccrs.PlateCarree(),cmap=white2blue,extend='both')
+        t1     = np.where(t1>70., np.nan, t1)
+        clevs1  = [ 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42,43, 44, 45,46,47, 48, 49, 50]
+        plot1   = ax[i,0].contourf(lon, lat, t1, levels=clevs1, transform=ccrs.PlateCarree(),cmap=temp_bar,extend='both')
         ax[i,0].text(0.02, 0.15, texts[cnt], transform=ax[i,0].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,0].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
         # middle - GW
-        clevs2   = [ 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 48, 50]
-        plot2    = ax[i,1].contourf(lon, lat, t2, levels=clevs2, transform=ccrs.PlateCarree(),cmap=white2blue,extend='both')
+        t2     = np.where(t2>70., np.nan, t2)
+        clevs2   = [ 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42,43, 44, 45,46,47, 48, 49, 50]
+        plot2    = ax[i,1].contourf(lon, lat, t2, levels=clevs2, transform=ccrs.PlateCarree(),cmap=temp_bar,extend='both')
         ax[i,1].text(0.02, 0.15, texts[cnt+1], transform=ax[i,1].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,1].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
         # right - AWAP
-        tmax     = np.where(np.isnan(fw), np.nan, tmax)
-        clevs3   = [ 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 48, 50]
-        plot3    = ax[i,2].contourf(lon, lat, t_awap, levels=clevs3, transform=ccrs.PlateCarree(),cmap=blue2white,extend='both') #
+        clevs3   = [ 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42,43, 44, 45,46,47, 48, 49, 50]
+        plot3    = ax[i,2].contourf(lon_awap, lat_awap, t_awap, levels=clevs3, transform=ccrs.PlateCarree(),cmap=temp_bar,extend='both') #
         ax[i,2].text(0.02, 0.15, texts[cnt+2], transform=ax[i,2].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,2].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
+        '''
+        # left, FD-AWAP
+        t1     = np.where(t1>70., np.nan, t1)
+        clevs1  = [ -4,-3,-2,-1,-0.5,0.5,1,2,3,4 ]
+        #[ -5,-4.5,-4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5 ]
+        plot1   = ax[i,0].contourf(lon, lat, t1-t_regrid, levels=clevs1, transform=ccrs.PlateCarree(),cmap=temp_bar,extend='both')
+        ax[i,0].text(0.02, 0.15, texts[cnt], transform=ax[i,0].transAxes, fontsize=14, verticalalignment='top', bbox=props)
+        ax[i,0].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
+
+        # middle - GW
+        t2     = np.where(t2>70., np.nan, t2)
+        clevs2   = [ -4,-3,-2,-1,-0.5,0.5,1,2,3,4 ]
+        plot2    = ax[i,1].contourf(lon, lat, t2-t_regrid, levels=clevs2, transform=ccrs.PlateCarree(),cmap=temp_bar,extend='both')
+        ax[i,1].text(0.02, 0.15, texts[cnt+1], transform=ax[i,1].transAxes, fontsize=14, verticalalignment='top', bbox=props)
+        ax[i,1].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
+
+        # right - AWAP
+        clevs3   = [ -4,-3,-2,-1,-0.5,0.5,1,2,3,4 ]
+        plot3    = ax[i,2].contourf(lon, lat, t2-t1, levels=clevs3, transform=ccrs.PlateCarree(),cmap=temp_bar,extend='both') #
+        ax[i,2].text(0.02, 0.15, texts[cnt+2], transform=ax[i,2].transAxes, fontsize=14, verticalalignment='top', bbox=props)
+        ax[i,2].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
+
+
         # set top x label
         if i == 0:
             # ax[i,0].xaxis.set_label_position('top')
@@ -239,8 +299,9 @@ def plot_spatial_T(case_names, wrf_path, AWAP_file, var_name, message=None):
 
         cnt = cnt + 3
     # plt.tight_layout(pad=0.01)
-    plt.savefig('./plots/FigS1_spatial_map_'+var_name+'_FD_GW_AWAP_2009_2013_2019.png',dpi=300)
-    
+    plt.savefig('./plots/FigS1_spatial_map_difference_'+var_name+'_FD_GW_AWAP_2009_2013_2019.png',dpi=300,
+                bbox_inches='tight', pad_inches=0.1)
+
 if __name__ == "__main__":
 
     # #######################
@@ -252,4 +313,3 @@ if __name__ == "__main__":
     case_names = ["hw2009_3Nov", "hw2013_3Nov", "hw2019_3Nov"]
     var_name   = "tmax"
     plot_spatial_T(case_names,wrf_path, AWAP_tmax, var_name)
-

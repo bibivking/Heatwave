@@ -98,10 +98,10 @@ def get_vertcross(file_path, z, t, s, ua, wa, lat_slt, lon_min, lon_max, doy, se
     end_point   = CoordPair(lat=lat_slt, lon=lon_max)
 
     # ****************** calc interpolation ******************
-    t_out     = np.zeros((ntime, 36, 48))
-    s_out     = np.zeros((ntime, 36, 48))
-    ua_out    = np.zeros((ntime, 36, 48))
-    wa_out    = np.zeros((ntime, 36, 48))
+    t_out     = np.zeros((ntime, 36, 98))
+    s_out     = np.zeros((ntime, 36, 98))
+    ua_out    = np.zeros((ntime, 36, 98))
+    wa_out    = np.zeros((ntime, 36, 98))
 
     for i in np.arange(ntime):
 
@@ -169,7 +169,7 @@ def get_PBL(file_path, land_path, z, pbl, lat_slt, lon_min, lon_max):
     '''
     In vertcross, autolevels=100(default), then vertical profile is evenly spaced to 100 levels
     '''
-    pbl_out     = np.zeros((ntime, 10, 48))
+    pbl_out     = np.zeros((ntime, 10, 98))
     pbl_4D      = np.expand_dims(pbl,axis=1).repeat(29,axis=1)
 
     landfile    = Dataset(land_path, mode='r')
@@ -421,7 +421,7 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
     q         = ax[1,1].quiver(xy_loc[::3], vertical[::3], ua_night_crs[::3,::3],
                               wa_night_crs[::3,::3], angles='xy', scale_units='xy',
                               scale=scale, pivot='middle', color="white")
-    
+
     ax[1,1].quiverkey(q,X=0.80, Y=2.1, U=scale, label=str(scale)+' m/s', labelpos='E', color="black")
     ax[1,1].text(0.02, 0.95, "(d) Δq$\mathregular{_{night}}$", transform=ax[1,1].transAxes, verticalalignment='top', bbox=props) # fontsize=14,
     ax[1,1].set_xlabel("Longitude")#, fontsize=12)
@@ -432,7 +432,7 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
     # colorbar position
     position  = fig.add_axes([0.14, 0.04, 0.62, 0.02]) # [left, bottom, width, height]
     cb_wtd    = fig.colorbar(cntr_wtd, ax=ax, pad=0.07, cax=position, orientation="horizontal", aspect=40, shrink=0.8)
-    
+
     cb_wtd.set_label('WTD (m)', loc='center',size=16)# rotation=270,
     cb_wtd.ax.tick_params(labelsize=12)
 

@@ -18,11 +18,11 @@ from convert_units import get_land_var_scale, get_land_var_range_diff
 from common_utils import *
 
 def plot_spatial_fwsoil_qle_qh_tmax_qair(case_names, wrf_path, loc_lat=None, loc_lon=None, seconds=None, message=None):
-       
+
     '''
     Figure 2
     '''
-   
+
     # ======================= Make plots ========================
     # Three integers (nrows, ncols, index)
 
@@ -60,9 +60,9 @@ def plot_spatial_fwsoil_qle_qh_tmax_qair(case_names, wrf_path, loc_lat=None, loc
     states= NaturalEarthFeature(category="cultural", scale="50m",
                                         facecolor="none",
                                         name="admin_1_states_provinces_shp")
-    # ocean = NaturalEarthFeature('cultural', 'ocean', scale='50m', 
+    # ocean = NaturalEarthFeature('cultural', 'ocean', scale='50m',
     #                         edgecolor='none', facecolor="lightgray")
-    
+
     # ======================= Set colormap =======================
     cmap       = plt.cm.seismic
     blue2white = truncate_colormap(cmap, minval=0., maxval=0.5)
@@ -135,7 +135,7 @@ def plot_spatial_fwsoil_qle_qh_tmax_qair(case_names, wrf_path, loc_lat=None, loc
 
         # "Q1"
         Q1    = file1.variables["Qair_f_inst"][:]
-        q1    = spital_var(time,Q1,time_s,time_e,seconds)            
+        q1    = spital_var(time,Q1,time_s,time_e,seconds)
 
         if len(file_paths) > 1:
             file2 = Dataset(file_paths[1], mode='r')
@@ -159,13 +159,13 @@ def plot_spatial_fwsoil_qle_qh_tmax_qair(case_names, wrf_path, loc_lat=None, loc
             # "Q2"
             Q2    = file2.variables["Qair_f_inst"][:]
             q2    = spital_var(time,Q2,time_s,time_e,seconds)
-            
+
             tmax  = tmax2 - tmax1
             qle   = qle2 - qle1
             fw    = fw2 - fw1
             qh    = qh2 - qh1
             q     = q2 - q1
-            
+
         else:
             qh    = qh1
             q     = q1
@@ -179,7 +179,7 @@ def plot_spatial_fwsoil_qle_qh_tmax_qair(case_names, wrf_path, loc_lat=None, loc
             ax[i,j].coastlines(resolution="50m",linewidth=1)
             ax[i,j].set_extent([130,155,-44,-20])
             ax[i,j].add_feature(states, linewidth=.5, edgecolor="black")
-            
+
             # Add gridlines
             gl = ax[i,j].gridlines(crs=ccrs.PlateCarree(), draw_labels=True, linewidth=1, color=almost_black, linestyle='--')
             gl.xlabels_top  = False
@@ -211,7 +211,7 @@ def plot_spatial_fwsoil_qle_qh_tmax_qair(case_names, wrf_path, loc_lat=None, loc
         # left - FWsoil
         clevs1  = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.]
         plot1   = ax[i,0].contourf(lon, lat, fw, levels=clevs1, transform=ccrs.PlateCarree(),cmap=white2blue,extend='both')
-        ax[i,0].text(0.02, 0.15, texts[cnt], transform=ax[i,0].transAxes, fontsize=14, verticalalignment='top', bbox=props)        
+        ax[i,0].text(0.02, 0.15, texts[cnt], transform=ax[i,0].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,0].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
 
         # middle left - Qle
@@ -219,27 +219,27 @@ def plot_spatial_fwsoil_qle_qh_tmax_qair(case_names, wrf_path, loc_lat=None, loc
         plot2    = ax[i,1].contourf(lon, lat, qle, levels=clevs2, transform=ccrs.PlateCarree(),cmap=white2blue,extend='both')
         ax[i,1].text(0.02, 0.15, texts[cnt+1], transform=ax[i,1].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,1].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
         # middle - Qh
         clevs3  = [ -140, -120, -100, -80, -60, -40, -20, -10]
         plot3   = ax[i,2].contourf(lon, lat, qh, levels=clevs3, transform=ccrs.PlateCarree(),cmap=blue2white,extend='both')
         ax[i,2].text(0.02, 0.15, texts[cnt+2], transform=ax[i,2].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,2].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
         # middle right - Tmax
         tmax     = np.where(np.isnan(fw), np.nan, tmax)
         clevs4   = [-3.,-2.5,-2.,-1.5,-1.,-0.5, -0.1]
         plot4    = ax[i,3].contourf(lon, lat, tmax, levels=clevs4, transform=ccrs.PlateCarree(),cmap=blue2white,extend='both') #
         ax[i,3].text(0.02, 0.15, texts[cnt+3], transform=ax[i,3].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,3].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
         # right - Qair
         clevs5  = [0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.]
         plot5   = ax[i,4].contourf(lon, lat, q*1000., levels=clevs5, transform=ccrs.PlateCarree(),cmap=white2blue,extend='both')
         ax[i,4].text(0.02, 0.15, texts[cnt+4], transform=ax[i,4].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,4].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
         clevs   = None
-        
+
         # set top x label
         if i == 0:
             # ax[i,0].xaxis.set_label_position('top')
@@ -272,7 +272,7 @@ def plot_spatial_fwsoil_qle_qh_tmax_qair(case_names, wrf_path, loc_lat=None, loc
             color_label= "W m$\mathregular{^{-2}}$"
             cbar.set_label(color_label, loc='center',size=14)
             cbar.ax.tick_params(labelsize=10, rotation=45)
-            
+
             # middle - Qh
             cbar = plt.colorbar(plot3, ax=ax[:,2], ticklocation="right", pad=0.05, orientation="horizontal",
                                 aspect=20, shrink=0.49)
@@ -286,7 +286,7 @@ def plot_spatial_fwsoil_qle_qh_tmax_qair(case_names, wrf_path, loc_lat=None, loc
             color_label= "$\mathregular{^o}$C"
             cbar.set_label(color_label, loc='center',size=14)
             cbar.ax.tick_params(labelsize=10, rotation=45)
-            
+
             # right - q
             cbar = plt.colorbar(plot5, ax=ax[:,4], ticklocation="right", pad=0.05, orientation="horizontal",
                                 aspect=20, shrink=0.49)
@@ -296,14 +296,15 @@ def plot_spatial_fwsoil_qle_qh_tmax_qair(case_names, wrf_path, loc_lat=None, loc
 
         cnt = cnt + 5
     # plt.tight_layout(pad=0.01)
-    plt.savefig('./plots/Fig2_spatial_map_fwsoil_Qle_Qh_Tmax_q_2009_2013_2019.png',dpi=300, bbox_inches='tight', pad_inches=0.1)
+    plt.savefig('./plots/Fig2_spatial_map_fwsoil_Qle_Qh_Tmax_q_2009_2013_2019.png',dpi=300)
+    #, bbox_inches='tight', pad_inches=0.1)
 
 def plot_spatial_Rnet_LW_SW(case_names, loc_lat=None, loc_lon=None, seconds=None, message=None):
 
     '''
-    old Figure S3, now Figure 3 
+    old Figure S3, now Figure 3
     '''
-    
+
     # ======================= Make plots ========================
     # Three integers (nrows, ncols, index)
 
@@ -341,9 +342,9 @@ def plot_spatial_Rnet_LW_SW(case_names, loc_lat=None, loc_lon=None, seconds=None
     states= NaturalEarthFeature(category="cultural", scale="50m",
                                         facecolor="none",
                                         name="admin_1_states_provinces_shp")
-    # ocean = NaturalEarthFeature('cultural', 'ocean', scale='50m', 
+    # ocean = NaturalEarthFeature('cultural', 'ocean', scale='50m',
     #                             edgecolor='none', facecolor="lightgray")
-    
+
     # ======================= Set colormap =======================
     cmap       = plt.cm.seismic
 
@@ -481,7 +482,7 @@ def plot_spatial_Rnet_LW_SW(case_names, loc_lat=None, loc_lon=None, seconds=None
             ax[i,j].coastlines(resolution="50m",linewidth=1)
             ax[i,j].set_extent([130,155,-44,-20])
             ax[i,j].add_feature(states, linewidth=.5, edgecolor="black")
-            
+
             # Add gridlines
             gl = ax[i,j].gridlines(crs=ccrs.PlateCarree(), draw_labels=True, linewidth=1, color=almost_black, linestyle='--')
             gl.xlabels_top  = False
@@ -519,29 +520,29 @@ def plot_spatial_Rnet_LW_SW(case_names, loc_lat=None, loc_lon=None, seconds=None
         plot1    = ax[i,0].contourf(lon, lat, rnet, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
         ax[i,0].text(0.02, 0.15, texts[cnt], transform=ax[i,0].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,0].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
         # left middle - LWnet
         plot2    = ax[i,1].contourf(lon, lat, lwnet, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
         ax[i,1].text(0.02, 0.15, texts[cnt+1], transform=ax[i,1].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,1].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
         # middle - LWup
         lwup = np.where(np.isnan(rnet), np.nan, lwup)
         plot3   = ax[i,2].contourf(lon, lat, lwup, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
         ax[i,2].text(0.02, 0.15, texts[cnt+2], transform=ax[i,2].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,2].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
         # right middle - LWdn
         lwdn = np.where(np.isnan(rnet), np.nan, lwdn)
         plot4   = ax[i,3].contourf(lon, lat, lwdn, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
         ax[i,3].text(0.02, 0.15, texts[cnt+3], transform=ax[i,3].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,3].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
         # right - SWnet
         plot5   = ax[i,4].contourf(lon, lat, swnet, levels=clevs, transform=ccrs.PlateCarree(),cmap=cmap,extend='both')
         ax[i,4].text(0.02, 0.15, texts[cnt+4], transform=ax[i,4].transAxes, fontsize=14, verticalalignment='top', bbox=props)
         ax[i,4].add_feature(OCEAN,edgecolor='none', facecolor="lightgray")
-        
+
         if i == 2 and j == 4:
 
             cbar = plt.colorbar(plot1, ax=ax, ticklocation="right", pad=0.05, orientation="horizontal",
@@ -564,7 +565,8 @@ def plot_spatial_Rnet_LW_SW(case_names, loc_lat=None, loc_lon=None, seconds=None
         # plt.title(var_name, size=16)
         # cb.ax[i,j].tick_params(labelsize=10)
     # plt.tight_layout(pad=0.01)
-    plt.savefig('./plots/Fig3_spatial_map_plot_spatial_Rnet_LW_SW_2009_2013_2019.png',dpi=300, bbox_inches='tight', pad_inches=0.1)
+    plt.savefig('./plots/Fig3_spatial_map_plot_spatial_Rnet_LW_SW_2009_2013_2019.png',dpi=300)
+    #, bbox_inches='tight', pad_inches=0.1)
 
 if __name__ == "__main__":
 

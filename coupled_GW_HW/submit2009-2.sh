@@ -12,4 +12,4 @@
 
 module load conda/analysis3-22.04
 cd /g/data/w97/mm3972/scripts/Heatwave/coupled_GW_HW
-python Fig4_profile_wrf_var.py
+python Fig4_profile_wrf_var_transect.py

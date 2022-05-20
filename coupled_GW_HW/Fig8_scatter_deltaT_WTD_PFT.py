@@ -21,11 +21,13 @@ from common_utils import *
 def mask_by_hw_thrd(time_s,Var):
 
     print("In mask_by_hw_thrd Var")
-
-    AWAP_mask  = "/g/data/w35/mm3972/scripts/Heatwave/coupled_GW_HW/nc_file/AWAP_tmean_above_Tmn90th_1970-2019_WRF_domain.nc"
+    
+    # AWAP_mask  = "/g/data/w97/mm3972/scripts/Heatwave/coupled_GW_HW/nc_file/AWAP_tmean_above_Tmn90th_1970-2019_WRF_domain.nc"
+    AWAP_mask  = "/g/data/w97/mm3972/scripts/Heatwave/coupled_GW_HW/nc_file/AWAP_tmax_above_tmax90th_1970-2019_WRF_domain.nc"
     awap_file  = Dataset(AWAP_mask, mode='r')
-    tmean      = awap_file.variables["tmean"][:]
-
+    # tmean      = awap_file.variables["tmean"][:]
+    tmean      = awap_file.variables["tmax"][:]
+    
     AWAP_time  = nc.num2date(awap_file.variables['time'][:],awap_file.variables['time'].units,
                  only_use_cftime_datetimes=False, only_use_python_datetimes=True)
 
@@ -277,24 +279,24 @@ def plot_spatial_land(file_paths, time_s, time_e, seconds=None,loc_lat=None, loc
 
                 cnt = cnt + 1
 
-    fig.savefig("./plots/figures/scatter_delta_Tmax_WTD_PFT_"+message,bbox_inches='tight')#, pad_inches=0.1)
+    fig.savefig("./plots/Fig8_scatter_delta_Tmax_WTD_PFT_90tmax_"+message,bbox_inches='tight')#, pad_inches=0.1)
 
 def plot_spatial_land_days(case_names, periods, time_ss, time_es, message=None):
 
     hw_mask = True
 
     # ============ Setting for plotting ============
-    # # wtd-tmax-fw
-    # x_y_clr  = ["wtd","tmax","fw"]
-    # labels   = ["WTD (m)",           # x-axis
-    #             "ΔT$_{max}$ ($\mathregular{^o}$C)", # y-axis
-    #             "Δ$β$ (-)"]          # colorbar
-    # x_min   = 0
-    # x_max   = 21
-    # y_min   = -6
-    # y_max   = 3.
-    # clr_min = -0.1#-0.8
-    # clr_max = 0.8
+    # wtd-tmax-fw
+    x_y_clr  = ["wtd","tmax","fw"]
+    labels   = ["WTD (m)",           # x-axis
+                "ΔT$_{max}$ ($\mathregular{^o}$C)", # y-axis
+                "Δ$β$ (-)"]          # colorbar
+    x_min   = 0
+    x_max   = 21
+    y_min   = -6
+    y_max   = 3.
+    clr_min = -0.1#-0.8
+    clr_max = 0.8
 
     # # wtd-tmax-tmax_gw
     # x_y_clr  = ["wtd","tmax","tmax_gw"]
@@ -307,19 +309,19 @@ def plot_spatial_land_days(case_names, periods, time_ss, time_es, message=None):
     # y_max  = 3.
     # clr_min = 30 #-0.8
     # clr_max = 50
-    
-    # tmax_gw-tmax-fw
-    x_y_clr  = ["tmax_gw","tmax","fw"]
-    labels   = ["T$_{gw,max}$ ($\mathregular{^o}$C)",          # x-axis
-                "ΔT$_{max}$ ($\mathregular{^o}$C)", # y-axis
-                "Δ$β$ (-)"]          # colorbar
-    x_min  = 15
-    x_max  = 52
-    y_min  = -6
-    y_max  = 3
-    clr_min = -0.1 #-0.8
-    clr_max = 0.8
-    
+
+    # # tmax_gw-tmax-fw
+    # x_y_clr  = ["tmax_gw","tmax","fw"]
+    # labels   = ["T$_{gw,max}$ ($\mathregular{^o}$C)",          # x-axis
+    #             "ΔT$_{max}$ ($\mathregular{^o}$C)", # y-axis
+    #             "Δ$β$ (-)"]          # colorbar
+    # x_min  = 15
+    # x_max  = 52
+    # y_min  = -6
+    # y_max  = 3
+    # clr_min = -0.1 #-0.8
+    # clr_max = 0.8
+
     # wtd-sm-fw
     # x_y_clr  = ["wtd","sm","fw"]
     # labels   = ["WTD (m)",           # x-axis
@@ -411,7 +413,7 @@ def plot_spatial_land_days(case_names, periods, time_ss, time_es, message=None):
         time_e = time_es[i]
         period = periods[i]
 
-        cpl_land_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
+        cpl_land_file     = '/g/data/w97/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
 
         cpl_land_file_gw  = cpl_land_file + '/LIS.CABLE.'+period+'_gw.nc'  # land output of wrf-cable run
         cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.'+period+'_fd.nc'  # land output of wrf-cable run
@@ -645,7 +647,7 @@ def plot_spatial_land_days(case_names, periods, time_ss, time_es, message=None):
 
         # df = None
     message = x_y_clr[0]+"_"+x_y_clr[1]+"_"+x_y_clr[2]
-    fig.savefig("./plots/figures/scatter_"+message+"_days",bbox_inches='tight')#, pad_inches=0.1)
+    fig.savefig("./plots/Fig8_scatter_"+message+"_days_90th-Tmax",bbox_inches='tight')#, pad_inches=0.1)
 
 def plot_spatial_tair_fwsoil(file_paths, time_s, time_e, seconds=None,loc_lat=None, loc_lon=None, message=None):
 
@@ -1122,7 +1124,7 @@ if __name__ == "__main__":
     #         time_s = datetime(2019,1,14,0,0,0)
     #         time_e = datetime(2019,1,26,23,59,0,0)
 
-    #     cpl_land_file     = '/g/data/w35/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
+    #     cpl_land_file     = '/g/data/w97/mm3972/model/wrf/NUWRF/LISWRF_configs/'+case_name+'/ensemble_avg'
 
     #     cpl_land_file_gw  = cpl_land_file + '/LIS.CABLE.'+period+'_gw.nc'  # land output of wrf-cable run
     #     cpl_land_file_fd  = cpl_land_file + '/LIS.CABLE.'+period+'_fd.nc'  # land output of wrf-cable run

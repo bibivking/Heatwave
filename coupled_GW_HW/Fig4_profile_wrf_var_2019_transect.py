@@ -98,10 +98,10 @@ def get_vertcross(file_path, z, t, s, ua, wa, lat_slt, lon_min, lon_max, doy, se
     end_point   = CoordPair(lat=lat_slt, lon=lon_max)
 
     # ****************** calc interpolation ******************
-    t_out     = np.zeros((ntime, 36, 48))
-    s_out     = np.zeros((ntime, 36, 48))
-    ua_out    = np.zeros((ntime, 36, 48))
-    wa_out    = np.zeros((ntime, 36, 48))
+    t_out     = np.zeros((ntime, 36, 98))
+    s_out     = np.zeros((ntime, 36, 98))
+    ua_out    = np.zeros((ntime, 36, 98))
+    wa_out    = np.zeros((ntime, 36, 98))
 
     for i in np.arange(ntime):
 
@@ -169,7 +169,7 @@ def get_PBL(file_path, land_path, z, pbl, lat_slt, lon_min, lon_max):
     '''
     In vertcross, autolevels=100(default), then vertical profile is evenly spaced to 100 levels
     '''
-    pbl_out     = np.zeros((ntime, 10, 48))
+    pbl_out     = np.zeros((ntime, 10, 98))
     pbl_4D      = np.expand_dims(pbl,axis=1).repeat(29,axis=1)
 
     landfile    = Dataset(land_path, mode='r')
@@ -372,7 +372,7 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
     levels2   = [ 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.6]
     # levels1   = [-1.2,-1.1,-1.,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1]
     # levels2   = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.1, 1.2]
-    
+
     # Water table depth height
     wtd_hgt   = [0,300]
 
@@ -436,7 +436,7 @@ def plot_profile_wrf_wind(file_paths, land_paths, time_s, time_e, message=None, 
     cb_wtd.set_label('WTD (m)', loc='center',size=16)# rotation=270,
     cb_wtd.ax.tick_params(labelsize=12)
 
-    fig.savefig("./plots/profile_wrf_Wind_"+message+"_transect", bbox_inches='tight', pad_inches=0.1)
+    fig.savefig("./plots/profile_wrf_Wind_"+message+"_transect", bbox_inches='tight', pad_inches=0.3)
 
 if __name__ == "__main__":
 
