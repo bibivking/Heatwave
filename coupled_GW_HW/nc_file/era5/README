@@ -1,0 +1,5 @@
+[mm3972@gadi-login-08 era5-1]$ cp /g/data/rt52/era5/single-levels/monthly-averaged-by-hour/2t/2009/2t_era5_mnth_sfc_20090201-20090228.nc /g/data/w97/mm3972/scripts/Heatwave/coupled_GW_HW/nc_file/era5
+[mm3972@gadi-login-08 era5-1]$ cp /g/data/rt52/era5/single-levels/monthly-averaged-by-hour/2t/2009/2t_era5_mnth_sfc_20190101-20190131.nc /g/data/w97/mm3972/scripts/Heatwave/coupled_GW_HW/nc_file/era5
+cp: cannot stat '/g/data/rt52/era5/single-levels/monthly-averaged-by-hour/2t/2009/2t_era5_mnth_sfc_20190101-20190131.nc': No such file or directory
+[mm3972@gadi-login-08 era5-1]$ cp /g/data/rt52/era5/single-levels/monthly-averaged-by-hour/2t/2019/2t_era5_mnth_sfc_20190101-20190131.nc /g/data/w97/mm3972/scripts/Heatwave/coupled_GW_HW/nc_file/era5
+[mm3972@gadi-login-08 era5-1]$ cp /g/data/rt52/era5/single-levels/monthly-averaged-by-hour/2t/2013/2t_era5_mnth_sfc_20130101-20130131.nc /g/data/w97/mm3972/scripts/Heatwave/coupled_GW_HW/nc_file/era5

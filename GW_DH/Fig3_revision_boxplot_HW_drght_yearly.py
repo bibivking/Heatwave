@@ -97,6 +97,7 @@ def Fig3_boxplot(start_yr,var_names,ylabels,ylabels_R,ranges,ranges_diff):
     orders  = ['(a)','(b)','(c)','(d)']
 
     for i, var_name in enumerate(var_names):
+        print(var_name)
 
         row = i//2 # round
         col = i%2  # mod
@@ -165,7 +166,7 @@ def Fig3_boxplot(start_yr,var_names,ylabels,ylabels_R,ranges,ranges_diff):
         # Plotting boxplot
         axs2.plot(medians_gw-medians_fd, ls="-", color="gray", label="GW-FD")
         #align_yaxis(ax, 0, ax2, 0)
-
+        print(medians_gw-medians_fd)
         axs2.set_ylim(ranges_diff[i])
         axs2.set_ylabel(ylabels_R[i],fontsize=14)
         axs2.yaxis.set_tick_params(labelsize=12)
